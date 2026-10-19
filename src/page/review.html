@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Literature review</title>
+    <link rel="stylesheet" href="../style/base.css">
+    <link rel="stylesheet" href="../style/review.css">
+    <!-- theme + style, before the page draws -->
+    <script src="../script/core/settings.js"></script>
+</head>
+
+<body>
+    <div class="bar">
+        <a href="../index.html" class="back" id="back_link">← Project</a>
+        <h2 class="brand">Literature review</h2>
+        <!-- the project's citation style: used here, on source pages and in bibliography exports -->
+        <label class="style_pick">Citation style <select id="cite_style"></select></label>
+        <small class="save_state" id="save_state"></small>
+        <!-- on phones these fold into one "Export" menu -->
+        <div class="export_menu" id="export_menu">
+            <button type="button" class="btn small primary menu_toggle" id="export_toggle" aria-expanded="false" aria-controls="export_items">Export ▾</button>
+            <div class="menu_items" id="export_items">
+                <button type="button" class="btn small" id="download_md">Download .md</button>
+                <button type="button" class="btn small" id="download_html">Download .html</button>
+                <button type="button" class="btn small primary" id="copy_rich" title="Paste into Word or Google Docs with formatting">Copy for Word / Docs</button>
+            </div>
+        </div>
+    </div>
+
+    <main class="review">
+        <!-- writing: Markdown with citations [@key], [@key, p. 4], [@a; @b] or @key,
+             or Visual: the formatted text, edited directly (saved back as Markdown) -->
+        <section class="panel writer">
+            <div class="toolbar" id="toolbar">
+                <div class="mode_toggle" id="mode_toggle" role="group" aria-label="Editing mode">
+                    <button type="button" data-mode="visual" title="Edit the formatted text">Visual</button>
+                    <button type="button" data-mode="markdown" title="Edit the Markdown source">Markdown</button>
+                </div>
+                <button type="button" data-action="h2" title="Section heading">H2</button>
+                <button type="button" data-action="h3" title="Sub-heading">H3</button>
+                <button type="button" data-action="bold" title="Bold (Ctrl+B)"><b>B</b></button>
+                <button type="button" data-action="italic" title="Italic (Ctrl+I)"><i>I</i></button>
+                <button type="button" data-action="list" title="Bullet list">• List</button>
+                <button type="button" data-action="numbered" title="Numbered list">1. List</button>
+                <button type="button" data-action="quote" title="Block quote">❝ Quote</button>
+                <button type="button" data-action="link" title="Link">Link</button>
+                <button type="button" data-action="cite" title="Find a source to cite">@ Cite</button>
+                <button type="button" data-action="image" title="Add an image">+ Image</button>
+                <button type="button" data-action="undo" title="Undo (Ctrl+Z)" aria-label="Undo">↶</button>
+                <button type="button" data-action="redo" title="Redo (Ctrl+Y)" aria-label="Redo">↷</button>
+                <span class="spacer"></span>
+                <small id="counts"></small>
+            </div>
+            <!-- appears while you type @…: pick a source to complete the citation -->
+            <div class="cite_suggest" id="cite_suggest" hidden></div>
+            <textarea id="review_text" spellcheck="true" aria-label="Literature review (Markdown)"></textarea>
+            <div class="visual md" id="visual_editor" contenteditable="true" spellcheck="true"
+                aria-label="Literature review" hidden></div>
+            <p class="hint" data-for="markdown">
+                Cite with <code>[@key]</code>, add a page or time with <code>[@key, p. 4]</code>, cite several with
+                <code>[@a; @b]</code>, or name the authors in your sentence with <code>@key</code>.
+                The reference list is added at the end automatically.
+            </p>
+            <p class="hint" data-for="visual" hidden>
+                Citations show as they will appear: type <code>@</code> (or <code>[@</code> for brackets) to add one,
+                or use the Sources tab. Double-click a citation to add a page or time; Backspace removes it.
+                The reference list is added at the end automatically.
+            </p>
+        </section>
+
+        <!-- preview with citations resolved, and your sources with their summaries and notes -->
+        <section class="panel side_panel">
+            <div class="tabs" id="tabs">
+                <button type="button" data-tab="preview" aria-selected="true">Preview</button>
+                <button type="button" data-tab="sources" aria-selected="false">Sources</button>
+                <button type="button" data-tab="figures" aria-selected="false">Figures</button>
+            </div>
+            <p class="cite_warning" id="cite_warning" hidden></p>
+            <article class="preview md" id="preview"></article>
+            <div class="sources_tab" id="sources_tab" hidden>
+                <input type="search" id="source_search" placeholder="Search sources, tags, notes…">
+                <div class="source_cards" id="source_cards"></div>
+            </div>
+            <!-- the project's figures (captured from sources or uploaded): insert with caption + citation -->
+            <div class="figures_tab" id="figures_tab" hidden>
+                <p class="hint">Insert adds the figure or table with its number (“Figure #” / “Table #” become Figure 1, 2… and
+                    Table 1, 2…), its title, and a credit note in the project's style (“From …” or “Adapted from …”); the
+                    source goes in the reference list. Save more with ★ or 📷 on a source's page.</p>
+                <ul class="figure_grid" id="review_figures"></ul>
+            </div>
+        </section>
+    </main>
+
+    <!-- source details form is added here by sources.js -->
+    <div class="modals" id="modals" hidden></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.min.js"></script>
+    <!-- turns the Visual editor's HTML back into Markdown -->
+    <script src="https://cdn.jsdelivr.net/npm/turndown@7.2.0/dist/turndown.js"></script>
+    <script src="../script/core/ui.js"></script>
+    <script src="../script/core/store.js"></script>
+    <script src="../script/writing/markdown.js"></script>
+    <script src="../script/writing/mdimages.js"></script>
+    <script src="../script/writing/mdbar.js"></script>
+    <script src="../script/sources/sources.js"></script>
+    <script src="../script/sources/cite.js"></script>
+    <script src="../script/sources/figures.js"></script>
+    <script src="../script/pages/review.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,100 @@
+/* Pixel Pop — design tokens. Light theme is the default; add data-theme="dark" to <html> for Night. */
+/* (fonts are loaded by core/settings.js as their own <link>, so nothing waits on an @import chain) */
+
+:root, [data-theme="light"] {
+  --surface-desktop: #d8e3f8;
+  --grid-line: #c2d1f1;
+  --surface-window: #fbe6cf;
+  --surface-inset: #fff6ea;
+  --surface-raised: #fff1df;
+  --ink: #2a2421;
+  --ink-muted: #6b5a4e;
+  --line: #2a2421;
+  --bevel-light: #ffffff80;
+  --shadow-ink: #2a2421;
+  --focus: #2f5bd8;
+  --candy-teal: #6cc3b9;
+  --candy-orange: #f4a64a;
+  --candy-pink: #f7a8cb;
+  --candy-lavender: #b6b2f2;
+  --candy-green: #a3d56e;
+  --candy-yellow: #f2cf55;
+  --candy-blue: #8aa6f2;
+  --on-candy: #2a2421;
+  --lip-cream: #e3c8a8;
+  --lip-teal: #45988e;
+  --lip-orange: #cc7a25;
+  --lip-pink: #dd78a6;
+  --lip-lavender: #8781d9;
+  --lip-green: #6fa646;
+  --deep-teal: #164540;
+  --deep-orange: #683710;
+  --deep-pink: #78254f;
+  --deep-lavender: #3a3290;
+  --deep-green: #23522a;
+  --danger: #c7384f;
+  --lip-danger: #8e2234;
+  --on-danger: #ffffff;
+  --danger-ink: #a8283d;
+  --shadow-pixel: 6px 6px 0 0 #2a2421;
+  --shadow-pixel-sm: 3px 3px 0 0 #2a2421;
+}
+
+[data-theme="dark"] {
+  --surface-desktop: #171b2c;
+  --grid-line: #232a42;
+  --surface-window: #2c2534;
+  --surface-inset: #1e1925;
+  --surface-raised: #3a3144;
+  --ink: #f6eadb;
+  --ink-muted: #c4b4a4;
+  --line: #a99a8b;
+  --bevel-light: #ffffff33;
+  --shadow-ink: #07050a;
+  --focus: #f2cf55;
+  --candy-teal: #6cc3b9;
+  --candy-orange: #f4a64a;
+  --candy-pink: #f7a8cb;
+  --candy-lavender: #b6b2f2;
+  --candy-green: #a3d56e;
+  --candy-yellow: #f2cf55;
+  --candy-blue: #8aa6f2;
+  --on-candy: #2a2421;
+  --lip-cream: #251f2c;
+  --lip-teal: #45988e;
+  --lip-orange: #cc7a25;
+  --lip-pink: #dd78a6;
+  --lip-lavender: #8781d9;
+  --lip-green: #6fa646;
+  --deep-teal: #164540;
+  --deep-orange: #683710;
+  --deep-pink: #78254f;
+  --deep-lavender: #3a3290;
+  --deep-green: #23522a;
+  --danger: #ff7f93;
+  --lip-danger: #cc5468;
+  --on-danger: #2a2421;
+  --danger-ink: #ff9aaa;
+  --shadow-pixel: 6px 6px 0 0 #07050a;
+  --shadow-pixel-sm: 3px 3px 0 0 #07050a;
+}
+
+:root {
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --radius-none: 0px;
+  --radius-round: 50%;
+  --border-pixel: 2px;
+  --border-heavy: 4px;
+  --font-display: "Pixelify Sans", ui-monospace, monospace;
+  --font-sans: "Nunito", ui-rounded, system-ui, sans-serif;
+  --font-label: "Nunito", ui-rounded, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+}
+
+/* (the design's type-style classes — .title, .item, .body… — are left out: the app already uses some
+   of those class names; the theme stylesheet sets the type on the app's own elements instead) */

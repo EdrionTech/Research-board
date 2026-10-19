@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en" data-theme="night">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nullsec — demo</title>
+<link rel="stylesheet" href="tokens.css">
+<link rel="stylesheet" href="components/nullsec.css">
+<script src="https://unpkg.com/react@18.3.1/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js"></script>
+<script src="components/nullsec.js"></script>
+<style>
+  .hud { display: grid; grid-template-columns: 1fr; gap: var(--space-5); max-width: 1200px; margin: 0 auto; }
+  @media (min-width: 960px) { .hud { grid-template-columns: 280px minmax(0, 1fr); } }
+  .top { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: var(--space-3); grid-column: 1 / -1; }
+  .side, .main { display: flex; flex-direction: column; gap: var(--space-5); min-width: 0; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script>
+  var N = window.Nullsec, h = React.createElement;
+  function App() {
+    var t = React.useState('night'), theme = t[0], m = React.useState(0);
+    React.useEffect(function(){ document.documentElement.dataset.theme = theme; }, [theme]);
+    return h('div', { className: 'hud' },
+      h('div', { className: 'top' },
+        h('div', null, h('span', { className: 'nx-label' }, '// ASTRAX_0317'), h('h1', { className: 'display nx-glitch', style: { margin: 0 } }, 'System online')),
+        h(N.Button, { variant: 'outline', tone: 'neutral', size: 'sm', icon: 'eye', trailing: false, onClick: function(){ t[1](theme === 'night' ? 'paper' : 'night'); } }, theme === 'night' ? 'Paper' : 'Night')),
+      h('aside', { className: 'side' },
+        h(N.Frame, { title: 'Menu', code: 'v9.31' }, h(N.MenuList, { active: m[0], onSelect: m[1], items: [{label:'Continue'},{label:'Inventory'},{label:'Objectives'},{label:'Multiplayer', disabled: true},{label:'Settings'},{label:'Exit'}] })),
+        h(N.Frame, { title: 'Vitals', tone: 'neutral', variant: 'notched' }, h('div', { className: 'nx-stack', style: { alignItems: 'stretch' } },
+          h(N.Meter, { label: 'Health', value: 72, icon: 'heart' }), h(N.Meter, { label: 'Charge', value: 100, tone: 'cyan', icon: 'battery' }), h(N.Meter, { label: 'Fuel', value: 18, tone: 'amber', icon: 'warning', display: '18 L' })))),
+      h('main', { className: 'main' },
+        h('div', { className: 'nx-grid' },
+          h(N.Frame, { title: 'Login', code: '// 0317', footer: 'SECURE CHANNEL // AES-256' }, h('div', { className: 'nx-stack', style: { alignItems: 'stretch' } },
+            h(N.TextField, { label: 'Name', placeholder: 'operator' }), h(N.TextField, { label: 'Password', type: 'password', placeholder: '••••••••' }),
+            h(N.Checkbox, { label: 'Stealth mode', defaultChecked: true }), h(N.Button, { size: 'lg' }, 'Connect'))),
+          h(N.Frame, { title: 'Reactor', tone: 'cyan', code: 'E-04', striped: true }, h('div', { className: 'nx-stack' },
+            h(N.Readout, { label: 'Energy reactor', value: '95', unit: '%', caption: '002/220 errors' }),
+            h('div', { className: 'nx-row' }, h(N.StatusTag, { kind: 'online' }), h(N.StatusTag, { kind: 'unlocked' }), h(N.StatusTag, { kind: 'warning' }, 'Detected')),
+            h(N.Divider, { label: 'Actions' }),
+            h('div', { className: 'nx-row' }, h(N.Button, { tone: 'cyan', icon: 'terminal' }, 'Hack'), h(N.Button, { variant: 'outline', tone: 'amber', icon: 'warning', trailing: false }, 'Override'))))),
+        h(N.Frame, { title: 'Target', tone: 'neutral', code: 'UNIT 77' }, h('div', { className: 'nx-row', style: { justifyContent: 'space-around', gap: 24 } },
+          h(N.Target, { label: 'LOCK', locked: true }, h('div', { style: { width: 140, height: 110, display: 'grid', placeItems: 'center', color: 'var(--red)' } }, h(N.Icon, { name: 'cube', size: 72 }))),
+          h(N.Readout, { label: 'Distance', value: '1.2', unit: 'KM', tone: 'red' }),
+          h('div', { className: 'nx-row' }, h(N.IconButton, { icon: 'check', label: 'Confirm', size: 'lg', tone: 'cyan', variant: 'solid' }), h(N.IconButton, { icon: 'close', label: 'Abort', size: 'lg', variant: 'solid' }))))));
+  }
+  ReactDOM.createRoot(document.getElementById('root')).render(h(App));
+</script>
+</body>
+</html>

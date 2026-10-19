@@ -1,0 +1,189 @@
+/* Reentry — design tokens. Cockpit is the default; set data-theme="hangar" on <html> for Hangar. */
+@font-face { font-family: 'Russo One'; src: url('fonts/RussoOne-Regular.ttf') format('truetype'); font-weight: 400; font-style: normal; font-display: swap; }
+@font-face { font-family: 'Barlow'; src: url('fonts/Barlow-Regular.ttf') format('truetype'); font-weight: 400; font-style: normal; font-display: swap; }
+@font-face { font-family: 'Barlow'; src: url('fonts/Barlow-Medium.ttf') format('truetype'); font-weight: 500; font-style: normal; font-display: swap; }
+@font-face { font-family: 'Barlow'; src: url('fonts/Barlow-SemiBold.ttf') format('truetype'); font-weight: 600; font-style: normal; font-display: swap; }
+@font-face { font-family: 'Barlow'; src: url('fonts/Barlow-Bold.ttf') format('truetype'); font-weight: 700; font-style: normal; font-display: swap; }
+@font-face { font-family: 'Barlow Condensed'; src: url('fonts/BarlowCondensed-SemiBold.ttf') format('truetype'); font-weight: 600; font-style: normal; font-display: swap; }
+@font-face { font-family: 'Barlow Condensed'; src: url('fonts/BarlowCondensed-Bold.ttf') format('truetype'); font-weight: 700; font-style: normal; font-display: swap; }
+@font-face { font-family: 'Share Tech Mono'; src: url('fonts/ShareTechMono-Regular.ttf') format('truetype'); font-weight: 400; font-style: normal; font-display: swap; }
+:root, [data-theme="cockpit"] {
+  --hull: #0b0e13;
+  --hull-glow: #2a3a5233;
+  --seam: #ffffff0d;
+  --rivet: #ffffff1f;
+  --plate-hi: #262d38;
+  --plate: #1b2129;
+  --plate-lo: #141920;
+  --bezel: #313945;
+  --bezel-hi: #4a5462;
+  --outline: #05070a;
+  --recess: #0a0d11;
+  --ink: #e6e9ee;
+  --ink-muted: #9aa3b0;
+  --line: #2c343f;
+  --line-strong: #6b7686;
+  --screw: #3a4350;
+  --screw-hi: #6b7686;
+  --crt: #120802;
+  --crt-hi: #2e1606;
+  --crt-bezel: #1a1e24;
+  --phosphor: #ffa43a;
+  --phosphor-dim: #c98a3e;
+  --phosphor-glow: #ff8a1a80;
+  --phosphor-alert: #ff5a3a;
+  --phosphor-alert-glow: #ff3a1a80;
+  --scanline: #00000059;
+  --gauge-face: #0f1318;
+  --gauge-ink: #c9cfd8;
+  --seg-off: #1b2028;
+  --amber-hi: #ffc775;
+  --amber: #f29a2e;
+  --amber-lo: #b0600c;
+  --on-amber: #160b02;
+  --amber-ink: #ffb054;
+  --red-hi: #ff7f68;
+  --red: #cc3420;
+  --red-lo: #861b0e;
+  --on-red: #ffffff;
+  --red-ink: #ff8a75;
+  --blue-hi: #7ea6ff;
+  --blue: #2c5fd1;
+  --blue-lo: #163a8a;
+  --on-blue: #ffffff;
+  --blue-ink: #8fb0ff;
+  --white-hi: #ffffff;
+  --white: #e3e7eb;
+  --white-lo: #aeb6bf;
+  --on-white: #12161c;
+  --steel-hi: #4f5967;
+  --steel: #333b47;
+  --steel-lo: #1f252d;
+  --on-steel: #e6e9ee;
+  --green-hi: #7be3a5;
+  --green: #23a35a;
+  --green-lo: #12643a;
+  --on-green: #04140a;
+  --green-ink: #5fe09a;
+  --on-steel-muted: #aab3bf;
+  --hazard: #f2c230;
+  --hazard-ink: #14110a;
+  --hazard-tag: #f2c230;
+  --hazard-text: #14110a;
+  --lamp-amber: #ffa43a;
+  --lamp-red: #ff4a30;
+  --lamp-green: #43e08a;
+  --lamp-blue: #5aa8ff;
+  --lamp-off: #2a313b;
+  --title-red: #ff3b2a;
+  --title-red-dim: #ff3b2a59;
+  --letterbox: #000000;
+  --letterbox-ink: #f2f2f2;
+  --letterbox-muted: #a3a3a3;
+  --focus: #5ad1ff;
+  --shadow-cel: 0 4px 0 0 rgba(0, 0, 0, 0.85);
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-screen: 16px;
+  --radius-round: 50%;
+  --target-min: 44px;
+  --bp-compact: 600px;
+  --font-display: "Russo One", Impact, sans-serif;
+  --font-sans: "Barlow", system-ui, sans-serif;
+  --font-cond: "Barlow Condensed", "Arial Narrow", sans-serif;
+  --font-mono: "Share Tech Mono", ui-monospace, monospace;
+}
+[data-theme="hangar"] {
+  --hull: #c9ced5;
+  --hull-glow: #ffffff66;
+  --seam: #0b0e131a;
+  --rivet: #0b0e1333;
+  --plate-hi: #ffffff;
+  --plate: #f2f4f6;
+  --plate-lo: #e1e5ea;
+  --bezel: #ffffff;
+  --bezel-hi: #ffffff;
+  --outline: #1a1f27;
+  --recess: #d5dae0;
+  --ink: #12161c;
+  --ink-muted: #46505c;
+  --line: #b7bec7;
+  --line-strong: #66707c;
+  --screw: #b8c0c9;
+  --screw-hi: #ffffff;
+  --crt: #120802;
+  --crt-hi: #2e1606;
+  --crt-bezel: #2a3038;
+  --phosphor: #ffa43a;
+  --phosphor-dim: #c98a3e;
+  --phosphor-glow: #ff8a1a80;
+  --phosphor-alert: #ff5a3a;
+  --phosphor-alert-glow: #ff3a1a80;
+  --scanline: #00000059;
+  --gauge-face: #f7f8f9;
+  --gauge-ink: #1a1f27;
+  --seg-off: #b9c0c8;
+  --amber-hi: #ffc775;
+  --amber: #f29a2e;
+  --amber-lo: #b0600c;
+  --on-amber: #160b02;
+  --amber-ink: #7a3a00;
+  --red-hi: #ff7f68;
+  --red: #cc3420;
+  --red-lo: #861b0e;
+  --on-red: #ffffff;
+  --red-ink: #9a1f12;
+  --blue-hi: #7ea6ff;
+  --blue: #2c5fd1;
+  --blue-lo: #163a8a;
+  --on-blue: #ffffff;
+  --blue-ink: #1d43a6;
+  --white-hi: #ffffff;
+  --white: #e3e7eb;
+  --white-lo: #aeb6bf;
+  --on-white: #12161c;
+  --steel-hi: #4f5967;
+  --steel: #333b47;
+  --steel-lo: #1f252d;
+  --on-steel: #e6e9ee;
+  --green-hi: #7be3a5;
+  --green: #23a35a;
+  --green-lo: #12643a;
+  --on-green: #04140a;
+  --green-ink: #0b5e33;
+  --on-steel-muted: #aab3bf;
+  --hazard: #f2c230;
+  --hazard-ink: #14110a;
+  --hazard-tag: #f2c230;
+  --hazard-text: #14110a;
+  --lamp-amber: #ffa43a;
+  --lamp-red: #ff4a30;
+  --lamp-green: #43e08a;
+  --lamp-blue: #5aa8ff;
+  --lamp-off: #9aa3ae;
+  --title-red: #ff3b2a;
+  --title-red-dim: #ff3b2a59;
+  --letterbox: #000000;
+  --letterbox-ink: #f2f2f2;
+  --letterbox-muted: #a3a3a3;
+  --focus: #0050d0;
+  --shadow-cel: 0 4px 0 0 rgba(26, 31, 39, 0.85);
+}
+.display { font-family: var(--font-display); font-size: 56px; line-height: 60px; font-weight: 400; letter-spacing: 0.06em; text-transform: uppercase; }
+.title { font-family: var(--font-display); font-size: 32px; line-height: 38px; font-weight: 400; letter-spacing: 0.04em; text-transform: uppercase; }
+.plate-title { font-family: var(--font-display); font-size: 20px; line-height: 24px; font-weight: 400; letter-spacing: 0.04em; text-transform: uppercase; }
+.heading { font-family: var(--font-sans); font-size: 18px; line-height: 24px; font-weight: 700; }
+.body { font-family: var(--font-sans); font-size: 16px; line-height: 26px; font-weight: 400; }
+.small { font-family: var(--font-sans); font-size: 14px; line-height: 22px; font-weight: 400; }
+.label { font-family: var(--font-cond); font-size: 13px; line-height: 16px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; }
+.button { font-family: var(--font-cond); font-size: 15px; line-height: 20px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; }
+.screen { font-family: var(--font-mono); font-size: 16px; line-height: 22px; font-weight: 400; }
+.readout { font-family: var(--font-mono); font-size: 40px; line-height: 44px; font-weight: 400; }
+.code { font-family: var(--font-mono); font-size: 13px; line-height: 18px; font-weight: 400; }

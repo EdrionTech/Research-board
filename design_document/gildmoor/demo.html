@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en" data-theme="midnight">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gildmoor — demo</title>
+<link rel="stylesheet" href="tokens.css">
+<link rel="stylesheet" href="components/gildmoor.css">
+<script src="https://unpkg.com/react@18.3.1/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js"></script>
+<script src="components/gildmoor.js"></script>
+<style>
+  .page { max-width: 1160px; margin: 0 auto; display: flex; flex-direction: column; gap: var(--space-8); }
+  .hero { text-align: center; display: flex; flex-direction: column; align-items: center; gap: var(--space-4); }
+  .hero h1 { margin: 0; color: var(--title); text-shadow: 0 0 30px var(--gold-glow); }
+  .layout { display: grid; grid-template-columns: 1fr; gap: var(--space-6); }
+  @media (min-width: 960px) { .layout { grid-template-columns: 320px minmax(0, 1fr); } }
+  .cards { display: flex; flex-wrap: wrap; gap: var(--space-6); justify-content: center; }
+  .top { display: flex; justify-content: flex-end; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script>
+  var G = window.Gildmoor, h = React.createElement;
+  function App() {
+    var t = React.useState('midnight'), theme = t[0];
+    React.useEffect(function(){ document.documentElement.dataset.theme = theme; }, [theme]);
+    return h('div', { className: 'page' },
+      h('div', { className: 'top' }, h(G.Button, { size: 'sm', gem: 'none', icon: theme === 'midnight' ? 'sun' : 'moon', onClick: function(){ t[1](theme === 'midnight' ? 'parchment' : 'midnight'); } }, theme === 'midnight' ? 'Parchment' : 'Midnight')),
+      h('header', { className: 'hero' },
+        h('h1', { className: 'display' }, 'The Gilded Tome'),
+        h(G.Divider, { label: 'Chapter II' }),
+        h('div', { className: 'gm-row', style: { justifyContent: 'center' } }, h(G.Button, { size: 'lg' }, 'Continue'), h(G.Button, { size: 'lg', gem: 'emerald' }, 'Play'), h(G.Button, { size: 'lg', gem: 'ruby' }, 'Restart'))),
+      h('div', { className: 'layout' },
+        h('div', { className: 'gm-stack', style: { alignItems: 'stretch', gap: 32 } },
+          h(G.Frame, { shape: 'arch', title: 'Aldric the Seer' }, h('div', { className: 'gm-stack', style: { alignItems: 'stretch' } },
+            h('div', { style: { textAlign: 'center' } }, h(G.Medallion, { icon: 'eye', label: 'Portrait', size: 'xl' })),
+            h(G.ProgressBar, { label: 'Health', value: 72, gem: 'ruby' }), h(G.ProgressBar, { label: 'Mana', value: 45, gem: 'amethyst' }), h(G.ProgressBar, { label: 'Experience', value: 80, display: '240 / 300' }))),
+          h(G.Frame, { title: 'Settings', shape: 'banner' }, h('div', { className: 'gm-stack' },
+            h(G.TextField, { label: 'Hero name', placeholder: 'Enter thy name' }), h(G.Checkbox, { label: 'Show quest markers', defaultChecked: true }), h(G.Checkbox, { label: 'Hardcore mode' })))),
+        h('div', { className: 'gm-stack', style: { alignItems: 'stretch', gap: 32 } },
+          h(G.Frame, { title: 'Quests', footer: 'Reward: 120 gold and the Moonlit Key' },
+            h(G.Tabs, { tabs: ['Main', 'Side', 'Completed'], label: 'Quests', id: 'q' }, function (i) { return h('p', { className: 'body', style: { margin: 0 } }, ['Find the lost bell of Varrow before the third moonrise.', 'Help the miller of Ashford with his rats.', 'You have finished 12 quests.'][i]); })),
+          h('div', { className: 'cards' },
+            h(G.ItemCard, { title: 'Whispering Sapphire', icon: 'gem', gem: 'ruby', rarity: 'rare' }, 'Hums softly when danger is near.'),
+            h(G.ItemCard, { title: 'Eclipsestone', icon: 'moon', gem: 'sapphire', rarity: 'legendary' }, 'Cut from the night the sun forgot.'),
+            h(G.ItemCard, { title: 'Elixir of Strength', icon: 'potion', gem: 'emerald', rarity: 'common', footer: h(G.Button, { size: 'sm', gem: 'emerald' }, 'Drink') }, 'Restores 40 vigour.')),
+          h('div', { className: 'gm-row', style: { justifyContent: 'center' } }, ['sword','shield','crown','scroll','map','chest'].map(function (n) { return h(G.Medallion, { key: n, icon: n, label: n }); })))));
+  }
+  ReactDOM.createRoot(document.getElementById('root')).render(h(App));
+</script>
+</body>
+</html>

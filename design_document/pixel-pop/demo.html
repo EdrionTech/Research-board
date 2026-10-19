@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pixel Pop — demo</title>
+<link rel="stylesheet" href="tokens.css">
+<link rel="stylesheet" href="components/pixel-pop.css">
+<script src="https://unpkg.com/react@18.3.1/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js"></script>
+<script src="components/pixel-pop.js"></script>
+<style>.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:var(--space-6);align-items:start}h1{margin:0 0 var(--space-6)}</style>
+</head>
+<body>
+<div id="root"></div>
+<script>
+  var P = window.PixelPop, h = React.createElement;
+  function App() {
+    var s = React.useState('light'), theme = s[0];
+    React.useEffect(function(){ document.documentElement.dataset.theme = theme; }, [theme]);
+    return h('div', null,
+      h('div', { className: 'pp-row', style: { justifyContent: 'space-between' } },
+        h('h1', { className: 'title' }, 'Pixel Pop'),
+        h(P.Button, { onClick: function(){ s[1](theme === 'light' ? 'dark' : 'light'); } }, theme === 'light' ? 'Night' : 'Day')),
+      h('div', { className: 'grid' },
+        h(P.Window, { title: 'Main menu' }, h('div', { className: 'pp-stack' },
+          h(P.Button, { tone: 'green', size: 'lg' }, 'Play'), h(P.Button, { tone: 'orange', size: 'lg' }, 'Options'),
+          h(P.Button, { tone: 'pink', size: 'lg' }, 'Store'), h(P.Button, { tone: 'lavender', size: 'lg' }, 'Back'))),
+        h(P.Window, { title: 'Settings', tone: 'lavender', footer: 'v1.0' }, h('div', { className: 'pp-stack' },
+          h(P.TextField, { label: 'Player name', placeholder: 'Type here' }),
+          h(P.TextField, { label: 'Search', icon: 'search', placeholder: 'Search...' }),
+          h(P.Slider, { label: 'Volume', defaultValue: 70 }),
+          h(P.Checkbox, { label: 'Play music', defaultChecked: true }))),
+        h(P.Window, { title: 'Loading...', tone: 'orange', controls: ['close'] }, h('div', { className: 'pp-stack' },
+          h(P.ProgressBar, { label: 'Loading...', value: 75 }), h(P.ProgressBar, { label: 'HP', value: 40, tone: 'green', segments: 10 }),
+          h('div', { className: 'pp-row' }, h(P.Badge, { icon: 'star' }, 'New'), h(P.Badge, { tone: 'pink', icon: 'mail' }, '2 unread')))),
+        h(P.Dialog, { kind: 'error', actions: [h(P.Button, { key: 1 }, 'Quit'), h(P.Button, { key: 2, tone: 'green' }, 'Retry')] }, 'Connection lost. Your progress is saved.'),
+        h('div', { className: 'pp-stack' }, h(P.SpeechBubble, { name: 'Guide' }, 'Welcome back! Ready for level 3?'),
+          h('div', { style: { alignSelf: 'flex-end' } }, h(P.SpeechBubble, { from: 'me', tail: 'right' }, "Let's go.")))));
+  }
+  ReactDOM.createRoot(document.getElementById('root')).render(h(App));
+</script>
+</body>
+</html>

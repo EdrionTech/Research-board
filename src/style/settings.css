@@ -1,0 +1,202 @@
+/* Settings page */
+
+.settings {
+    display: grid;
+    gap: 20px;
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 24px 24px 48px;
+}
+
+.settings_section {
+    background: var(--surface);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+}
+.settings_section > header { padding: 12px 18px; border-bottom: 1px solid var(--line); }
+.settings_section h3 { margin: 0; font-size: 1.05rem; }
+
+.setting {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px 24px;
+    padding: 16px 18px;
+    border-bottom: 1px solid var(--line);
+}
+.setting:last-child { border-bottom: 0; }
+.setting.stacked { display: grid; justify-content: stretch; }
+.setting strong { display: block; }
+.setting .hint { margin: 2px 0 0; font-size: .85rem; color: var(--muted); max-width: 60ch; }
+.setting code { background: var(--bg); padding: 0 4px; border-radius: 4px; font-size: .8rem; }
+.check { display: flex; align-items: center; gap: 6px; margin-top: 8px; font-size: .85rem; cursor: pointer; }
+.data_state { margin: 0; padding: 0 18px 14px; font-size: .9rem; color: var(--accent); }
+.data_state:empty { display: none; }
+label.btn { cursor: pointer; }
+
+/* theme: one of three */
+.segmented { display: flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.segmented button { border: 0; background: none; color: var(--muted); padding: 7px 16px; }
+.segmented button + button { border-left: 1px solid var(--line); }
+.segmented button[aria-checked="true"] { background: var(--accent); color: #fff; }
+
+/* style cards with a small preview */
+.style_cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
+.style_card {
+    display: grid;
+    gap: 4px;
+    align-content: start;
+    padding: 10px;
+    text-align: left;
+    color: var(--text);
+    background: var(--bg);
+    border: 2px solid var(--line);
+    border-radius: 10px;
+}
+.style_card[aria-checked="true"] { border-color: var(--accent); }
+.style_card small { color: var(--muted); font-size: .8rem; }
+
+.style_preview { display: grid; place-items: center; height: 92px; margin-bottom: 6px; border-radius: 6px; }
+.style_preview.pv_pixel-pop {
+    border-radius: 0;
+    background-image: linear-gradient(#c2d1f1 0 1px, transparent 1px), linear-gradient(90deg, #c2d1f1 0 1px, transparent 1px);
+    background-size: 12px 12px;
+}
+.pv_window { display: grid; gap: 6px; width: 62%; padding: 10px; border: 1px solid; border-radius: 8px; }
+.pv_pixel-pop .pv_window { border-width: 2px; border-radius: 0; }
+.pv_line { height: 4px; border-radius: 2px; opacity: .5; }
+.pv_line.short { width: 60%; }
+.pv_key { justify-self: end; width: 40%; height: 14px; border: 0; border-radius: 6px; }
+.pv_pixel-pop .pv_key, .pv_pixel-pop .pv_line { border-radius: 0; }
+.pv_pixel-pop .pv_key { border: 2px solid; box-shadow: inset 0 -3px 0 #6fa646; }
+
+/* Skyglass: frosted glass over a sky with a cloud, glossy pill */
+.style_preview.pv_skyglass {
+    background:
+        radial-gradient(ellipse 30% 14% at 26% 30%, rgba(255, 255, 255, .85) 0%, transparent 72%),
+        radial-gradient(circle at 84% 76%, transparent 0 12px, rgba(255, 255, 255, .55) 13px 14px, transparent 15px),
+        linear-gradient(180deg, #3a9fe4 0%, #56bdf0 55%, #c4ecff 100%) !important;
+}
+.pv_skyglass .pv_window {
+    background: linear-gradient(155deg, rgba(255, 255, 255, .65), rgba(255, 255, 255, .15) 45%, rgba(255, 255, 255, .3)) !important;
+    border-color: rgba(255, 255, 255, .9) !important;
+    border-radius: 14px;
+    -webkit-backdrop-filter: blur(6px);
+    backdrop-filter: blur(6px);
+    box-shadow: 0 6px 16px rgba(10, 60, 120, .25);
+}
+.pv_skyglass .pv_key {
+    border-radius: 999px;
+    background: linear-gradient(180deg, #4ea2ee, #1565c0 52%, #0b3f86) !important;
+    box-shadow: inset 0 3px 3px -1px rgba(255, 255, 255, .7), 0 2px 4px rgba(10, 60, 120, .3);
+}
+
+/* Gildmoor: a gold double frame with diamond corners under a starry sky, sapphire key */
+.style_preview.pv_gildmoor {
+    border-radius: 0;
+    background:
+        radial-gradient(1.2px 1.2px at 14% 22%, #f6dfa0 50%, transparent 100%),
+        radial-gradient(1px 1px at 82% 16%, #f6dfa0 50%, transparent 100%),
+        radial-gradient(1.4px 1.4px at 88% 80%, #f6dfa0 50%, transparent 100%),
+        radial-gradient(1px 1px at 8% 84%, #d9b45a 50%, transparent 100%),
+        radial-gradient(70% 60% at 50% 0%, #1d2366 0%, transparent 70%),
+        #070a22 !important;
+}
+.pv_gildmoor .pv_window {
+    position: relative;
+    border-radius: 0;
+    background: linear-gradient(180deg, #1b1a5e, #0e1240) !important;
+    box-shadow: inset 0 0 0 2px #121546, inset 0 0 0 3px #8a6a2a, 0 0 14px rgba(217, 180, 90, .35);
+}
+.pv_gildmoor .pv_window::before {
+    content: "";
+    position: absolute;
+    top: -4px;
+    left: calc(50% - 4px);
+    width: 8px;
+    height: 8px;
+    background: #d9b45a;
+    transform: rotate(45deg);
+}
+.pv_gildmoor .pv_line { border-radius: 0; background: #f3e9d2 !important; }
+.pv_gildmoor .pv_key { border-radius: 0; border: 1px solid #d9b45a; background: linear-gradient(180deg, #3d63bf, #203d83 55%, #10204f) !important; }
+
+/* Nullsec: a chamfered neon outline with brackets on a dot grid, solid red key */
+.style_preview.pv_nullsec {
+    border-radius: 0;
+    background:
+        radial-gradient(circle at center, #2a2836 0 1px, transparent 1.5px) 0 0 / 10px 10px,
+        #07070b !important;
+}
+.pv_nullsec .pv_window {
+    --c: 10px;
+    border-radius: 0;
+    border-color: #6e6a80 !important;
+    background:
+        linear-gradient(135deg, #6e6a80 0 calc(50% + 1px), transparent 0) left top / var(--c) var(--c) no-repeat border-box,
+        linear-gradient(315deg, #6e6a80 0 calc(50% + 1px), transparent 0) right bottom / var(--c) var(--c) no-repeat border-box,
+        linear-gradient(#19e6e6, #19e6e6) right top / 12px 2px no-repeat border-box,
+        linear-gradient(#19e6e6, #19e6e6) right top / 2px 12px no-repeat border-box,
+        linear-gradient(#19e6e6, #19e6e6) left bottom / 12px 2px no-repeat border-box,
+        linear-gradient(#19e6e6, #19e6e6) left bottom / 2px 12px no-repeat border-box,
+        #0e0d14 !important;
+    clip-path: polygon(var(--c) 0, 100% 0, 100% calc(100% - var(--c)), calc(100% - var(--c)) 100%, 0 100%, 0 var(--c));
+}
+.pv_nullsec .pv_line { border-radius: 0; background: #f2f0f7 !important; }
+.pv_nullsec .pv_key { border-radius: 0; clip-path: polygon(5px 0, 100% 0, 100% calc(100% - 5px), calc(100% - 5px) 100%, 0 100%, 0 5px); }
+
+/* Astrolabe: a see-through panel over a starfield with crosshairs, a lit blue planet key */
+.style_preview.pv_astrolabe {
+    background:
+        radial-gradient(1px 1px at 12% 20%, #fff 50%, transparent 100%),
+        radial-gradient(1.4px 1.4px at 80% 14%, #ffd9a0 50%, transparent 100%),
+        radial-gradient(1px 1px at 90% 70%, #9fb3ff 50%, transparent 100%),
+        radial-gradient(1.2px 1.2px at 6% 80%, #8ff2da 50%, transparent 100%),
+        repeating-radial-gradient(circle at 95% -20%, transparent 0 44px, rgba(159, 179, 255, .15) 45px 46px, transparent 47px 70px),
+        radial-gradient(60% 50% at 0% 0%, rgba(74, 58, 154, .35), transparent 70%),
+        #05060f !important;
+}
+.pv_astrolabe .pv_window {
+    position: relative;
+    border-radius: 10px;
+    border-color: rgba(159, 179, 255, .3) !important;
+    background: radial-gradient(120% 70% at 0% 0%, rgba(42, 58, 138, .35), transparent 60%), rgba(11, 15, 38, .85) !important;
+}
+.pv_astrolabe .pv_window::before {
+    content: "";
+    position: absolute;
+    inset: -4px;
+    --x: linear-gradient(rgba(159, 179, 255, .6), rgba(159, 179, 255, .6));
+    background: var(--x) 3px 0 / 1px 7px no-repeat, var(--x) 0 3px / 7px 1px no-repeat,
+        var(--x) calc(100% - 3px) 100% / 1px 7px no-repeat, var(--x) 100% calc(100% - 3px) / 7px 1px no-repeat;
+}
+.pv_astrolabe .pv_line { background: #e8ecff !important; }
+.pv_astrolabe .pv_key { border-radius: 999px; background: radial-gradient(130% 160% at 22% -10%, #7d9bff, #2d4fc0 48%, #16245f) !important; box-shadow: 0 0 0 2px #05060f, 0 0 0 3px #7aa2ff; }
+
+/* Reentry: a screwed gunmetal plate on the riveted hull, an amber keycap */
+.style_preview.pv_reentry {
+    background:
+        radial-gradient(circle at 6px 6px, rgba(255, 255, 255, .12) 0 1.4px, transparent 2px) -6px -6px / 60px 40px,
+        linear-gradient(90deg, rgba(255, 255, 255, .05) 0 1px, transparent 1px) 0 0 / 60px 40px,
+        linear-gradient(0deg, rgba(255, 255, 255, .05) 0 1px, transparent 1px) 0 0 / 60px 40px,
+        #0b0e13 !important;
+}
+.pv_reentry .pv_window {
+    border-radius: 5px;
+    border-color: #05070a !important;
+    background:
+        radial-gradient(circle at 6px 6px, #6b7686 0 1.5px, #05070a 2px 2.6px, transparent 3px),
+        radial-gradient(circle at calc(100% - 6px) 6px, #6b7686 0 1.5px, #05070a 2px 2.6px, transparent 3px),
+        linear-gradient(180deg, #262d38, #1b2129 38%, #141920) !important;
+    box-shadow: inset 0 1px 0 #4a5462, 0 3px 0 rgba(0, 0, 0, .85);
+}
+.pv_reentry .pv_line { border-radius: 0; background: #e6e9ee !important; }
+.pv_reentry .pv_key { border-radius: 3px; border: 1px solid #05070a; box-shadow: inset 0 2px 0 #ffc775, inset 0 -3px 0 #b0600c, 0 2px 0 #05070a; }
+
+#custom_css { width: 100%; font-family: ui-monospace, Consolas, monospace; font-size: .85rem; }
+
+@media (max-width: 560px) {
+    .settings { padding: 16px 16px 40px; }
+}

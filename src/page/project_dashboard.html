@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard</title>
+    <link rel="stylesheet" href="../style/base.css">
+    <link rel="stylesheet" href="../style/dashboard.css">
+    <link rel="stylesheet" href="../style/literature.css">
+    <!-- theme + style, before the page draws -->
+    <script src="../script/core/settings.js"></script>
+</head>
+
+<body>
+    <div class="bar">
+        <a href="../index.html" class="back">← Projects</a>
+        <h2 class="brand" id="project_title"></h2>
+        <!-- quick text note: lands in the Overview inbox unless a section is picked -->
+        <a class="btn small settings_link" href="settings.html" title="Theme, style and your data">Settings</a>
+        <button type="button" class="btn primary" id="quick_note">+ Quick note</button>
+    </div>
+
+    <nav class="workspacetabs" id="tabs">
+        <button type="button" data-tab="overview">Overview</button>
+        <button type="button" data-tab="literature">Literature</button>
+        <button type="button" data-tab="research">Research</button>
+    </nav>
+
+    <main class="workspace">
+        <section class="overview" data-panel="overview">
+            <!-- project description, ideas and notes building towards the introduction -->
+            <p class="project_desc" id="project_desc"></p>
+            <div class="stats" id="stats"></div>
+            <div class="sections" data-sections="overview"></div>
+        </section>
+
+        <section class="literature_ws" data-panel="literature" hidden>
+            <!-- the project's literature review (review.html) and its citation style -->
+            <div class="review_card">
+                <div>
+                    <h3>Literature review</h3>
+                    <p class="hint" id="review_info">Not started yet</p>
+                </div>
+                <span class="spacer"></span>
+                <label class="style_pick" title="Used in the review, on source pages and in bibliography exports">
+                    Citation style <select id="project_cite_style"></select>
+                </label>
+                <a class="btn primary" id="open_review">Open editor</a>
+            </div>
+
+            <!-- material review: the source library; each source opens on its own page (material.html) -->
+            <div class="library">
+                <div class="library_tools">
+                    <input type="search" id="source_search" placeholder="Search title, author, keyword...">
+                    <select id="source_filter" aria-label="Filter by status">
+                        <option value="">All</option>
+                        <option value="to_read">To read</option>
+                        <option value="reading">Reading</option>
+                        <option value="done">Done</option>
+                    </select>
+                    <button type="button" class="btn primary" id="add_source">+ Source</button>
+                </div>
+                <!-- your tags: click to filter (a source must have every tag picked) -->
+                <div class="tag_filter" id="tag_filter" hidden></div>
+                <!-- exports: you choose the sources inside each popup -->
+                <div class="selection_bar">
+                    <span id="selection_info"></span>
+                    <span class="spacer"></span>
+                    <button type="button" class="btn small" id="open_colors" title="Highlight colours and what they mean">🎨 Colours</button>
+                    <button type="button" class="btn small" id="open_digest">Summaries</button>
+                    <button type="button" class="btn small" id="open_export">Export bibliography</button>
+                </div>
+                <ul class="sources" id="source_list"></ul>
+            </div>
+
+            <!-- every note of a colour across papers (shown once some note has a colour; the colours: 🎨 Colours) -->
+            <div class="colors_panel" id="highlights_panel" hidden>
+                <header>
+                    <h3>Highlights across papers</h3>
+                    <span class="spacer"></span>
+                    <button type="button" class="btn small" id="copy_highlights" title="Each passage as a quote with its citation">Copy as Markdown</button>
+                </header>
+                <div class="note_filter" id="highlight_filter"></div>
+                <ul class="highlight_list" id="highlight_list"></ul>
+            </div>
+
+            <!-- the project's own images: captures from sources (📷 on a source's page) and uploads -->
+            <div class="figures_panel">
+                <header>
+                    <h3>Figures <small id="figure_count"></small></h3>
+                    <span class="spacer"></span>
+                    <button type="button" class="btn small" id="add_figure">+ Upload image</button>
+                </header>
+                <p class="hint">Images for your writing: capture them on a source's page with 📷 (a video frame, part of a
+                    PDF page, a figure) or upload your own. Insert them from the Figures tab in the literature review.</p>
+                <ul class="figure_grid" id="figure_grid"></ul>
+            </div>
+
+            <!-- general literature notes and summaries -->
+            <div class="sections" data-sections="literature"></div>
+        </section>
+
+        <section class="research_ws" data-panel="research" hidden>
+            <!-- methodology, implementation, data management and analysis -->
+            <div class="sections" data-sections="research"></div>
+        </section>
+    </main>
+
+    <!-- one section of a workspace; dashboard.js makes one per entry in SECTIONS -->
+    <template id="section_template">
+        <div class="section">
+            <header>
+                <h3></h3>
+                <button type="button" class="add" title="Add">+</button>
+            </header>
+            <p class="hint"></p>
+            <ul class="items"></ul>
+        </div>
+    </template>
+
+    <div class="modals" id="modals" hidden>
+        <!-- quick notes and generic section items -->
+        <form class="item_form modal" id="item_form" hidden>
+            <h2 id="form_heading">New item</h2>
+            <label>Section <select name="type"></select></label>
+            <label>Title <input name="title" maxlength="120" placeholder="Optional"></label>
+            <label data-for="source_note">Source <select name="sourceId"></select></label>
+            <label>Notes <textarea name="body" rows="6"></textarea></label>
+            <div class="actions">
+                <button type="button" class="btn danger" id="delete_item">Delete</button>
+                <span class="spacer"></span>
+                <button type="button" class="btn" data-close>Cancel</button>
+                <button type="submit" class="btn primary">Save</button>
+            </div>
+        </form>
+        <!-- source details form is added here by sources.js -->
+
+        <!-- a project figure / table: how it's numbered and credited when reused -->
+        <form class="figure_form modal" id="figure_form" hidden>
+            <h2>Edit figure</h2>
+            <label>Caption <textarea name="caption" rows="2"></textarea></label>
+            <div class="form_row">
+                <label>Type
+                    <select name="kind">
+                        <option value="figure">Figure</option>
+                        <option value="table">Table</option>
+                    </select>
+                </label>
+                <label>Credit
+                    <select name="credit">
+                        <option value="from">Reproduced as is (“From …”)</option>
+                        <option value="adapted">Cropped or changed (“Adapted from …”)</option>
+                    </select>
+                </label>
+            </div>
+            <label>Where in the source <input name="locator" placeholder="e.g. p. 4, Fig. 2, Table I, 12:34"></label>
+            <p class="hint figure_credit_preview" id="figure_credit_preview"></p>
+            <div class="actions">
+                <button type="button" class="btn" data-close>Cancel</button>
+                <button type="submit" class="btn primary">Save</button>
+            </div>
+        </form>
+
+        <!-- bibliography of all / filtered / ticked sources -->
+        <!-- highlight colours: what each colour means in this project (literature.js, sources/colors.js) -->
+        <form class="colors_form modal" id="colors_form" hidden>
+            <h2>Highlight colours</h2>
+            <p class="hint">You decide what each colour means, e.g. yellow for passages with questions, green for
+                ones worth quoting. Pick a colour when you attach a note to a passage; it's highlighted in that colour
+                in every paper of this project.</p>
+            <ul class="color_rows" id="color_rows"></ul>
+            <div class="actions">
+                <button type="button" class="btn" id="add_color">+ Colour</button>
+                <span class="spacer"></span>
+                <button type="button" class="btn primary" data-close>Done</button>
+            </div>
+        </form>
+
+        <!-- one highlight at a time: read it, change its colour, edit the note, open it in its paper -->
+        <form class="note_review modal" id="note_review" hidden>
+            <header class="review_head">
+                <small id="review_count"></small>
+                <span class="spacer"></span>
+                <button type="button" class="btn small" id="review_prev" aria-label="Previous note" title="Previous (←)">←</button>
+                <button type="button" class="btn small" id="review_next" aria-label="Next note" title="Next (→)">→</button>
+            </header>
+            <p class="review_where" id="review_where"></p>
+            <blockquote class="review_quote" id="review_quote"></blockquote>
+            <div class="review_thumb" id="review_thumb"></div>
+            <div class="md review_body" id="review_body"></div>
+            <div class="md review_answer" id="review_answer" hidden></div>
+            <div class="review_edit" id="review_edit" hidden>
+                <textarea rows="6" aria-label="Note"></textarea>
+            </div>
+            <div class="color_pick" id="review_colors" role="radiogroup" aria-label="Colour"></div>
+            <div class="actions">
+                <button type="button" class="btn" id="review_edit_btn">Edit note</button>
+                <a class="btn" id="review_open">Open in paper ↗</a>
+                <span class="spacer"></span>
+                <button type="button" class="btn primary" data-close>Close</button>
+            </div>
+        </form>
+
+        <form class="export_form modal wide" id="export_form" hidden>
+            <h2>Export bibliography</h2>
+            <div class="export_body">
+                <!-- which sources: all ticked to start with (literature.js: createSourcePicker) -->
+                <div class="picker" id="export_picker"></div>
+                <div class="export_output">
+                    <label>Style <select name="style"></select></label>
+                    <textarea name="output" rows="16" readonly aria-label="Bibliography"></textarea>
+                </div>
+            </div>
+            <div class="actions">
+                <small id="export_count"></small>
+                <span class="spacer"></span>
+                <button type="button" class="btn" data-close>Close</button>
+                <button type="button" class="btn" id="download_export">Download</button>
+                <button type="button" class="btn primary" id="copy_export">Copy</button>
+            </div>
+        </form>
+
+        <!-- your summaries of all / filtered / ticked sources, gathered into one document -->
+        <form class="digest_form modal wide" id="digest_form" hidden>
+            <h2>Summaries</h2>
+            <div class="export_body">
+                <div class="picker" id="digest_picker"></div>
+                <div class="export_output">
+                    <label>Layout
+                        <select name="layout">
+                            <option value="bullets">Bullet points</option>
+                            <option value="paragraphs">As written</option>
+                        </select>
+                    </label>
+                    <div class="checks">
+                        <span>Include</span>
+                        <label><input type="checkbox" name="citation" checked> Full citation</label>
+                        <label><input type="checkbox" name="review"> Review</label>
+                        <label><input type="checkbox" name="notes"> Notes</label>
+                        <label><input type="checkbox" name="skipEmpty"> Skip sources without a summary</label>
+                    </div>
+                    <div class="digest_preview md" id="digest_preview"></div>
+                </div>
+            </div>
+            <div class="actions">
+                <small id="digest_count"></small>
+                <span class="spacer"></span>
+                <button type="button" class="btn" data-close>Close</button>
+                <button type="button" class="btn" id="download_digest">Download .md</button>
+                <button type="button" class="btn primary" id="copy_digest">Copy</button>
+            </div>
+        </form>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.min.js"></script>
+    <script src="../script/core/ui.js"></script>
+    <script src="../script/core/store.js"></script>
+    <script src="../script/writing/markdown.js"></script>
+    <script src="../script/writing/mdbar.js"></script>
+    <script src="../script/sources/sources.js"></script>
+    <script src="../script/sources/cite.js"></script>
+    <script src="../script/sources/colors.js"></script>
+    <script src="../script/sources/picker.js"></script>
+    <script src="../script/sources/figures.js"></script>
+    <script src="../script/pages/dashboard/dashboard.js"></script>
+    <script src="../script/pages/dashboard/literature.js"></script>
+</body>
+
+</html>

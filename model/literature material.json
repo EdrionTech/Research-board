@@ -1,0 +1,195 @@
+[
+  {
+    "id": "src_01",
+    "type": "source",
+    "citekey": "doe2024bla",
+    "title": "Bla bla",
+    "kind": "article",
+    "abstract": "Bla bla bla",
+    "published": "2024-06-05",
+    "venue": "Example Journal",
+    "url": "https://example.com/bla-bla",
+    "doi": "",
+    "pdfUrl": "https://example.com/bla-bla.pdf",
+    "file": {
+      "assetId": "a0",
+      "name": "bla-bla.pdf",
+      "size": 482113
+    },
+    "text": "",
+    "authors": [
+      {
+        "firstName": "John",
+        "lastName": "Doe",
+        "affiliation": "Example University"
+      },
+      {
+        "firstName": "Jane",
+        "lastName": "Smith",
+        "affiliation": "Example Institute"
+      }
+    ],
+    "status": "reading",
+    "keywords": [
+      "keyword1",
+      "keyword2",
+      "keyword3"
+    ],
+    "tags": [
+      "method",
+      "to cite",
+      "chapter 2"
+    ],
+    "summary": "This is a summary of the literature material.",
+    "review": "",
+    "referencesFrom": "pdf",
+    "references": [
+      {
+        "n": "1",
+        "text": "D. Mellinger, A. Kushleyev, and V. Kumar, “Mixed-integer quadratic program trajectory generation for heterogeneous quadrotor teams,” in 2012 IEEE International Conference on Robotics and Automation (ICRA), May 2012, pp. 477–483.",
+        "doi": "10.1109/icra.2012.6225009",
+        "sourceId": "src_02"
+      },
+      {
+        "n": "2",
+        "text": "Jimmy Lei Ba, Jamie Ryan Kiros, and Geoffrey E Hinton. Layer normalization. arXiv preprint arXiv:1607.06450, 2016.",
+        "arxiv": "1607.06450"
+      }
+    ],
+    "notes": [
+      {
+        "id": "n1",
+        "kind": "text",
+        "createdAt": "2024-06-01T10:30:00Z",
+        "page": 123,
+        "line": 43,
+        "quote": "The exact text of line 43, saved when the note was attached",
+        "body": "This is a note about the literature material.\n\n- bullet note 1\n- bullet note 2\n\n![figure 2](asset:a1)",
+        "assets": [
+          "a1"
+        ],
+        "color": "green"
+      },
+      {
+        "id": "n2",
+        "kind": "question",
+        "createdAt": "2024-06-01T10:45:00Z",
+        "anchor": "S3.SS1.p2",
+        "where": "§3.1 ¶2",
+        "start": 129,
+        "end": 318,
+        "quote": "The exact sentence, phrase or word the note is about (start/end count characters inside the paragraph)",
+        "body": "What is the main argument of the literature material?",
+        "answer": ""
+      },
+      {
+        "id": "n3",
+        "kind": "audio",
+        "createdAt": "2024-06-02T09:00:00Z",
+        "body": "Optional caption or transcript",
+        "assets": [
+          "a2"
+        ]
+      },
+      {
+        "id": "n5",
+        "kind": "text",
+        "createdAt": "2024-06-02T09:10:00Z",
+        "anchor": "S1.F2",
+        "imageId": "S1.F2.g1",
+        "where": "Fig. 2 · area",
+        "region": {
+          "x": 0.25,
+          "y": 0.1,
+          "w": 0.4,
+          "h": 0.5
+        },
+        "imageSrc": "https://arxiv.org/html/2610.22340v1/method.png",
+        "aspect": 2.76,
+        "thumb": "",
+        "body": "Note about this part of the figure (on a PDF page: page + region, and thumb holds a small JPEG of the area)"
+      },
+      {
+        "id": "n6",
+        "kind": "text",
+        "createdAt": "2024-06-03T08:00:00Z",
+        "time": 754,
+        "segments": [
+          {
+            "start": 754
+          },
+          {
+            "start": 900,
+            "end": 960
+          }
+        ],
+        "where": "12:34, 15:00–16:00",
+        "body": "Note on a video source: segments are moments { start } and ranges { start, end } in seconds, any mix; time = the first start. Videos have kind \"video\", url = the YouTube/Vimeo link or file = an uploaded video with mime video/*"
+      },
+      {
+        "id": "n4",
+        "kind": "handwritten",
+        "createdAt": "2024-06-02T09:15:00Z",
+        "page": 12,
+        "body": "",
+        "assets": [
+          "a3"
+        ]
+      }
+    ],
+    "assets": [
+      {
+        "id": "a1",
+        "mime": "image/png",
+        "name": "figure2.png"
+      },
+      {
+        "id": "a2",
+        "mime": "audio/webm",
+        "name": "thoughts.webm",
+        "seconds": 42
+      },
+      {
+        "id": "a3",
+        "mime": "image/png",
+        "name": "sketch.png"
+      }
+    ]
+  },
+  {
+    "id": "src_02",
+    "type": "source",
+    "citekey": "mellinger2012mixed",
+    "title": "Mixed-integer quadratic program trajectory generation for heterogeneous quadrotor teams",
+    "kind": "article",
+    "published": "2012-05",
+    "venue": "2012 IEEE International Conference on Robotics and Automation",
+    "url": "https://doi.org/10.1109/icra.2012.6225009",
+    "doi": "10.1109/icra.2012.6225009",
+    "authors": [
+      {
+        "firstName": "Daniel",
+        "lastName": "Mellinger",
+        "affiliation": ""
+      },
+      {
+        "firstName": "Alex",
+        "lastName": "Kushleyev",
+        "affiliation": ""
+      },
+      {
+        "firstName": "Vijay",
+        "lastName": "Kumar",
+        "affiliation": ""
+      }
+    ],
+    "status": "to_read",
+    "tags": [],
+    "citedIn": [
+      "src_01"
+    ],
+    "reference": "D. Mellinger, A. Kushleyev, and V. Kumar, “Mixed-integer quadratic program trajectory generation for heterogeneous quadrotor teams,” in 2012 IEEE International Conference on Robotics and Automation (ICRA), May 2012, pp. 477–483.",
+    "unverified": false,
+    "notes": []
+  }
+]

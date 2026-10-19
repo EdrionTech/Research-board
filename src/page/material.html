@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Material</title>
+    <link rel="stylesheet" href="../style/base.css">
+    <link rel="stylesheet" href="../style/material.css">
+    <!-- theme + style, before the page draws -->
+    <script src="../script/core/settings.js"></script>
+</head>
+
+<body>
+    <div class="bar">
+        <a href="../index.html" class="back" id="back_link">← Project</a>
+        <h2 class="brand" id="bar_title"></h2>
+        <button type="button" class="btn small" id="edit_source">Edit details</button>
+        <button type="button" class="btn small danger" id="delete_source">Delete</button>
+    </div>
+
+    <!-- what the material is: details from the source record -->
+    <header class="material_head">
+        <div class="head_info">
+            <p class="source_meta" id="source_meta"></p>
+            <h1 class="source_title" id="source_title"></h1>
+            <p class="source_authors" id="source_authors"></p>
+            <div class="source_links" id="source_links"></div>
+            <!-- added from another paper's references -->
+            <p class="cited_in" id="cited_in" hidden></p>
+            <!-- phones only: shows the details below -->
+            <button type="button" class="link head_more" id="head_more" aria-expanded="false">Tags, status, citation ▾</button>
+            <ul class="keywords" id="keywords"></ul>
+            <!-- your own tags, used to filter the library -->
+            <div class="tag_row">
+                <ul class="tags" id="tags"></ul>
+                <input id="tag_input" list="tag_suggestions" placeholder="+ Add tag" aria-label="Add a tag">
+                <datalist id="tag_suggestions"></datalist>
+            </div>
+            <label class="status">Status
+                <select id="status_select">
+                    <option value="to_read">To read</option>
+                    <option value="reading">Reading</option>
+                    <option value="done">Done</option>
+                </select>
+            </label>
+        </div>
+
+        <!-- copy a reference for your bibliography; styles come from cite.js -->
+        <div class="cite_box">
+            <select id="cite_style" aria-label="Citation style"></select>
+            <button type="button" class="btn small primary" id="copy_cite">Copy citation</button>
+        </div>
+    </header>
+
+    <main class="material">
+        <!-- reading the material itself -->
+        <section class="reader panel">
+            <div class="reader_bar">
+                <!-- zoom: also pinch with two fingers, or Ctrl + wheel / trackpad pinch (zoom.js) -->
+                <div class="zoom_ctl" id="zoom_ctl" role="group" aria-label="Zoom" hidden>
+                    <button type="button" data-zoom="out" aria-label="Zoom out">−</button>
+                    <button type="button" data-zoom="fit" id="zoom_level" aria-label="Fit to the width">100%</button>
+                    <button type="button" data-zoom="in" aria-label="Zoom in">+</button>
+                </div>
+                <div class="view_toggle" hidden>
+                    <button type="button" data-view="video">Video</button>
+                    <button type="button" data-view="html">HTML</button>
+                    <button type="button" data-view="pdf">PDF</button>
+                    <button type="button" data-view="text">Text</button>
+                </div>
+                <span class="reader_source" id="reader_source"></span>
+                <a class="btn small" id="open_original" target="_blank" rel="noopener" hidden>Open in new tab ↗</a>
+                <button type="button" class="btn small" id="full_btn" aria-pressed="false" title="Read full screen (Esc to leave)">⛶ Full screen</button>
+                <button type="button" class="btn small" id="capture_btn" title="Drag a box over part of the page, a figure or the video to save it as an image">📷 Capture</button>
+                <label class="btn small" title="A PDF or a video file">Upload file
+                    <input type="file" id="upload_pdf" accept="application/pdf,video/*" hidden>
+                </label>
+                <button type="button" class="btn small" id="paste_text">Paste text</button>
+                <button type="button" class="btn small danger" id="remove_material" hidden>Remove</button>
+            </div>
+
+            <!-- what a click in the paper attaches a note to (stays visible when the notes side is hidden) -->
+            <div class="attach_row">
+                <div class="attach_mode" id="attach_mode" role="group" aria-label="Attach notes to">
+                    <span>Attach notes to</span>
+                    <button type="button" data-mode="block" title="A paragraph, figure or PDF line">Paragraph</button>
+                    <button type="button" data-mode="sentence">Sentence</button>
+                    <button type="button" data-mode="phrase">Phrase</button>
+                    <button type="button" data-mode="word">Word</button>
+                    <button type="button" data-mode="image" title="An image, part of an image, or an area of a PDF page">Image</button>
+                </div>
+                <p class="hint" id="attach_hint"></p>
+            </div>
+
+            <details class="abstract" id="abstract">
+                <summary>Abstract</summary>
+                <div class="md"></div>
+            </details>
+
+            <!-- status: messages show here; while loading it floats in a corner so the pages never jump -->
+            <div class="reader_state" id="reader_state">
+                <p class="reader_status" id="reader_status"></p>
+                <progress class="reader_progress" id="reader_progress" hidden></progress>
+            </div>
+            <!-- no copy the app can read (a paywall, or a publisher that doesn't allow downloads): help bring one -->
+            <div class="get_paper" id="get_paper" hidden>
+                <h3>Get the paper</h3>
+                <p class="hint" id="get_paper_why"></p>
+                <ol class="get_steps">
+                    <li id="get_paper_open">Open it where you have access <small>(for paywalled papers, sign in through your
+                        university library)</small>: <span class="get_links" id="get_paper_links"></span></li>
+                    <li>Download the PDF.</li>
+                    <li>Drop it here, or <label class="link">choose the file<input type="file" id="get_paper_file"
+                        accept="application/pdf" hidden></label>.</li>
+                </ol>
+                <div class="drop_zone" id="drop_zone">Drop the PDF here</div>
+                <button type="button" class="link" id="find_copy">Look again for a free copy (arXiv, open access)</button>
+            </div>
+            <!-- video: YouTube, Vimeo or a video file; notes attach to a moment -->
+            <div class="reader_video" id="reader_video" hidden>
+                <div class="video_frame" id="video_frame"></div>
+                <!-- your timed notes along the video; click one to jump there -->
+                <div class="timeline" id="timeline" hidden></div>
+                <!-- a moment; a range (press to start, again to end); several of either in one note -->
+                <div class="video_bar">
+                    <button type="button" class="btn small primary" id="note_at_time">✎ Note at 0:00</button>
+                    <button type="button" class="btn small" id="range_btn">⟦ Start range at 0:00</button>
+                    <button type="button" class="btn small" id="capture_frame" title="Save the current frame as an image">📷 Capture frame</button>
+                    <small class="hint" id="video_hint"></small>
+                </div>
+            </div>
+            <!-- arXiv HTML version: click a paragraph or figure to attach a note -->
+            <iframe class="reader_html" id="reader_html" title="Paper" hidden></iframe>
+            <!-- PDF pages as printed: click a line to attach a note -->
+            <div class="reader_pdf" id="reader_pdf" hidden></div>
+            <!-- pasted text as numbered lines -->
+            <div class="reader_text" id="reader_text" hidden></div>
+        </section>
+
+        <!-- your work on it: line notes, summary, review (can be hidden to read full width) -->
+        <aside class="side">
+            <div class="side_bar">
+                <label class="float_toggle" title="Open the note box next to what you click in the paper">
+                    <input type="checkbox" id="float_toggle"> Pop-up note box
+                </label>
+                <button type="button" class="btn small" id="hide_side">Hide notes ⟩</button>
+            </div>
+            <section class="panel">
+                <h3 id="notes_heading">Notes</h3>
+                <!-- the note form sits here, or in the floating note box (#composer) while that is open -->
+                <div id="note_slot">
+                <form class="note_form" id="note_form">
+                    <div class="quote_preview" id="quote_preview" hidden>
+                        <div>
+                            <small id="quote_where"></small>
+                            <blockquote></blockquote>
+                            <div id="quote_thumb"></div>
+                            <!-- a video note's moments and ranges -->
+                            <div class="seg_chips" id="quote_segments"></div>
+                        </div>
+                        <button type="button" class="link" id="clear_quote">Detach</button>
+                    </div>
+                    <div class="note_form_row">
+                        <select name="kind" aria-label="Note type">
+                            <option value="text">Note</option>
+                            <option value="question">Question</option>
+                        </select>
+                        <input name="page" placeholder="Page" aria-label="Page">
+                        <input name="line" placeholder="Line" aria-label="Line">
+                    </div>
+                    <!-- the note's colour; what each colour means is set for the project (Literature tab) -->
+                    <div class="color_pick" id="color_pick" role="radiogroup" aria-label="Highlight colour"></div>
+                    <input type="hidden" name="color">
+                    <textarea name="body" rows="4" required
+                        placeholder="Markdown works: **bold**, - bullets, [link](https://...). Paste or drop images here."></textarea>
+                    <!-- previews of images you added to this note -->
+                    <div class="note_images" id="note_images"></div>
+                    <textarea name="answer" rows="2" placeholder="Answer or suggestion (optional)" hidden></textarea>
+                    <!-- later: audio and handwritten note kinds -->
+                    <div class="actions">
+                        <button type="button" class="link" id="add_image" title="Add your own image: screenshot, photo of handwritten notes…">+ Image</button>
+                        <small class="shortcut">Ctrl + Enter to save</small>
+                        <span class="spacer"></span>
+                        <button type="button" class="btn small" id="cancel_note" hidden>Cancel</button>
+                        <button type="submit" class="btn small primary" id="save_note">Add note</button>
+                    </div>
+                </form>
+                </div>
+                <!-- show only the notes of one colour -->
+                <div class="note_filter" id="note_filter" hidden></div>
+                <ul class="source_notes" id="source_notes"></ul>
+            </section>
+
+            <section class="panel md_field" data-field="summary">
+                <header>
+                    <h3>Summary</h3>
+                    <button type="button" class="btn small edit_md">Edit</button>
+                </header>
+                <div class="md"></div>
+                <div class="md_edit" hidden>
+                    <textarea rows="8"></textarea>
+                    <div class="actions">
+                        <button type="button" class="btn small cancel_md">Cancel</button>
+                        <button type="button" class="btn small primary save_md">Save</button>
+                    </div>
+                </div>
+            </section>
+
+            <section class="panel md_field" data-field="review" id="review_field">
+                <header>
+                    <h3>Review</h3>
+                    <button type="button" class="btn small edit_md">Edit</button>
+                </header>
+                <div class="md"></div>
+                <div class="md_edit" hidden>
+                    <textarea rows="8"></textarea>
+                    <div class="actions">
+                        <button type="button" class="btn small cancel_md">Cancel</button>
+                        <button type="button" class="btn small primary save_md">Save</button>
+                    </div>
+                </div>
+            </section>
+            <!-- the paper's own references: add one, some or all to the project (material_refs.js) -->
+            <details class="panel refs_panel" id="refs_panel" hidden>
+                <summary><h3>References <small id="refs_count"></small></h3></summary>
+                <p class="hint" id="refs_hint"></p>
+                <div class="refs_tools">
+                    <input type="search" id="refs_search" placeholder="Search the references…" aria-label="Search the references">
+                    <label class="check"><input type="checkbox" id="refs_all"> All</label>
+                </div>
+                <ol class="refs_list" id="refs_list"></ol>
+                <div class="refs_actions">
+                    <small id="refs_state" aria-live="polite"></small>
+                    <span class="spacer"></span>
+                    <button type="button" class="btn small primary" id="refs_add" disabled>Add selected</button>
+                </div>
+            </details>
+        </aside>
+    </main>
+
+    <!-- brings the hidden notes side back -->
+    <button type="button" class="show_side" id="show_side" hidden>⟨ Notes</button>
+
+    <!-- floating note box: opens next to what you clicked in the paper; drag it by its header -->
+    <div class="composer" id="composer" role="dialog" aria-label="Write a note" hidden>
+        <div class="composer_head" id="composer_head">
+            <strong>New note</strong>
+            <button type="button" class="link" id="composer_close" title="Close (Esc)">✕</button>
+        </div>
+        <div id="composer_slot"></div>
+    </div>
+
+    <div class="modals" id="modals" hidden>
+        <!-- source details form is added here by sources.js -->
+
+        <!-- highlight colours: what each colour means in this project (sources/colors.js) -->
+        <form class="colors_form modal" id="colors_form" hidden>
+            <h2>Highlight colours</h2>
+            <p class="hint">You decide what each colour means, e.g. yellow for passages with questions, green for
+                ones worth quoting. They're the same in every paper of this project.</p>
+            <ul class="color_rows" id="color_rows"></ul>
+            <div class="actions">
+                <button type="button" class="btn" id="add_color">+ Colour</button>
+                <span class="spacer"></span>
+                <button type="button" class="btn primary" data-close>Done</button>
+            </div>
+        </form>
+
+        <!-- one of the paper's references, looked up: who, what, where, the abstract (material_refs.js) -->
+        <form class="ref_profile modal" id="ref_profile" hidden>
+            <p class="ref_profile_state" id="ref_profile_state" aria-live="polite"></p>
+            <h2 id="ref_profile_title"></h2>
+            <p class="ref_profile_authors" id="ref_profile_authors"></p>
+            <p class="ref_profile_meta" id="ref_profile_meta"></p>
+            <div class="ref_profile_links" id="ref_profile_links"></div>
+            <section class="ref_profile_abstract" id="ref_profile_abstract_box" hidden>
+                <h3>Abstract</h3>
+                <div class="md" id="ref_profile_abstract"></div>
+            </section>
+            <section class="ref_profile_cited">
+                <h3>As this paper cites it</h3>
+                <blockquote id="ref_profile_cited"></blockquote>
+            </section>
+            <div class="actions">
+                <button type="button" class="btn" id="ref_profile_copy">Copy citation</button>
+                <span class="spacer"></span>
+                <button type="button" class="btn" data-close>Close</button>
+                <button type="button" class="btn primary" id="ref_profile_add">+ Add to project</button>
+                <a class="btn primary" id="ref_profile_open" hidden>Open in project ↗</a>
+            </div>
+        </form>
+
+        <!-- a captured image: keep it as a note on this source and/or as a project figure -->
+        <form class="capture_form modal" id="capture_form" hidden>
+            <h2 id="capture_title">Save image</h2>
+            <small class="capture_where" id="capture_where"></small>
+            <img class="capture_preview" id="capture_preview" alt="The captured image">
+            <!-- a table from an arXiv paper is kept as a real table -->
+            <div class="capture_table md" id="capture_table" hidden></div>
+            <label>Caption <input name="caption" maxlength="200"></label>
+            <!-- how it's numbered and credited when you reuse it (sources/figures.js, cite.js) -->
+            <div class="form_row">
+                <label>Type
+                    <select name="kind">
+                        <option value="figure">Figure</option>
+                        <option value="table">Table</option>
+                    </select>
+                </label>
+                <label>Credit
+                    <select name="credit">
+                        <option value="from">Reproduced as is (“From …”)</option>
+                        <option value="adapted">Cropped or changed (“Adapted from …”)</option>
+                    </select>
+                </label>
+            </div>
+            <label>Your note <textarea name="note" rows="2" placeholder="Optional: what this shows, why it matters"></textarea></label>
+            <div class="checks">
+                <span>Save as</span>
+                <label><input type="checkbox" name="asNote" checked> A note on this source</label>
+                <label><input type="checkbox" name="asFigure" checked> A project figure (to use in your writing)</label>
+            </div>
+            <div class="actions">
+                <button type="button" class="btn" data-close>Cancel</button>
+                <button type="submit" class="btn primary">Save</button>
+            </div>
+        </form>
+        <form class="text_form modal" id="text_form" hidden>
+            <h2>Paste text</h2>
+            <p class="hint">For web articles or anything without a PDF. Each line becomes a numbered line you can
+                attach notes to.</p>
+            <textarea name="text" rows="14" required></textarea>
+            <div class="actions">
+                <button type="button" class="btn" data-close>Cancel</button>
+                <button type="submit" class="btn primary">Save</button>
+            </div>
+        </form>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script src="../script/core/ui.js"></script>
+    <script src="../script/core/store.js"></script>
+    <script src="../script/writing/markdown.js"></script>
+    <script src="../script/writing/mdimages.js"></script>
+    <script src="../script/writing/mdbar.js"></script>
+    <script src="../script/sources/sources.js"></script>
+    <script src="../script/sources/cite.js"></script>
+    <script src="../script/sources/colors.js"></script>
+    <script src="../script/sources/references.js"></script>
+    <script src="../script/reader/textrange.js"></script>
+    <script src="../script/reader/zoom.js"></script>
+    <script src="../script/reader/reader.js"></script>
+    <script src="../script/reader/video.js"></script>
+    <script src="../script/reader/capture.js"></script>
+    <script src="../script/pages/material.js"></script>
+    <script src="../script/pages/material_refs.js"></script>
+</body>
+
+</html>

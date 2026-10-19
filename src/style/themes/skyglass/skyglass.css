@@ -1,0 +1,318 @@
+/* Skyglass — the app in the Skyglass style (design_document/skyglass: GUIDE.md, tokens).
+   Loaded by core/settings.js with tokens.css when you choose it in Settings. Light = Day sky, dark = Deep sea.
+
+   The rules, from the guide:
+   - real glass over a real sky: the page always shows the sky (gradient, clouds, bubbles, aurora);
+     panels are clear glass: light tint, strong blur, diagonal sheen, bright top-left rim, soft blue shadow
+   - everything shines: buttons are glossy pills (light → deep gradient, white shine on the top half)
+   - round and soft: pills, bubbles, generous corners; no sharp corners or hard shadows
+   - gloss colours have jobs: blue = primary, green = accept/success, aqua = selection,
+     red = delete, orange = download / warnings (dark text)
+   - one humanist sans: Source Sans 3
+   Performance: only big surfaces (bars, panels, popups) get the real blur; the many small cards inside
+   them use the stronger glass tint, which also keeps their text readable. */
+
+/* ---- the app's colours, mapped onto Skyglass tokens ---- */
+
+html[data-style="skyglass"][data-theme] {
+    --bg: var(--glass-strong);       /* wells inside panels */
+    --surface: var(--glass);         /* panels */
+    --text: var(--ink);
+    --muted: var(--ink-muted);
+    --line: color-mix(in srgb, var(--ink) 16%, transparent);
+    --radius: var(--radius-lg);
+    --shadow: var(--shadow-glass);
+}
+html[data-style="skyglass"][data-theme="light"] { --accent: var(--blue); --danger: var(--red); }
+html[data-style="skyglass"][data-theme="dark"] { --accent: var(--aqua-light); --danger: var(--red-light); }
+
+/* ---- the sky ---- */
+
+body {
+    font-family: var(--font-sans);
+    font-size: 15px;
+    color: var(--ink);
+    background-color: var(--sky-mid);
+    background-image:
+        /* bubbles */
+        radial-gradient(circle at 86% 74%, transparent 0 44px, var(--bubble) 45px 47px, transparent 48px),
+        radial-gradient(circle at 84.6% 70.5%, var(--glass-sheen) 0 7px, transparent 8px),
+        radial-gradient(circle at 9% 82%, transparent 0 26px, var(--bubble) 27px 28.5px, transparent 29.5px),
+        radial-gradient(circle at 58% 12%, transparent 0 16px, var(--bubble) 17px 18px, transparent 19px),
+        /* clouds */
+        radial-gradient(ellipse 26% 9% at 18% 26%, var(--cloud) 0%, transparent 72%),
+        radial-gradient(ellipse 16% 8% at 27% 21%, var(--cloud) 0%, transparent 72%),
+        radial-gradient(ellipse 30% 10% at 78% 16%, var(--cloud) 0%, transparent 72%),
+        radial-gradient(ellipse 18% 8% at 70% 12%, var(--cloud) 0%, transparent 72%),
+        radial-gradient(ellipse 60% 14% at 40% 100%, var(--cloud) 0%, transparent 70%),
+        /* aurora */
+        linear-gradient(112deg, transparent 28%, var(--aurora-soft) 44%, transparent 58%),
+        radial-gradient(120% 60% at 12% 0%, var(--aurora) 0%, transparent 60%),
+        linear-gradient(180deg, var(--sky-top) 0%, var(--sky-mid) 55%, var(--sky-low) 100%);
+    background-attachment: fixed;
+    min-height: 100vh;
+}
+
+h1, h2, h3, .brand { font-family: var(--font-sans); font-weight: 600; }
+.source_title { font-weight: 300; font-size: 2rem; line-height: 1.2; } /* display: light */
+.stat b { font-weight: 300; font-size: 2rem; font-variant-numeric: tabular-nums; }
+
+:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+
+/* ---- glass: big surfaces (real blur) ---- */
+
+.bar, .panel, .section, .library, .figures_panel, .review_card, .settings_section, .stat,
+.modal, .composer, .workspacetabs {
+    background-color: var(--glass);
+    background-image: linear-gradient(155deg, var(--glass-sheen) 0%, var(--glass-sheen-end) 34%, transparent 58%, var(--glass-glow) 100%);
+    -webkit-backdrop-filter: blur(var(--blur-glass)) saturate(180%);
+    backdrop-filter: blur(var(--blur-glass)) saturate(180%);
+    border: 1px solid var(--glass-edge-low);
+    border-top-color: var(--glass-edge);
+    border-left-color: var(--glass-edge);
+    box-shadow: var(--shadow-glass),
+        inset 0 1px 0 0 var(--glass-edge),
+        inset 0 0 0 1px var(--glass-edge-low),
+        inset 0 -18px 30px -18px var(--glass-glow);
+}
+.panel, .section, .library, .figures_panel, .review_card, .settings_section, .modal { border-radius: var(--radius-lg); }
+.stat { border-radius: var(--radius-md); }
+.composer { border-radius: var(--radius-lg); }
+
+/* the curved reflection across the top-left of the glass */
+.panel, .section, .library, .figures_panel, .review_card, .settings_section, .stat, .modal { position: relative; isolation: isolate; }
+.panel::before, .section::before, .library::before, .figures_panel::before, .review_card::before,
+.settings_section::before, .stat::before, .modal::before {
+    content: "";
+    position: absolute;
+    z-index: -1;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    background: radial-gradient(140% 70% at 18% -22%, var(--glass-sheen) 0%, var(--glass-sheen-end) 42%, transparent 46%);
+}
+
+/* the top bar: a glass strip over the sky */
+.bar { border-radius: 0; border-width: 0 0 1px; box-shadow: var(--shadow-glass), inset 0 -1px 0 0 var(--glass-edge-low); }
+.bar .back { color: var(--ink); font-weight: 600; }
+.workspacetabs { border-radius: 0; border-width: 0 0 1px; box-shadow: none; }
+
+.review_card { border-left: 1px solid var(--glass-edge); }
+
+/* popups float a little higher; the page behind is dimmed and softened */
+.modal { background-color: var(--glass-strong); box-shadow: var(--shadow-glass), 0 24px 60px rgba(10, 40, 90, .35), inset 0 1px 0 0 var(--glass-edge); }
+.modals { background: rgba(10, 40, 90, .28); -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); }
+.composer { background-color: var(--glass-strong); }
+.composer_head { border-bottom-color: var(--glass-edge-low); }
+
+/* ---- glass: small things inside panels (strong tint, no blur) ---- */
+
+.item, .source_row, .source_note, .source_card, .figure_card, .picker, .style_card, .card_notes li,
+.digest_preview, .export_form textarea, .settings .setting code, .md code {
+    background-color: var(--glass-strong);
+    background-image: linear-gradient(180deg, var(--glass-sheen-end) 0%, transparent 60%);
+    border: 1px solid var(--glass-edge);
+    border-radius: var(--radius-md);
+}
+.item:hover, .item:focus-visible, .source_row:hover, .source_row:focus-visible {
+    outline: none;
+    box-shadow: var(--shadow-gloss), 0 0 0 1px var(--glass-edge);
+    filter: brightness(1.04);
+}
+.source_note { border-left: 4px solid var(--glass-edge); }
+.source_note.question { border-left-color: var(--aqua-light); }
+.setting { border-bottom-color: var(--glass-edge-low); }
+.settings_section > header { border-bottom-color: var(--glass-edge-low); }
+
+/* ---- buttons: glossy pills (default glass; primary blue; delete red) ---- */
+
+.btn {
+    --c-l: var(--glass-strong);
+    --c: var(--glass-strong);
+    --c-d: var(--glass-strong);
+    --c-on: var(--ink);
+    position: relative;
+    isolation: isolate;
+    border-radius: var(--radius-pill);
+    font-family: var(--font-sans);
+    font-weight: 600;
+    color: var(--c-on);
+    padding: 7px 18px;
+    background: var(--c);
+    background-image: radial-gradient(90% 55% at 50% 100%, var(--gloss-glow) 0%, transparent 70%), linear-gradient(180deg, var(--c-l) 0%, var(--c) 52%, var(--c-d) 100%);
+    border: 1px solid var(--glass-edge);
+    box-shadow: var(--shadow-gloss), inset 0 -2px 6px 0 var(--gloss-depth), inset 0 1px 0 0 var(--glass-shine);
+    text-shadow: 0 1px 0 var(--icon-emboss);
+    transition: filter .12s ease, box-shadow .12s ease;
+}
+/* white shine across the top half */
+.btn::before {
+    content: "";
+    position: absolute;
+    z-index: -1;
+    left: 6%;
+    right: 6%;
+    top: 2px;
+    height: 48%;
+    border-radius: inherit;
+    background-image: linear-gradient(180deg, var(--gloss-top) 0%, var(--gloss-fade) 100%);
+    pointer-events: none;
+    opacity: .6;
+}
+.btn:hover { filter: brightness(1.08) saturate(1.1); box-shadow: var(--shadow-gloss), 0 0 14px 0 var(--gloss-halo), inset 0 -2px 6px 0 var(--gloss-depth), inset 0 1px 0 0 var(--glass-shine); }
+.btn:active { filter: brightness(.94); box-shadow: inset 0 2px 6px 0 var(--gloss-depth); }
+.btn:active::before { top: 4px; }
+.btn:disabled { filter: grayscale(.8) opacity(.55); cursor: not-allowed; }
+.btn.small { padding: 4px 14px; font-size: 13px; }
+
+/* (gloss set again: base.css gives .primary a flat accent background that would cover it) */
+.btn.primary, .btn.danger {
+    color: var(--c-on);
+    border-color: var(--c-d);
+    text-shadow: 0 1px 1px var(--gloss-depth);
+    background: var(--c);
+    background-image: radial-gradient(90% 55% at 50% 100%, var(--gloss-glow) 0%, transparent 70%), linear-gradient(180deg, var(--c-l) 0%, var(--c) 52%, var(--c-d) 100%);
+}
+.btn.primary::before, .btn.danger::before { opacity: 1; }
+.btn.primary { --c-l: var(--blue-light); --c: var(--blue); --c-d: var(--blue-deep); --c-on: var(--on-color); }
+.btn.danger { --c-l: var(--red-light); --c: var(--red); --c-d: var(--red-deep); --c-on: var(--on-color); }
+/* download = orange (dark text), accept/save = green */
+#download_md, #download_html, #download_export, #download_digest, #backup {
+    --c-l: var(--orange-light); --c: var(--orange); --c-d: var(--orange-deep); --c-on: var(--on-orange);
+    border-color: var(--orange-deep);
+}
+#save_note, #capture_form [type="submit"], #apply_css { --c-l: var(--green-light); --c: var(--green); --c-d: var(--green-deep); --c-on: var(--on-color); border-color: var(--green-deep); }
+
+.link { color: var(--accent); font-weight: 600; }
+
+/* ---- fields: pills of strong glass, pressed in ---- */
+
+input, select, textarea {
+    font-family: var(--font-sans);
+    color: var(--ink);
+    background-color: var(--glass-strong);
+    background-image: linear-gradient(180deg, var(--gloss-depth) 0%, transparent 35%);
+    border: 1px solid var(--glass-edge);
+    box-shadow: inset 0 1px 3px 0 var(--gloss-depth), 0 1px 0 0 var(--glass-edge-low);
+}
+input, select { border-radius: var(--radius-pill); padding-left: 14px; padding-right: 14px; }
+textarea { border-radius: var(--radius-md); background-image: none; }
+input[type="checkbox"], input[type="radio"] { accent-color: var(--aqua); box-shadow: none; }
+input::placeholder, textarea::placeholder { color: var(--ink-muted); opacity: 1; }
+form.modal label, .style_pick, .picker_head strong, .checks > span, .attach_mode > span { font-weight: 600; font-size: 13px; }
+
+/* ---- chips, tabs, toggles: glass pills; selected = aqua gloss ---- */
+
+.attach_mode button, .tag_chip, .group_chip, .seg_chip, .cite_suggest button, .toolbar button,
+.view_toggle button, .mode_toggle button, .segmented button, .workspacetabs button, .tabs button,
+.badge, .tag, .keywords li {
+    border-radius: var(--radius-pill);
+    border: 1px solid var(--glass-edge);
+    background-color: var(--glass-strong);
+    background-image: linear-gradient(180deg, var(--glass-sheen) 0%, transparent 60%);
+    color: var(--ink);
+    font-family: var(--font-sans);
+    font-weight: 600;
+}
+.view_toggle, .mode_toggle, .segmented { border: 0; gap: 4px; overflow: visible; }
+.view_toggle button, .mode_toggle button, .segmented button { box-shadow: var(--shadow-gloss); }
+.segmented button + button { border-left: 1px solid var(--glass-edge); }
+.workspacetabs button, .tabs button { margin: 6px 2px; border-bottom: 1px solid var(--glass-edge); }
+
+.attach_mode button[aria-pressed="true"], .tag_chip.active, .group_chip.on,
+.view_toggle button[aria-pressed="true"], .toolbar .mode_toggle button[aria-pressed="true"],
+.segmented button[aria-checked="true"], .workspacetabs button[aria-selected="true"], .tabs button[aria-selected="true"] {
+    background-image: linear-gradient(180deg, var(--aqua-light) 0%, var(--aqua) 55%, var(--aqua-deep) 100%);
+    border-color: var(--aqua-deep);
+    color: var(--on-color);
+    text-shadow: 0 1px 1px var(--gloss-depth);
+}
+.group_chip.partial { border-color: var(--aqua); border-style: dashed; }
+
+/* status badges by job: reading = aqua, done = green (success), full text / video = orange */
+.badge { font-size: 12px; padding: 2px 10px; }
+.badge.reading { background-image: linear-gradient(180deg, var(--aqua-light), var(--aqua) 55%, var(--aqua-deep)); color: var(--on-color); border-color: var(--aqua-deep); }
+.badge.done { background-image: linear-gradient(180deg, var(--green-light), var(--green) 55%, var(--green-deep)); color: var(--on-color); border-color: var(--green-deep); }
+.badge.material { background-image: linear-gradient(180deg, var(--orange-light), var(--orange) 55%, var(--orange-deep)); color: var(--on-orange); border-color: var(--orange-deep); }
+.tag { color: var(--blue-deep); }
+html[data-theme="dark"] .tag { color: var(--ink); }
+
+/* ---- reading surfaces: strong glass behind text; PDF pages stay paper ---- */
+
+.visual, .preview { background-color: var(--glass-strong); border-radius: var(--radius-md); }
+.visual { border: 1px solid var(--glass-edge); }
+.reader_html { border-radius: var(--radius-md); box-shadow: var(--shadow-glass); }
+.pdf_page { border-radius: 4px; box-shadow: var(--shadow-glass); }
+.reader_bar { background: var(--glass-strong); -webkit-backdrop-filter: blur(var(--blur-glass)); backdrop-filter: blur(var(--blur-glass)); border-bottom-color: var(--glass-edge-low); }
+
+.timeline { background: var(--glass-strong); border: 1px solid var(--glass-edge); box-shadow: inset 0 1px 3px var(--gloss-depth); }
+.timeline .span { background-image: linear-gradient(180deg, var(--aqua-light), var(--aqua)); }
+.timeline .marker { background-image: linear-gradient(180deg, var(--orange-light), var(--orange)); border-color: var(--glass-edge); }
+
+/* floating keys: blue gloss pills */
+.show_side, .selection_btn, .img_note_btn, .capture_hint {
+    border-radius: var(--radius-pill);
+    border: 1px solid var(--blue-deep);
+    background-image: radial-gradient(90% 55% at 50% 100%, var(--gloss-glow) 0%, transparent 70%), linear-gradient(180deg, var(--blue-light) 0%, var(--blue) 52%, var(--blue-deep) 100%);
+    color: var(--on-color);
+    text-shadow: 0 1px 1px var(--gloss-depth);
+    box-shadow: var(--shadow-gloss), inset 0 1px 0 0 var(--glass-shine);
+    font-family: var(--font-sans);
+}
+.show_side { border-radius: var(--radius-pill) 0 0 var(--radius-pill); }
+.cite_warning { border-radius: var(--radius-md); color: var(--danger-ink); }
+.capture_box { border-radius: var(--radius-md); }
+.figure_card img, .thumb, .capture_preview { border-radius: var(--radius-sm); }
+
+/* home page project cards: glossy photo tiles */
+.project { border-radius: var(--radius-lg); box-shadow: var(--shadow-glass); border: 1px solid var(--glass-edge); }
+.project:hover, .project:focus-visible { box-shadow: var(--shadow-glass), 0 0 18px var(--gloss-halo); }
+.hover_hide button { border-radius: var(--radius-pill); background: var(--glass-strong); color: var(--ink); border: 1px solid var(--glass-edge); }
+.overhead { background: linear-gradient(transparent 35%, rgba(6, 30, 60, .78)); }
+
+/* settings: the chosen style card glows aqua */
+.style_card[aria-checked="true"] { border-color: var(--aqua); box-shadow: 0 0 0 2px var(--aqua), 0 0 16px var(--gloss-halo); }
+
+/* ---- screens ---- */
+
+@media (max-width: 900px) {
+    .side {
+        background-color: var(--glass-strong);
+        -webkit-backdrop-filter: blur(var(--blur-glass)) saturate(180%);
+        backdrop-filter: blur(var(--blur-glass)) saturate(180%);
+        border-top: 1px solid var(--glass-edge);
+        border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+    }
+    .show_side { border-radius: var(--radius-pill); }
+}
+@media (max-width: 599px) {
+    .source_title { font-size: 1.5rem; }
+    .panel, .section, .library, .figures_panel { border-radius: var(--radius-md); }
+}
+/* touch: every control at least 44px (the guide's target-min) */
+@media (pointer: coarse) {
+    .btn, .btn.small { min-height: var(--target-min); }
+}
+
+/* reduced transparency, or no backdrop blur: frosted glass becomes solid glass */
+@media (prefers-reduced-transparency: reduce) {
+    .bar, .panel, .section, .library, .figures_panel, .review_card, .settings_section, .stat, .modal,
+    .composer, .workspacetabs, .reader_bar, .side {
+        background-color: var(--glass-solid);
+        -webkit-backdrop-filter: none;
+        backdrop-filter: none;
+    }
+}
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+    .bar, .panel, .section, .library, .figures_panel, .review_card, .settings_section, .stat, .modal,
+    .composer, .workspacetabs, .reader_bar, .side { background-color: var(--glass-solid); }
+}
+/* high contrast: no shine or reflections, plain system borders */
+@media (forced-colors: active) {
+    .btn::before, .panel::before, .section::before, .library::before, .figures_panel::before,
+    .review_card::before, .settings_section::before, .stat::before, .modal::before { display: none; }
+    .btn, .tag_chip, .group_chip, .attach_mode button, input, select, textarea { border: 2px solid ButtonText; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .btn { transition: none; }
+}

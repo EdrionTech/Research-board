@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings · Research Board</title>
+    <link rel="stylesheet" href="../style/base.css">
+    <link rel="stylesheet" href="../style/settings.css">
+    <!-- theme + style, before the page draws -->
+    <script src="../script/core/settings.js"></script>
+</head>
+
+<body>
+    <div class="bar">
+        <a href="../index.html" class="back">← Projects</a>
+        <h2 class="brand">Settings</h2>
+    </div>
+
+    <main class="settings">
+        <!-- customization: how the app looks (saved in this browser) -->
+        <section class="settings_section customization">
+            <header>
+                <h3>Appearance</h3>
+            </header>
+
+            <div class="setting">
+                <div>
+                    <strong>Theme</strong>
+                    <p class="hint">Light or dark. System follows your device.</p>
+                </div>
+                <div class="segmented" id="theme_choice" role="radiogroup" aria-label="Theme">
+                    <button type="button" role="radio" aria-checked="false" data-theme-choice="system">System</button>
+                    <button type="button" role="radio" aria-checked="false" data-theme-choice="light">Light</button>
+                    <button type="button" role="radio" aria-checked="false" data-theme-choice="dark">Dark</button>
+                </div>
+            </div>
+
+            <div class="setting stacked">
+                <div>
+                    <strong>Style</strong>
+                    <p class="hint">The look of every page. Each style has light and dark versions.</p>
+                </div>
+                <!-- one card per style in core/settings.js -->
+                <div class="style_cards" id="style_cards" role="radiogroup" aria-label="Style"></div>
+            </div>
+
+            <div class="setting stacked">
+                <div>
+                    <strong>Your own CSS</strong>
+                    <p class="hint">Fine-tune any style: applied last, on every page. For example
+                        <code>:root { --accent: #c2185b; }</code> or <code>.bar { font-size: 1.1rem; }</code>.
+                        You can also load a .css file.</p>
+                </div>
+                <textarea id="custom_css" rows="7" spellcheck="false" aria-label="Your own CSS"></textarea>
+                <div class="actions">
+                    <small id="css_state"></small>
+                    <span class="spacer"></span>
+                    <label class="btn small">Load .css file
+                        <input type="file" id="css_file" accept=".css,text/css" hidden>
+                    </label>
+                    <button type="button" class="btn small" id="clear_css">Clear</button>
+                    <button type="button" class="btn small primary" id="apply_css">Apply</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- your data: it lives in this browser only -->
+        <section class="settings_section">
+            <header>
+                <h3>Your data</h3>
+            </header>
+            <div class="setting">
+                <div>
+                    <strong>Stored in this browser</strong>
+                    <p class="hint" id="storage_info">Projects, sources, notes and files are kept in this browser
+                        only. Back them up to move to another computer or keep them safe.</p>
+                </div>
+            </div>
+            <div class="setting">
+                <div>
+                    <strong>Back up</strong>
+                    <p class="hint">Download everything as one .json file.</p>
+                    <label class="check"><input type="checkbox" id="backup_files" checked> Include files (PDFs, images,
+                        videos): bigger, but complete</label>
+                </div>
+                <button type="button" class="btn primary" id="backup">Download backup</button>
+            </div>
+            <div class="setting">
+                <div>
+                    <strong>Restore</strong>
+                    <p class="hint">Load a backup file. It replaces everything that's here now.</p>
+                </div>
+                <label class="btn">Choose backup…
+                    <input type="file" id="restore_file" accept=".json,application/json" hidden>
+                </label>
+            </div>
+            <div class="setting">
+                <div>
+                    <strong>Delete everything</strong>
+                    <p class="hint">Removes all projects, sources, notes and files from this browser. Settings stay.</p>
+                </div>
+                <button type="button" class="btn danger" id="delete_all">Delete everything</button>
+            </div>
+            <p class="data_state" id="data_state" aria-live="polite"></p>
+        </section>
+    </main>
+
+    <script src="../script/core/ui.js"></script>
+    <script src="../script/core/store.js"></script>
+    <script src="../script/pages/settings.js"></script>
+</body>
+
+</html>

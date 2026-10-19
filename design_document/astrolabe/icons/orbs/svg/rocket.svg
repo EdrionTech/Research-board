@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+<defs>
+<radialGradient id="d" cx=".35" cy=".3" r=".8"><stop offset="0" stop-color="#22306a"/><stop offset=".6" stop-color="#0c1130"/><stop offset="1" stop-color="#05060f"/></radialGradient>
+<filter id="g" filterUnits="userSpaceOnUse" x="-8" y="-8" width="80" height="80"><feGaussianBlur stdDeviation="1" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+</defs>
+<circle cx="32" cy="32" r="23" fill="url(#d)"/>
+<circle cx="32" cy="32" r="23" fill="none" stroke="#9fb3ff" stroke-opacity=".55" stroke-width="1"/>
+<ellipse cx="32" cy="32" rx="30" ry="10.5" transform="rotate(-24 32 32)" fill="none" stroke="#ffcc6f" stroke-opacity=".8" stroke-width="1.1"/>
+<circle cx="59.4" cy="19.8" r="2.6" fill="#ffcc6f"/>
+<g transform="translate(19.5 19.5) scale(1.04)" filter="url(#g)"><path d="M12 2.6C15.4 5 16.4 8.8 16.4 12.8V17H7.6v-4.2C7.6 8.8 8.6 5 12 2.6zM10.1 10a1.9 1.9 0 1 0 3.8 0a1.9 1.9 0 1 0 -3.8 0M7.6 13.2L4.8 16.4v3l2.8-1.6M16.4 13.2l2.8 3.2v3l-2.8-1.6M10.4 20l1.6 1.8 1.6-1.8" fill="none" stroke="#e8ecff" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/></g>
+</svg>

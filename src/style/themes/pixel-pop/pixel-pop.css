@@ -1,0 +1,282 @@
+/* Pixel Pop — the app in the Pixel Pop style (design_document/pixel-pop: GUIDE.md, tokens).
+   Loaded by core/settings.js on top of base.css and the page's own CSS when you choose it in Settings.
+
+   The rules, from the guide:
+   - everything on the pixel grid: 2px outlines (--border-pixel), sizes in 4px steps, square corners
+   - flat on the desk: windows have no shadow; only lifted things (popups, note box) get --shadow-pixel
+   - candy colours mean a role: green = go/confirm, teal = info/title bars, lavender = navigation,
+     orange = settings/attention, pink = extras/favourites, yellow = badges/warnings, blue = progress
+   - Pixelify Sans only for titles and buttons; Nunito for reading; JetBrains Mono for inputs and numbers */
+
+/* (tokens.css and the fonts are loaded alongside this file by core/settings.js, not @imported:
+   an import chain makes every page wait longer and flash) */
+
+/* ---- the app's colours, mapped onto Pixel Pop tokens ---- */
+
+html[data-style="pixel-pop"][data-theme] {
+    --bg: var(--surface-desktop);
+    --surface: var(--surface-window);
+    --text: var(--ink);
+    --muted: var(--ink-muted);
+    --accent: var(--focus);
+    --radius: 0px;
+    --shadow: none;
+}
+/* (--line and --danger have the same names in both, so they are set again here to beat base.css) */
+html[data-style="pixel-pop"][data-theme="light"] { --line: #2a2421; --danger: #c7384f; }
+html[data-style="pixel-pop"][data-theme="dark"] { --line: #a99a8b; --danger: #ff7f93; }
+
+/* ---- the desk ---- */
+
+body {
+    font-family: var(--font-sans);
+    background-color: var(--surface-desktop);
+    background-image:
+        linear-gradient(var(--grid-line) 0 1px, transparent 1px),
+        linear-gradient(90deg, var(--grid-line) 0 1px, transparent 1px);
+    background-size: var(--space-6) var(--space-6);
+}
+
+h1, h2, h3, .brand, .project_title, .source_title, .section h3, .md_field h3, #notes_heading {
+    font-family: var(--font-display);
+    font-weight: 600;
+    letter-spacing: 0;
+}
+
+:focus-visible { outline: var(--border-pixel) solid var(--focus); outline-offset: calc(2 * var(--border-pixel)); }
+
+/* ---- windows: the top bar is the title strip, panels are cream sheets with an outline ---- */
+
+.bar {
+    background: var(--candy-teal);
+    color: var(--on-candy);
+    box-shadow: none;
+    border-bottom: var(--border-pixel) solid var(--line);
+}
+.bar .back, .bar .brand, .bar small, .bar .style_pick { color: var(--on-candy); }
+.bar .back { font-family: var(--font-mono); font-size: 14px; }
+
+.panel, .section, .library, .figures_panel, .review_card, .stat, .library_list, .source_pane,
+.project, .picker, .digest_preview, .export_form textarea {
+    background-color: var(--surface-window);
+    border: var(--border-pixel) solid var(--line);
+    border-radius: 0;
+    box-shadow: none;
+}
+.review_card { border-left-width: var(--border-heavy); border-left-color: var(--line); }
+
+/* things inside a window: wells */
+.item, .source_row, .source_note, .source_card, .figure_card, .card_notes li, .notes li, .stats .stat b {
+    border-radius: 0;
+}
+.item, .source_row, .source_note, .source_card, .figure_card {
+    background: var(--surface-inset);
+    border: var(--border-pixel) solid var(--line);
+}
+.item:hover, .item:focus-visible, .source_row:hover, .source_row:focus-visible {
+    outline: none;
+    background: var(--surface-raised);
+    box-shadow: var(--shadow-pixel-sm);
+    transform: translate(-1px, -1px);
+}
+.source_note { border-left: var(--border-heavy) solid var(--line); }
+.source_note.question { border-left-color: var(--candy-teal); }
+
+/* lifted: popups and the floating note box get the hard pixel shadow */
+.modal, .composer {
+    background: var(--surface-window);
+    border: var(--border-pixel) solid var(--line);
+    border-radius: 0;
+    box-shadow: var(--shadow-pixel);
+}
+.modal h2, .composer_head strong { font-family: var(--font-display); }
+.composer_head {
+    margin: -10px -12px 10px;
+    padding: 6px 12px;
+    background: var(--candy-teal);
+    color: var(--on-candy);
+    border-bottom: var(--border-pixel) solid var(--line);
+}
+.modals { background: rgba(42, 36, 33, .45); }
+
+/* ---- buttons: candy keys with a darker bottom lip, uppercase pixel label ---- */
+
+.btn {
+    --pp-face: var(--surface-raised);
+    --pp-lip: var(--lip-cream);
+    --pp-text: var(--ink);
+    margin: var(--border-pixel);
+    border: 0;
+    border-radius: 0;
+    background: var(--pp-face);
+    color: var(--pp-text);
+    font-family: var(--font-display);
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 8px 16px 12px;
+    box-shadow:
+        0 calc(-1 * var(--border-pixel)) 0 0 var(--line), 0 var(--border-pixel) 0 0 var(--line),
+        calc(-1 * var(--border-pixel)) 0 0 0 var(--line), var(--border-pixel) 0 0 0 var(--line),
+        inset 0 calc(-1 * var(--border-heavy)) 0 0 var(--pp-lip);
+}
+.btn:hover {
+    box-shadow:
+        0 calc(-1 * var(--border-pixel)) 0 0 var(--line), 0 var(--border-pixel) 0 0 var(--line),
+        calc(-1 * var(--border-pixel)) 0 0 0 var(--line), var(--border-pixel) 0 0 0 var(--line),
+        inset 0 calc(-1 * var(--border-heavy)) 0 0 var(--pp-lip), inset 0 var(--border-pixel) 0 0 var(--bevel-light);
+}
+.btn:active {
+    transform: translateY(var(--border-pixel));
+    box-shadow:
+        0 calc(-1 * var(--border-pixel)) 0 0 var(--line), 0 var(--border-pixel) 0 0 var(--line),
+        calc(-1 * var(--border-pixel)) 0 0 0 var(--line), var(--border-pixel) 0 0 0 var(--line),
+        inset 0 calc(-1 * var(--border-pixel)) 0 0 var(--pp-lip);
+}
+.btn:disabled { cursor: not-allowed; --pp-face: var(--surface-inset); --pp-text: var(--ink-muted); --pp-lip: var(--surface-inset); }
+.btn.small { padding: 4px 12px 8px; font-size: 14px; }
+
+/* roles: go/confirm = green, destructive = danger, settings / attention = orange
+   (face and text set again here: base.css colours .primary / .danger buttons directly) */
+.btn.primary { --pp-face: var(--candy-green); --pp-lip: var(--lip-green); --pp-text: var(--deep-green); }
+.btn.danger { --pp-face: var(--danger); --pp-lip: var(--lip-danger); --pp-text: var(--on-danger); }
+.btn.primary, .btn.danger { background: var(--pp-face); color: var(--pp-text); border: 0; }
+#edit_source, #hide_side, .settings_link { --pp-face: var(--candy-orange); --pp-lip: var(--lip-orange); --pp-text: var(--deep-orange); }
+.back { font-family: var(--font-mono); }
+.link { font-family: var(--font-label); font-weight: 800; letter-spacing: .04em; }
+
+/* ---- fields: inset wells, square, mono text ---- */
+
+input, textarea, select {
+    font-family: var(--font-mono);
+    font-size: 15px;
+    color: var(--ink);
+    background: var(--surface-inset);
+    border: var(--border-pixel) solid var(--line);
+    border-radius: 0;
+}
+input::placeholder, textarea::placeholder { color: var(--ink-muted); opacity: 1; }
+input:disabled, textarea:disabled, select:disabled { color: var(--ink-muted); border-style: dashed; }
+form.modal label, .style_pick, .attach_mode > span, .picker_head strong, .checks > span {
+    font-family: var(--font-label);
+    font-weight: 800;
+    font-size: 12px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+input[type="checkbox"], input[type="radio"] { accent-color: var(--candy-green); }
+
+/* ---- tabs, toggles, chips ---- */
+
+.workspacetabs { border-bottom: var(--border-pixel) solid var(--line); background: var(--surface-window); }
+.workspacetabs button, .tabs button {
+    font-family: var(--font-display);
+    border-radius: 0;
+    border-bottom: 0;
+}
+.workspacetabs button[aria-selected="true"], .tabs button[aria-selected="true"] {
+    background: var(--candy-lavender);
+    color: var(--on-candy);
+    box-shadow: inset 0 calc(-1 * var(--border-heavy)) 0 0 var(--lip-lavender);
+}
+.tabs { border-bottom: var(--border-pixel) solid var(--line); }
+
+.view_toggle, .mode_toggle { border: var(--border-pixel) solid var(--line); border-radius: 0; }
+.view_toggle button[aria-pressed="true"],
+.toolbar .mode_toggle button[aria-pressed="true"] { background: var(--candy-teal); color: var(--on-candy); }
+
+.attach_mode button, .tag_chip, .group_chip, .seg_chip, .cite_suggest button, .toolbar button {
+    border: var(--border-pixel) solid var(--line);
+    border-radius: 0;
+    background: var(--surface-inset);
+    color: var(--ink);
+}
+.attach_mode button[aria-pressed="true"], .tag_chip.active, .group_chip.on {
+    background: var(--candy-teal);
+    border-color: var(--line);
+    color: var(--on-candy);
+}
+.group_chip.partial { background: var(--surface-raised); border-style: dashed; }
+
+/* badges: label type, outlined; status colours by role */
+.badge, .tag, .keywords li {
+    font-family: var(--font-label);
+    font-weight: 800;
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    border: var(--border-pixel) solid var(--line);
+    border-radius: 0;
+    color: var(--on-candy);
+}
+.badge { background: var(--surface-inset); color: var(--ink); }
+.badge.reading { background: var(--candy-blue); color: var(--on-candy); }
+.badge.done { background: var(--candy-green); color: var(--on-candy); }
+.badge.material { background: var(--candy-yellow); color: var(--on-candy); }
+.tag { background: var(--candy-pink); }
+.keywords li { background: var(--surface-inset); color: var(--ink); }
+
+/* ---- numbers and system text in mono ---- */
+
+.stat b, #counts, .save_state, .picker_head small, #selection_info, .seg_chip, .note_head small,
+.source_meta, .reader_source, .timeline + .video_bar, #note_at_time, #range_btn {
+    font-family: var(--font-mono);
+}
+.stat b { font-size: 1.6rem; }
+
+/* progress: segmented, never smooth */
+progress, .reader_progress { accent-color: var(--candy-blue); }
+
+/* ---- reading surfaces stay paper-white; the page around them is the desk ---- */
+
+.pdf_page { box-shadow: var(--shadow-pixel-sm); outline: var(--border-pixel) solid var(--line); }
+.reader_html, .visual, .preview, .reader_original { border-radius: 0; }
+.visual { background: var(--surface-inset); border: var(--border-pixel) solid var(--line); }
+.timeline { border: var(--border-pixel) solid var(--line); border-radius: 0; background: var(--surface-inset); }
+.timeline .span { border-radius: 0; background: var(--candy-yellow); }
+.timeline .marker { border-radius: 0; background: var(--candy-pink); border-color: var(--line); }
+.show_side { background: var(--candy-orange); color: var(--on-candy); border: var(--border-pixel) solid var(--line); border-right: 0; border-radius: 0; box-shadow: var(--shadow-pixel-sm); font-family: var(--font-display); }
+.capture_hint { background: var(--candy-teal); color: var(--on-candy); border: var(--border-pixel) solid var(--line); border-radius: 0; font-family: var(--font-mono); }
+.img_note_btn { border-radius: 0; background: var(--candy-teal); color: var(--on-candy); border: var(--border-pixel) solid var(--line); box-shadow: var(--shadow-pixel-sm); }
+.figure_card img, .thumb, .capture_preview { border-radius: 0; border: var(--border-pixel) solid var(--line); }
+.cite_warning { border: var(--border-pixel) solid var(--danger); border-radius: 0; color: var(--danger-ink); }
+
+/* home page project cards */
+.project { box-shadow: none; }
+.project:hover, .project:focus-visible { transform: translate(-2px, -2px); box-shadow: var(--shadow-pixel); }
+.hover_hide button { border-radius: 0; border: var(--border-pixel) solid var(--line); font-family: var(--font-display); text-transform: uppercase; }
+.overhead { background: linear-gradient(transparent 40%, rgba(42, 36, 33, .85)); }
+
+/* square keys (only slider knobs and notification dots are round) */
+.section .add {
+    border-radius: 0;
+    border: var(--border-pixel) solid var(--line);
+    background: var(--candy-green);
+    color: var(--deep-green);
+    font-family: var(--font-display);
+}
+
+/* settings page: orange is the settings colour */
+.settings_section { border: var(--border-pixel) solid var(--line); }
+.settings_section > header { background: var(--candy-orange); color: var(--on-candy); border-bottom: var(--border-pixel) solid var(--line); }
+.setting { border-bottom: var(--border-pixel) solid var(--line); }
+.segmented { border: var(--border-pixel) solid var(--line); border-radius: 0; }
+.segmented button { font-family: var(--font-display); }
+.segmented button + button { border-left: var(--border-pixel) solid var(--line); }
+.segmented button[aria-checked="true"] { background: var(--candy-teal); color: var(--on-candy); }
+.style_card { border: var(--border-pixel) solid var(--line); border-radius: 0; background: var(--surface-inset); }
+.style_card[aria-checked="true"] { border-color: var(--line); outline: var(--border-heavy) solid var(--candy-green); outline-offset: -6px; }
+.data_state { font-family: var(--font-mono); color: var(--ink); }
+
+/* phones and tablets: the notes sheet and the note box are lifted windows; the Notes key sits bottom right */
+.selection_btn { border-radius: 0; background: var(--candy-teal); color: var(--on-candy); border: var(--border-pixel) solid var(--line); box-shadow: var(--shadow-pixel-sm); font-family: var(--font-display); text-transform: uppercase; }
+@media (max-width: 900px) {
+    .side { border-radius: 0; border-top: var(--border-pixel) solid var(--line); box-shadow: var(--shadow-pixel); background-color: var(--surface-desktop); }
+    .show_side { border: var(--border-pixel) solid var(--line); border-radius: 0; text-transform: uppercase; }
+}
+@media (max-width: 700px) {
+    .composer { border-radius: 0; }
+}
+
+/* states switch instantly: no easing */
+*, *::before, *::after { transition: none !important; }

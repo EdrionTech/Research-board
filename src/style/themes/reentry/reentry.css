@@ -1,0 +1,408 @@
+/* Reentry — the app in the Reentry style (design_document/reentry: GUIDE.md, tokens).
+   Loaded by core/settings.js with tokens.css when you choose it in Settings. Dark = Cockpit, light = Hangar.
+
+   The rules, from the guide:
+   - drawn, not rendered: cel shading — flat faces, a lit band on top, a hard unblurred shadow at the bottom,
+     a dark ink outline around every plate, key, well and screen; no soft shadows or gloss
+   - hardware you could touch: plates have screws and a grooved title rule; wells are recessed; keys press down 3px
+   - screens glow, the rest doesn't: only CRTs (amber phosphor), lamps and lit values glow
+   - colour means a job: amber = the main action and the lit tab, red = delete, blue = secondary / navigation,
+     green = nominal, steel = quiet keys, hazard yellow = caution (one stripe plate per screen)
+   - Russo One for titles (uppercase), Barlow to read, Barlow Condensed for keys and labels, Share Tech Mono on screens
+   Keycaps, screens, lamps and stripes look the same in both themes; only the hull, plates, wells and text change. */
+
+/* ---- the app's colours, mapped onto Reentry tokens ---- */
+
+html[data-style="reentry"][data-theme] {
+    --bg: var(--recess);            /* wells */
+    --surface: var(--plate);        /* plates */
+    --text: var(--ink);
+    --muted: var(--ink-muted);
+    --line: var(--hairline);
+    --accent: var(--blue-ink);
+    --danger: var(--red-ink);
+    --radius: var(--radius-md);
+    --shadow: var(--shadow-cel);
+    /* the four screws on a plate (background layers, so they work on plates that scroll too) */
+    --screw-face: radial-gradient(circle at 35% 30%, var(--screw-hi), var(--screw) 70%);
+    --screws:
+        radial-gradient(circle at 11px 11px, var(--screw-hi) 0 1.4px, var(--screw) 2.2px 3.6px, var(--outline) 4px 5px, transparent 5.5px),
+        radial-gradient(circle at calc(100% - 11px) 11px, var(--screw-hi) 0 1.4px, var(--screw) 2.2px 3.6px, var(--outline) 4px 5px, transparent 5.5px),
+        radial-gradient(circle at 11px calc(100% - 11px), var(--screw-hi) 0 1.4px, var(--screw) 2.2px 3.6px, var(--outline) 4px 5px, transparent 5.5px),
+        radial-gradient(circle at calc(100% - 11px) calc(100% - 11px), var(--screw-hi) 0 1.4px, var(--screw) 2.2px 3.6px, var(--outline) 4px 5px, transparent 5.5px);
+}
+
+/* ---- the hull: riveted panel seams ---- */
+
+body {
+    font-family: var(--font-sans);
+    font-size: 15px;
+    line-height: 1.6;
+    color: var(--ink);
+    background-color: var(--hull);
+    background-image:
+        radial-gradient(circle at 6px 6px, var(--rivet) 0 1.6px, transparent 2.2px),
+        linear-gradient(90deg, var(--seam) 0 1px, transparent 1px),
+        linear-gradient(0deg, var(--seam) 0 1px, transparent 1px),
+        radial-gradient(120% 80% at 50% -20%, var(--hull-glow) 0%, transparent 60%);
+    background-size: 240px 160px, 240px 160px, 240px 160px, 100% 100%;
+    background-position: -6px -6px, 0 0, 0 0, 0 0;
+    background-attachment: fixed;
+    min-height: 100vh;
+}
+
+h1, h2, h3, h4, .brand, .project_title {
+    font-family: var(--font-display);
+    font-weight: 400;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+}
+.md h1, .md h2, .md h3, .md h4 { text-transform: none; letter-spacing: .01em; }
+.brand { letter-spacing: .06em; }
+/* the source's title is the episode card: wide red capitals in a letterbox */
+.source_title {
+    display: inline-block;
+    max-width: 100%;
+    margin: 4px 0 8px;
+    padding: 14px 22px;
+    font-size: 1.9rem;
+    line-height: 1.15;
+    letter-spacing: .1em;
+    color: var(--title-red);
+    background: var(--letterbox);
+    border-radius: var(--radius-sm);
+    border-top: 2px solid var(--title-red);
+    border-bottom: 2px solid var(--title-red);
+    box-shadow: inset 0 5px 0 0 var(--letterbox), inset 0 7px 0 0 var(--title-red-dim), inset 0 -5px 0 0 var(--letterbox), inset 0 -7px 0 0 var(--title-red-dim);
+}
+code, pre, kbd, .seg_chip { font-family: var(--font-mono); }
+.md blockquote { border-left: 3px solid var(--outline); color: var(--ink-muted); }
+.md hr, hr { border: 0; height: 0; border-top: 2px solid var(--outline); box-shadow: 0 1px 0 0 var(--bezel-hi); }
+::selection { background: var(--amber); color: var(--on-amber); }
+
+:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
+
+/* ---- plates: lit top band, flat face, ink outline, hard cel shadow, four screws ---- */
+
+.panel, .section, .library, .figures_panel, .review_card, .settings_section, .modal, .composer {
+    background-color: var(--plate);
+    background-image: var(--screws), linear-gradient(180deg, var(--plate-hi) 0%, var(--plate) 38%, var(--plate-lo) 100%);
+    border: 1px solid var(--outline);
+    border-radius: var(--radius-md);
+    box-shadow: inset 0 1px 0 0 var(--bezel-hi), inset 0 0 0 1px var(--bezel), var(--shadow-cel);
+}
+.review_card { border-left-width: 1px; }
+.settings_section { overflow: visible; }
+
+/* the one hazard plate per screen: a caution stripe across the top */
+.review_card, .panel.writer {
+    padding-top: 26px;
+    background-image:
+        repeating-linear-gradient(-45deg, var(--hazard) 0 10px, var(--hazard-ink) 10px 20px),
+        linear-gradient(var(--outline), var(--outline)),
+        var(--screws),
+        linear-gradient(180deg, var(--plate-hi) 0%, var(--plate) 38%, var(--plate-lo) 100%);
+    background-size: 100% 10px, 100% 1px, auto, auto, auto, auto, 100% 100%;
+    background-position: 0 0, 0 10px, 0 4px, 0 4px, 0 4px, 0 4px, 0 0;
+    background-repeat: no-repeat;
+}
+
+/* plate titles with the grooved rule under them */
+.section h3, .figures_panel h3, .side h3, .review_card h3, .settings_section > header h2,
+.settings_section > header h3, form.modal h2 { font-family: var(--font-display); font-weight: 400; font-size: 1.15rem; letter-spacing: .04em; text-transform: uppercase; }
+.settings_section > header, .figures_panel header, .section header {
+    padding-bottom: 10px;
+    border-bottom: 2px solid var(--outline);
+    box-shadow: 0 1px 0 0 var(--bezel-hi);
+}
+.section header { margin-bottom: 10px; }
+.settings_section > header { margin: 0 12px; padding-left: 6px; padding-right: 6px; }
+
+/* stats are CRT readouts: amber phosphor behind a bezel (screens stay dark in both themes) */
+.stat {
+    padding: 12px 16px;
+    color: var(--phosphor);
+    background:
+        repeating-linear-gradient(0deg, transparent 0 2px, var(--scanline) 2px 3px),
+        radial-gradient(120% 110% at 50% 35%, var(--crt-hi) 0%, var(--crt) 75%);
+    border: 8px solid var(--crt-bezel);
+    border-radius: var(--radius-screen);
+    outline: 1px solid var(--outline);
+    box-shadow: inset 0 0 0 1px #000, inset 0 0 24px 4px rgba(0, 0, 0, .65), var(--shadow-cel);
+}
+.stat b { font-family: var(--font-mono); font-weight: 400; font-size: 2.1rem; line-height: 1.1; color: var(--phosphor); text-shadow: 0 0 6px var(--phosphor-glow); font-variant-numeric: tabular-nums; }
+.stat span { font-family: var(--font-mono); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--phosphor-dim); }
+
+/* the top bar: a long plate along the top */
+.bar, .workspacetabs {
+    background: linear-gradient(180deg, var(--plate-hi) 0%, var(--plate) 45%, var(--plate-lo) 100%);
+    border: 0;
+    border-bottom: 2px solid var(--outline);
+    border-radius: 0;
+    box-shadow: inset 0 -1px 0 0 var(--bezel), 0 3px 0 0 rgba(0, 0, 0, .35);
+}
+.workspacetabs { background: var(--recess); box-shadow: inset 0 3px 6px rgba(0, 0, 0, .35); }
+.bar .back { color: var(--ink-muted); font-family: var(--font-cond); font-weight: 700; font-size: 14px; letter-spacing: .12em; text-transform: uppercase; }
+.bar .back:hover { color: var(--ink); }
+
+.modal { box-shadow: inset 0 1px 0 0 var(--bezel-hi), inset 0 0 0 1px var(--bezel), 0 6px 0 0 rgba(0, 0, 0, .85); }
+.modals { background: color-mix(in srgb, var(--hull) 75%, transparent); }
+.composer_head { border-bottom: 2px solid var(--outline); }
+
+/* ---- small things inside plates: recessed wells ---- */
+
+.item, .source_row, .source_note, .source_card, .figure_card, .picker, .style_card, .card_notes li,
+.digest_preview, .export_form textarea, .settings .setting code, .md code, .figure_credit_preview {
+    background: var(--recess);
+    border: 1.5px solid var(--outline);
+    border-radius: var(--radius-sm);
+    box-shadow: inset 0 3px 5px rgba(0, 0, 0, .35), 0 1px 0 0 var(--bezel-hi);
+}
+.item:hover, .item:focus-visible, .source_row:hover, .source_row:focus-visible, .figure_card:hover {
+    outline: none;
+    border-color: var(--amber);
+    box-shadow: inset 0 3px 5px rgba(0, 0, 0, .35), 0 0 0 1px var(--amber);
+}
+.source_row strong, .item strong { font-weight: 700; }
+.source_row small, .item small, .figure_card small { font-family: var(--font-mono); font-size: 12px; }
+.source_note { border-left: 4px solid var(--amber); }
+.source_note.question { border-left-color: var(--blue); }
+.setting { border-bottom: 1px dashed var(--line-strong); }
+
+/* labels: condensed stencil capitals */
+form.modal label, .style_pick, .picker_head strong, .checks > span, .attach_mode > span, .tag_filter > span {
+    font-family: var(--font-cond);
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--ink-muted);
+}
+form.modal .checks label { font-family: var(--font-sans); font-size: 15px; letter-spacing: 0; text-transform: none; color: var(--ink); }
+
+/* ---- keys: cel-shaded keycaps. Steel by default; amber = the main action; red = delete; green = go; blue = downloads ---- */
+
+.btn {
+    --c-hi: var(--steel-hi);
+    --c: var(--steel);
+    --c-lo: var(--steel-lo);
+    --c-on: var(--on-steel);
+    border-radius: var(--radius-sm);
+    font-family: var(--font-cond);
+    font-weight: 700;
+    font-size: 14px;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--c-on);
+    padding: 6px 16px 8px;
+    margin-bottom: 3px;
+    background: var(--c);
+    border: 1.5px solid var(--outline);
+    box-shadow: inset 0 2px 0 0 var(--c-hi), inset 0 -5px 0 0 var(--c-lo), 0 3px 0 0 var(--outline);
+    transition: transform .06s ease, box-shadow .06s ease, filter .12s ease;
+}
+.btn:hover { filter: brightness(1.08) saturate(1.05); }
+.btn:active { transform: translateY(3px); box-shadow: inset 0 2px 0 0 var(--c-hi), inset 0 -2px 0 0 var(--c-lo), 0 0 0 0 var(--outline); }
+.btn:disabled {
+    cursor: not-allowed;
+    transform: none;
+    filter: none;
+    color: var(--ink-muted);
+    border: 1.5px dashed var(--line-strong);
+    background: repeating-linear-gradient(-45deg, transparent 0 6px, var(--hairline) 6px 8px), var(--recess);
+    box-shadow: none;
+}
+.btn.small { padding: 3px 12px 6px; font-size: 13px; }
+
+/* (set again: base.css gives .primary a flat accent background) */
+.btn.primary, .btn.danger, #save_note, #capture_form [type="submit"], #apply_css,
+#download_md, #download_html, #download_export, #download_digest, #backup { background: var(--c); color: var(--c-on); }
+.btn.primary { --c-hi: var(--amber-hi); --c: var(--amber); --c-lo: var(--amber-lo); --c-on: var(--on-amber); }
+.btn.danger { --c-hi: var(--red-hi); --c: var(--red); --c-lo: var(--red-lo); --c-on: var(--on-red); }
+#save_note, #capture_form [type="submit"], #apply_css { --c-hi: var(--green-hi); --c: var(--green); --c-lo: var(--green-lo); --c-on: var(--on-green); }
+#download_md, #download_html, #download_export, #download_digest, #backup { --c-hi: var(--blue-hi); --c: var(--blue); --c-lo: var(--blue-lo); --c-on: var(--on-blue); }
+
+.link { color: var(--blue-ink); font-family: var(--font-cond); font-weight: 700; letter-spacing: .08em; text-transform: uppercase; text-decoration: underline; text-decoration-thickness: 1.5px; text-underline-offset: 4px; text-decoration-color: transparent; }
+.link:hover { text-decoration-color: currentColor; }
+a { color: var(--blue-ink); }
+
+/* ---- fields: recessed wells ---- */
+
+input, select, textarea {
+    font-family: var(--font-sans);
+    color: var(--ink);
+    background: var(--recess);
+    border: 1.5px solid var(--outline);
+    border-radius: var(--radius-sm);
+    box-shadow: inset 0 3px 5px rgba(0, 0, 0, .4), 0 1px 0 0 var(--bezel-hi);
+}
+.tag_row input { border-radius: var(--radius-sm); }
+input::placeholder, textarea::placeholder { color: var(--ink-muted); opacity: 1; }
+input[type="checkbox"], input[type="radio"] { accent-color: var(--amber); box-shadow: none; }
+input[type="range"] { accent-color: var(--amber); border: 0; background: none; box-shadow: none; }
+.writer textarea, .md_edit textarea { font-family: var(--font-mono); font-size: 14px; }
+
+/* ---- tabs and toggles: steel keys in a recessed rail; the selected one stays pressed with its amber lamp lit ---- */
+
+.attach_mode button, .tag_chip, .group_chip, .seg_chip, .cite_suggest button, .toolbar button,
+.view_toggle button, .mode_toggle button, .segmented button, .workspacetabs button, .tabs button {
+    position: relative;
+    border-radius: var(--radius-sm);
+    border: 1.5px solid var(--outline);
+    background: linear-gradient(180deg, var(--steel-hi), var(--steel) 50%, var(--steel-lo));
+    color: var(--on-steel-muted);
+    font-family: var(--font-cond);
+    font-weight: 700;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    box-shadow: 0 2px 0 0 var(--outline);
+}
+.attach_mode button:hover, .tag_chip:hover, .group_chip:hover, .toolbar button:hover, .view_toggle button:hover,
+.mode_toggle button:hover, .segmented button:hover, .workspacetabs button:hover, .tabs button:hover { color: var(--on-steel); }
+.view_toggle, .mode_toggle, .segmented, .tabs {
+    gap: 4px;
+    padding: 5px;
+    border: 1.5px solid var(--outline);
+    border-radius: var(--radius-md);
+    background: var(--recess);
+    box-shadow: inset 0 3px 6px rgba(0, 0, 0, .45), 0 1px 0 0 var(--bezel-hi);
+    overflow: visible;
+}
+.segmented button + button { border-left: 1.5px solid var(--outline); }
+.workspacetabs button, .tabs button, .segmented button, .view_toggle button, .mode_toggle button, .attach_mode button { padding-top: 9px; }
+/* the lamp strip on every tab key (off until selected) */
+.workspacetabs button::before, .tabs button::before, .segmented button::before, .view_toggle button::before,
+.mode_toggle button::before, .attach_mode button::before {
+    content: "";
+    position: absolute;
+    left: 10px;
+    right: 10px;
+    top: 3px;
+    height: 3px;
+    border-radius: 2px;
+    background: var(--lamp-off);
+}
+.attach_mode button[aria-pressed="true"], .view_toggle button[aria-pressed="true"], .toolbar .mode_toggle button[aria-pressed="true"],
+.segmented button[aria-checked="true"], .workspacetabs button[aria-selected="true"], .tabs button[aria-selected="true"] {
+    color: var(--on-steel);
+    transform: translateY(2px);
+    box-shadow: none;
+    background: linear-gradient(180deg, var(--steel), var(--steel-lo));
+}
+.attach_mode button[aria-pressed="true"]::before, .view_toggle button[aria-pressed="true"]::before, .mode_toggle button[aria-pressed="true"]::before,
+.segmented button[aria-checked="true"]::before, .workspacetabs button[aria-selected="true"]::before, .tabs button[aria-selected="true"]::before {
+    background: var(--phosphor);
+    box-shadow: 0 0 8px 1px var(--phosphor-glow);
+}
+/* filters that are on: amber keys */
+.tag_chip.active, .group_chip.on { background: var(--amber); color: var(--on-amber); box-shadow: inset 0 2px 0 0 var(--amber-hi), inset 0 -3px 0 0 var(--amber-lo), 0 2px 0 0 var(--outline); }
+.group_chip.partial { border-style: dashed; color: var(--on-steel); }
+
+/* status tags: a lamp next to the word (colour is never the only signal) */
+.badge, .tag, .keywords li {
+    --l: var(--lamp-off);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border-radius: var(--radius-sm);
+    border: 1.5px solid var(--outline);
+    background: var(--recess);
+    color: var(--ink);
+    font-family: var(--font-cond);
+    font-weight: 600;
+    font-size: 12px;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+}
+.badge::before {
+    content: "";
+    flex: none;
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #ffffffcc 0 1.5px, transparent 2px), var(--l);
+    box-shadow: 0 0 0 1.5px var(--outline), 0 0 8px 1px var(--l);
+}
+.badge.reading { --l: var(--lamp-amber); }
+.badge.done { --l: var(--lamp-green); }
+.badge.material { --l: var(--lamp-blue); }
+.tag { color: var(--blue-ink); }
+
+/* ---- reading surfaces; PDF pages stay paper ---- */
+
+.visual, .preview { background: var(--recess); border: 1.5px solid var(--outline); border-radius: var(--radius-sm); }
+.reader_html, .pdf_page { border-radius: var(--radius-sm); box-shadow: 0 0 0 1.5px var(--outline), var(--shadow-cel); }
+.reader_bar { background: var(--plate); border-bottom: 2px solid var(--outline); }
+
+.timeline { background: var(--recess); border: 1.5px solid var(--outline); border-radius: 2px; box-shadow: inset 0 2px 3px rgba(0, 0, 0, .5); }
+.timeline .span { background: var(--amber); border-radius: 0; }
+.timeline .marker { background: var(--lamp-red); border-color: var(--outline); box-shadow: 0 0 8px var(--lamp-red); }
+
+/* floating keys: amber keycaps */
+.show_side, .selection_btn, .img_note_btn, .capture_hint {
+    border-radius: var(--radius-sm);
+    border: 1.5px solid var(--outline);
+    background: var(--amber);
+    color: var(--on-amber);
+    font-family: var(--font-cond);
+    font-weight: 700;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    box-shadow: inset 0 2px 0 0 var(--amber-hi), inset 0 -4px 0 0 var(--amber-lo), 0 3px 0 0 var(--outline);
+}
+.cite_warning { border-radius: var(--radius-sm); color: var(--hazard-ink); background: var(--hazard); border: 1.5px solid var(--outline); }
+.capture_box { border-radius: 2px; border-color: var(--phosphor); box-shadow: 0 0 10px var(--phosphor-glow); }
+/* the toast is a little CRT */
+.toast {
+    border-radius: var(--radius-screen);
+    border: 6px solid var(--crt-bezel);
+    outline: 1px solid var(--outline);
+    background: radial-gradient(120% 110% at 50% 35%, var(--crt-hi) 0%, var(--crt) 75%);
+    color: var(--phosphor);
+    font-family: var(--font-mono);
+    text-shadow: 0 0 6px var(--phosphor-glow);
+    box-shadow: var(--shadow-cel);
+}
+
+/* home page project cards: plates with an ink outline and a hard shadow */
+.project { border-radius: var(--radius-md); border: 1.5px solid var(--outline); box-shadow: inset 0 0 0 1px var(--bezel), var(--shadow-cel); }
+.project:hover, .project:focus-visible { box-shadow: 0 0 0 2px var(--amber), var(--shadow-cel); }
+.hover_hide button { border-radius: var(--radius-sm); background: var(--steel); color: var(--on-steel); border: 1.5px solid var(--outline); font-family: var(--font-cond); font-weight: 700; text-transform: uppercase; letter-spacing: .08em; }
+.overhead { background: linear-gradient(transparent 30%, rgba(5, 7, 10, .88)); }
+.overhead .project_title { color: #f2f2f2; letter-spacing: .08em; }
+
+/* settings: the chosen style card lights its amber lamp */
+.style_card[aria-checked="true"] { border-color: var(--amber); box-shadow: 0 0 0 2px var(--amber), inset 0 3px 5px rgba(0, 0, 0, .35); }
+
+/* ---- screens ---- */
+
+@media (max-width: 900px) {
+    .side {
+        background: var(--screws), linear-gradient(180deg, var(--plate-hi) 0%, var(--plate) 38%, var(--plate-lo) 100%);
+        border-top: 2px solid var(--outline);
+        border-radius: var(--radius-md) var(--radius-md) 0 0;
+        box-shadow: inset 0 1px 0 0 var(--bezel-hi), 0 -4px 0 0 rgba(0, 0, 0, .5);
+    }
+}
+@media (max-width: 599px) {
+    .source_title { font-size: 1.35rem; padding: 10px 14px; letter-spacing: .08em; }
+}
+/* touch: every control at least 44px (the guide's target-min) */
+@media (pointer: coarse) {
+    .btn, .btn.small { min-height: var(--target-min); }
+}
+@media (prefers-reduced-motion: reduce) {
+    .btn { transition: none; }
+    .btn:active { transform: none; }
+}
+/* more contrast: muted text becomes full ink; scanlines and glows switch off */
+@media (prefers-contrast: more) {
+    html[data-style="reentry"][data-theme] { --muted: var(--ink); --ink-muted: var(--ink); --scanline: transparent; --phosphor-glow: transparent; }
+}
+/* high contrast: stripes, lamps and scanlines drop away; plain system borders */
+@media (forced-colors: active) {
+    .workspacetabs button::before, .tabs button::before, .segmented button::before, .view_toggle button::before,
+    .mode_toggle button::before, .attach_mode button::before, .badge::before { display: none; }
+    .btn, .tag_chip, .group_chip, .attach_mode button, input, select, textarea, .stat { border: 1.5px solid ButtonText; }
+    .attach_mode button[aria-pressed="true"], .segmented button[aria-checked="true"], .workspacetabs button[aria-selected="true"], .tabs button[aria-selected="true"] { forced-color-adjust: none; background: Highlight; color: HighlightText; }
+}

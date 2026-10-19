@@ -1,0 +1,202 @@
+/* Gildmoor — component styles. Every value comes from tokens.css; fonts ship under fonts/. */
+*, *::before, *::after { box-sizing: border-box; }
+body {
+  margin: 0; padding: var(--space-6); min-height: 100vh; color: var(--ink);
+  font-family: var(--font-serif); font-size: 18px; line-height: 28px; -webkit-text-size-adjust: 100%;
+  background-color: var(--bg);
+  background-image:
+    radial-gradient(1.2px 1.2px at 12% 18%, var(--star) 50%, transparent 100%),
+    radial-gradient(1px 1px at 68% 9%, var(--star) 50%, transparent 100%),
+    radial-gradient(1.6px 1.6px at 84% 42%, var(--star) 50%, transparent 100%),
+    radial-gradient(1px 1px at 33% 62%, var(--star-dim) 50%, transparent 100%),
+    radial-gradient(1.3px 1.3px at 52% 84%, var(--star) 50%, transparent 100%),
+    radial-gradient(1px 1px at 92% 76%, var(--star-dim) 50%, transparent 100%),
+    radial-gradient(1px 1px at 5% 92%, var(--star-dim) 50%, transparent 100%),
+    radial-gradient(70% 55% at 50% 0%, var(--bg-glow) 0%, transparent 70%),
+    radial-gradient(45% 40% at 90% 100%, var(--bg-glow-2) 0%, transparent 70%);
+  background-size: 240px 240px, 240px 240px, 240px 240px, 240px 240px, 240px 240px, 240px 240px, 240px 240px, 100% 100%, 100% 100%;
+  background-attachment: fixed;
+}
+.gm-row { display: flex; flex-wrap: wrap; gap: var(--space-4); align-items: center; }
+.gm-stack { display: flex; flex-direction: column; gap: var(--space-4); align-items: flex-start; }
+.gm-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(260px, 100%), 1fr)); gap: var(--space-6); }
+.gm-icon { flex: none; display: inline-block; vertical-align: middle; }
+.gm-label { font-family: var(--font-caps); font-size: 13px; line-height: 18px; font-weight: 600; letter-spacing: .12em; color: var(--label); }
+
+/* Gems: fills for buttons, medallions, cards and ribbons */
+.gm-gem-sapphire { --g-l: var(--sapphire-light); --g: var(--sapphire); --g-d: var(--sapphire-deep); }
+.gm-gem-emerald  { --g-l: var(--emerald-light);  --g: var(--emerald);  --g-d: var(--emerald-deep); }
+.gm-gem-ruby     { --g-l: var(--ruby-light);     --g: var(--ruby);     --g-d: var(--ruby-deep); }
+.gm-gem-amethyst { --g-l: var(--amethyst-light); --g: var(--amethyst); --g-d: var(--amethyst-deep); }
+.gm-gem-midnight { --g-l: var(--night-light);    --g: var(--night);    --g-d: var(--night-deep); }
+.gm-gem-gold     { --g-l: var(--gold-bright);    --g: var(--gold);     --g-d: var(--gold-deep); }
+.gm-gem-none     { --g-l: var(--surface-top);    --g: var(--surface-solid); --g-d: var(--surface-bottom); }
+
+/* ---------- Frame ---------- */
+.gm-frame { position: relative; max-width: 100%; min-width: 0; padding: var(--space-6) var(--space-5) var(--space-5);
+  background: linear-gradient(180deg, var(--surface-top), var(--surface-bottom));
+  border: 1px solid var(--gold);
+  box-shadow: inset 0 0 0 4px var(--frame-gap), inset 0 0 0 5px var(--gold-deep), 0 0 28px 0 var(--gold-glow), var(--shadow-panel); }
+.gm-frame.gm-gem-sapphire, .gm-frame.gm-gem-emerald, .gm-frame.gm-gem-ruby, .gm-frame.gm-gem-amethyst {
+  background: radial-gradient(90% 60% at 50% 0%, var(--g-l) 0%, transparent 70%), linear-gradient(180deg, var(--g), var(--g-d)); }
+.gm-finial { position: absolute; top: -8px; left: 50%; width: 15px; height: 15px; transform: translateX(-50%) rotate(45deg);
+  background: var(--surface-top); border: 1px solid var(--gold); }
+.gm-finial::after { content: ""; position: absolute; inset: 3.5px; background: var(--gold); }
+.gm-corner { position: absolute; width: 9px; height: 9px; transform: rotate(45deg); background: var(--gold); }
+.gm-c-tl { top: -5px; left: -5px; } .gm-c-tr { top: -5px; right: -5px; } .gm-c-bl { bottom: -5px; left: -5px; } .gm-c-br { bottom: -5px; right: -5px; }
+.gm-frame-arch { border-top-left-radius: var(--radius-arch) var(--radius-arch-y); border-top-right-radius: var(--radius-arch) var(--radius-arch-y); padding-top: var(--space-8); }
+.gm-frame-arch .gm-c-tl, .gm-frame-arch .gm-c-tr { display: none; }
+.gm-frame-banner { margin-bottom: 18px; }
+.gm-frame-banner::after { content: ""; position: absolute; left: 50%; bottom: -15px; width: 28px; height: 28px; transform: translateX(-50%) rotate(45deg);
+  background: var(--surface-bottom); border-right: 1px solid var(--gold); border-bottom: 1px solid var(--gold); }
+.gm-frame-banner .gm-c-bl, .gm-frame-banner .gm-c-br { display: none; }
+.gm-frame-head { text-align: center; margin-bottom: var(--space-4); }
+.gm-frame-title { margin: 0; font-family: var(--font-caps); font-weight: 700; font-size: 20px; line-height: 26px; letter-spacing: .08em; color: var(--title); }
+.gm-frame-foot { margin-top: var(--space-4); padding-top: var(--space-3); border-top: 1px solid var(--gold-deep); font-size: 15px; line-height: 22px; font-style: italic; color: var(--ink-muted); text-align: center; }
+
+/* ---------- Ribbon (title plate) ---------- */
+.gm-ribbon { position: relative; display: block; width: fit-content; max-width: 100%; margin: 0 auto; padding: 6px var(--space-6);
+  font-family: var(--font-caps); font-weight: 700; font-size: 15px; line-height: 20px; letter-spacing: .1em; text-align: center; color: var(--on-gem);
+  background: linear-gradient(180deg, var(--g-l), var(--g) 55%, var(--g-d));
+  clip-path: polygon(0 0, 100% 0, calc(100% - 12px) 50%, 100% 100%, 0 100%, 12px 50%);
+  box-shadow: inset 0 1px 0 0 var(--gold), inset 0 -1px 0 0 var(--gold), inset 0 3px 0 0 var(--g-d), inset 0 4px 0 0 var(--gold-deep); }
+.gm-ribbon.gm-gem-none { color: var(--title); }
+.gm-ribbon-text { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* ---------- Button ---------- */
+.gm-btn { position: relative; display: inline-flex; align-items: center; justify-content: center; gap: var(--space-2); max-width: 100%;
+  min-height: 44px; margin: 4px 12px; padding: var(--space-2) var(--space-6); cursor: pointer;
+  font-family: var(--font-caps); font-weight: 600; font-size: 16px; line-height: 20px; letter-spacing: .1em; color: var(--on-gem);
+  background: radial-gradient(80% 60% at 50% 0%, var(--g-l) 0%, transparent 75%), linear-gradient(180deg, var(--g), var(--g-d));
+  border: 1px solid var(--gold); outline: 1px solid var(--gold-deep); outline-offset: 3px;
+  text-shadow: 0 1px 2px var(--text-shadow); transition: box-shadow .15s ease, border-color .15s ease; }
+.gm-btn-label { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.gm-btn-cap { position: absolute; top: 50%; width: 9px; height: 9px; background: var(--gold); transform: translateY(-50%) rotate(45deg); }
+.gm-btn-cap-l { left: -10px; } .gm-btn-cap-r { right: -10px; }
+.gm-btn:hover { border-color: var(--gold-bright); outline-color: var(--gold); box-shadow: 0 0 18px 0 var(--gold-glow), inset 0 0 12px 0 var(--gold-glow); }
+.gm-btn:active { box-shadow: inset 0 2px 8px 0 var(--text-shadow); }
+.gm-btn:disabled { cursor: not-allowed; filter: grayscale(.7) brightness(.8); box-shadow: none; }
+.gm-btn-sm { min-height: 34px; font-size: 13px; padding: var(--space-1) var(--space-4); }
+.gm-btn-lg { min-height: 56px; font-size: 20px; line-height: 24px; padding: var(--space-3) var(--space-8); }
+.gm-btn.gm-gem-none { color: var(--title); }
+
+/* ---------- Medallion (round icon button) ---------- */
+.gm-medal { position: relative; display: inline-grid; place-items: center; width: 56px; height: 56px; padding: 0; margin: 6px; border-radius: var(--radius-round); cursor: pointer; color: var(--gold-bright);
+  background: radial-gradient(circle at 50% 38%, var(--g-l) 0%, var(--g) 55%, var(--g-d) 100%);
+  border: 2px solid var(--gold); box-shadow: inset 0 0 0 3px var(--g-d), inset 0 0 0 4px var(--gold-deep), 0 0 16px 0 var(--gold-glow); transition: box-shadow .15s ease; }
+.gm-medal .gm-icon { filter: drop-shadow(0 0 4px var(--gold-glow)); }
+.gm-medal:hover { box-shadow: inset 0 0 0 3px var(--g-d), inset 0 0 0 4px var(--gold), 0 0 26px 2px var(--gold-glow); }
+.gm-stud { position: absolute; width: 8px; height: 8px; background: var(--gold); border: 1px solid var(--bg); transform: rotate(45deg); }
+.gm-s-n { top: -5px; left: calc(50% - 4px); } .gm-s-s { bottom: -5px; left: calc(50% - 4px); } .gm-s-e { right: -5px; top: calc(50% - 4px); } .gm-s-w { left: -5px; top: calc(50% - 4px); }
+.gm-medal-sm { width: 44px; height: 44px; } .gm-medal-lg { width: 76px; height: 76px; } .gm-medal-xl { width: 104px; height: 104px; }
+
+/* ---------- RarityTag ---------- */
+.gm-rarity { display: inline-flex; align-items: center; gap: var(--space-2); font-family: var(--font-caps); font-weight: 700; font-size: 12px; line-height: 16px; letter-spacing: .14em; color: var(--r); }
+.gm-rarity-gem { width: 8px; height: 8px; transform: rotate(45deg); background: var(--r); box-shadow: 0 0 6px var(--r); }
+.gm-rarity-common { --r: var(--rarity-common); } .gm-rarity-rare { --r: var(--rarity-rare); } .gm-rarity-epic { --r: var(--rarity-epic); } .gm-rarity-legendary { --r: var(--rarity-legendary); }
+
+/* ---------- ItemCard ---------- */
+.gm-card { position: relative; width: 220px; max-width: 100%; padding: var(--space-5) var(--space-4) var(--space-4); text-align: center;
+  background: radial-gradient(90% 55% at 50% 38%, var(--g-l) 0%, transparent 70%), linear-gradient(180deg, var(--g), var(--g-d));
+  border: 1px solid var(--gold); box-shadow: inset 0 0 0 4px var(--frame-gap), inset 0 0 0 5px var(--gold-deep), 0 0 22px 0 var(--gold-glow); }
+.gm-card .gm-finial { background: var(--g); }
+.gm-card .gm-ribbon { margin-top: calc(-1 * var(--space-2)); font-size: 13px; padding: 5px var(--space-5); }
+.gm-card-art { display: grid; place-items: center; height: 120px; margin: var(--space-3) 0; color: var(--gold-bright); }
+.gm-card-art .gm-icon { filter: drop-shadow(0 0 10px var(--gold-glow)); }
+.gm-card-art img { max-width: 100%; max-height: 120px; object-fit: contain; }
+.gm-card-meta { margin-bottom: var(--space-2); }
+.gm-card-text { font-size: 16px; line-height: 24px; color: var(--on-gem-text); font-style: italic; }
+.gm-card-foot { margin-top: var(--space-3); }
+
+/* ---------- Tabs ---------- */
+.gm-tablist { display: flex; flex-wrap: wrap; gap: var(--space-1); border-bottom: 1px solid var(--gold); }
+.gm-tab { position: relative; min-height: 40px; padding: var(--space-2) var(--space-5); border: 1px solid transparent; border-bottom: 0; background: transparent; cursor: pointer;
+  font-family: var(--font-caps); font-weight: 600; font-size: 15px; line-height: 20px; letter-spacing: .08em; color: var(--ink-muted); }
+.gm-tab:hover { color: var(--title); }
+.gm-tab-on { color: var(--on-gem); background: linear-gradient(180deg, var(--ruby-light), var(--ruby) 60%, var(--ruby-deep)); border-color: var(--gold); margin-bottom: -1px; }
+.gm-tab-on::after { content: ""; position: absolute; left: 50%; top: -5px; width: 8px; height: 8px; background: var(--gold); transform: translateX(-50%) rotate(45deg); }
+.gm-tabpanel { padding: var(--space-4) 0 0; }
+
+/* ---------- TextField ---------- */
+.gm-field { display: flex; flex-direction: column; gap: var(--space-1); min-width: min(240px, 100%); }
+.gm-input-wrap { display: flex; align-items: center; gap: var(--space-2); min-height: 44px; padding: 0 var(--space-3); color: var(--gold);
+  background: var(--inset); border: 1px solid var(--gold-deep); box-shadow: inset 0 2px 6px 0 var(--text-shadow); }
+.gm-input-wrap:focus-within { border-color: var(--gold); }
+.gm-input { flex: 1; min-width: 0; border: 0; outline: none; background: transparent; font-family: var(--font-serif); font-size: 18px; line-height: 26px; color: var(--ink); padding: var(--space-2) 0; }
+.gm-input::placeholder { color: var(--ink-muted); font-style: italic; opacity: 1; }
+.gm-field-err .gm-input-wrap { border-color: var(--danger-ink); }
+.gm-msg { font-size: 15px; line-height: 22px; font-style: italic; color: var(--ink-muted); }
+.gm-msg-err { color: var(--danger-ink); font-style: normal; }
+
+/* ---------- Checkbox (diamond) ---------- */
+.gm-check { position: relative; display: inline-flex; align-items: center; gap: var(--space-3); min-height: 32px; cursor: pointer; }
+.gm-check-input { position: absolute; left: 2px; opacity: 0; width: 20px; height: 20px; margin: 0; cursor: inherit; }
+.gm-check-box { width: 16px; height: 16px; margin: 0 3px; flex: none; transform: rotate(45deg); border: 1px solid var(--gold); background: var(--inset); display: grid; place-items: center; }
+.gm-check-mark { width: 8px; height: 8px; background: transparent; }
+.gm-check-input:checked + .gm-check-box { box-shadow: 0 0 10px var(--gold-glow); }
+.gm-check-input:checked + .gm-check-box .gm-check-mark { background: var(--gold-bright); }
+.gm-disabled { color: var(--ink-muted); cursor: not-allowed; }
+.gm-disabled .gm-check-box { border-style: dashed; }
+
+/* ---------- ProgressBar ---------- */
+.gm-progress { display: flex; flex-direction: column; gap: var(--space-1); min-width: min(240px, 100%); }
+.gm-progress-head { display: flex; justify-content: space-between; align-items: baseline; }
+.gm-progress-val { font-family: var(--font-caps); font-size: 14px; color: var(--ink); }
+.gm-progress-track { position: relative; height: 14px; margin: 0 8px; padding: 2px; background: var(--inset); border: 1px solid var(--gold); }
+.gm-progress-track::before, .gm-progress-track::after { content: ""; position: absolute; top: 50%; width: 9px; height: 9px; background: var(--gold); transform: translateY(-50%) rotate(45deg); }
+.gm-progress-track::before { left: -6px; } .gm-progress-track::after { right: -6px; }
+.gm-progress-fill { display: block; height: 100%; background: linear-gradient(180deg, var(--g-l), var(--g) 55%, var(--g-d)); box-shadow: 0 0 8px var(--gold-glow); }
+
+/* ---------- Divider ---------- */
+.gm-divider { display: flex; align-items: center; gap: var(--space-3); width: 100%; color: var(--gold); }
+.gm-divider::before, .gm-divider::after { content: ""; flex: 1; height: 1px; }
+.gm-divider::before { background: linear-gradient(90deg, transparent, var(--gold)); }
+.gm-divider::after { background: linear-gradient(90deg, var(--gold), transparent); }
+.gm-divider-orn { position: relative; width: 52px; height: 14px; flex: none;
+  background: radial-gradient(circle at 6px 50%, var(--gold) 0 2.5px, transparent 3px), radial-gradient(circle at 46px 50%, var(--gold) 0 2.5px, transparent 3px); }
+.gm-divider-orn::after { content: ""; position: absolute; left: calc(50% - 5px); top: calc(50% - 5px); width: 10px; height: 10px; border: 1px solid var(--gold); transform: rotate(45deg); background: var(--gold-deep); }
+.gm-divider-label { font-family: var(--font-caps); font-weight: 600; font-size: 14px; letter-spacing: .14em; color: var(--title); }
+
+/* ---------- Focus (one ring for everything) ---------- */
+.gm-btn:focus-visible { outline: 2px solid var(--focus); outline-offset: 4px; }
+.gm-medal:focus-visible, .gm-tab:focus-visible { outline: 2px solid var(--focus); outline-offset: 4px; }
+.gm-input-wrap:focus-within { outline: 2px solid var(--focus); outline-offset: 3px; }
+.gm-check-input:focus-visible + .gm-check-box { outline: 2px solid var(--focus); outline-offset: 3px; }
+
+/* =================== Screens & access =================== */
+@media (max-width: 599px) {
+  body { padding: var(--space-4); }
+  .display { font-size: 36px; line-height: 42px; }
+  .title { font-size: 26px; line-height: 32px; }
+  .gm-frame { padding: var(--space-5) var(--space-4) var(--space-4); }
+  .gm-btn-lg { min-height: 48px; font-size: 17px; padding: var(--space-2) var(--space-6); }
+  .gm-card { width: 100%; }
+}
+@media (pointer: coarse) {
+  .gm-btn, .gm-btn-sm, .gm-tab, .gm-input-wrap { min-height: 44px; }
+  .gm-medal-sm { width: 48px; height: 48px; }
+  .gm-check { min-height: 44px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .gm-btn, .gm-medal { transition: none; }
+}
+@media (prefers-contrast: more) {
+  :root { --ink-muted: var(--ink); --gold-deep: var(--gold); }
+  .gm-frame, .gm-card, .gm-medal { box-shadow: none; }
+}
+@media (forced-colors: active) {
+  .gm-btn, .gm-medal, .gm-tab, .gm-input-wrap, .gm-check-box, .gm-frame, .gm-card { border: 1px solid ButtonText; }
+  .gm-btn-cap, .gm-corner, .gm-finial, .gm-stud, .gm-frame-banner::after { forced-color-adjust: none; background: CanvasText; }
+  .gm-ribbon { clip-path: none; border: 1px solid CanvasText; }
+  .gm-progress-fill { background: Highlight; }
+  .gm-check-input:checked + .gm-check-box .gm-check-mark { background: Highlight; }
+}
+.gm-card .gm-ribbon-text { white-space: normal; text-overflow: clip; }
+.gm-card .gm-ribbon { clip-path: polygon(0 0, 100% 0, calc(100% - 10px) 50%, 100% 100%, 0 100%, 10px 50%); padding-left: var(--space-5); padding-right: var(--space-5); }
+/* Text inside gem-tinted frames uses the gem inks in both themes */
+.gm-frame[class*="gm-gem-"]:not(.gm-gem-none) { color: var(--on-gem-text); }
+.gm-frame[class*="gm-gem-"]:not(.gm-gem-none) .gm-frame-title, .gm-frame[class*="gm-gem-"]:not(.gm-gem-none) .gm-label { color: var(--on-gem); }
+.gm-frame[class*="gm-gem-"]:not(.gm-gem-none) .gm-finial { background: var(--g); }
+.gm-frame-banner[class*="gm-gem-"]:not(.gm-gem-none)::after { background: var(--g-d); }
+/* On gem cards the rarity word turns gold for contrast; the diamond keeps the rarity hue */
+.gm-card .gm-rarity, .gm-frame[class*="gm-gem-"]:not(.gm-gem-none) .gm-rarity { color: var(--on-gem); }
