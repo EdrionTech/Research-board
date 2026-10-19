@@ -55,6 +55,27 @@
 .source_row:hover, .source_row:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
 .source_row small { color: var(--muted); font-size: .78rem; }
 
+/* its paper's first page (or the video's thumbnail), blurred, behind the card */
+.source_row.has_preview { position: relative; isolation: isolate; overflow: hidden; }
+.row_preview {
+    position: absolute;
+    inset: -14px;
+    z-index: -1;
+    background: center 12% / cover no-repeat;
+    filter: blur(7px) saturate(1.1);
+    opacity: .3;
+    pointer-events: none;
+}
+/* the text stays readable over it */
+.source_row.has_preview::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: linear-gradient(180deg, transparent 0%, color-mix(in srgb, var(--bg) 55%, transparent) 100%);
+    pointer-events: none;
+}
+
 .row_tags { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: 4px; }
 
 .figure_credit_preview { margin: 0; padding: 8px 10px; border-radius: 8px; background: var(--bg); font-size: .85rem; color: var(--text); font-style: italic; }
@@ -178,8 +199,11 @@
     display: grid;
     gap: 2px;
     padding: 8px 10px;
-    border-left: 4px solid var(--note-color);
     border-radius: 6px;
+}
+/* its colour stays on top of whatever card the style draws */
+.highlight_list .highlight {
+    border-left: 4px solid var(--note-color);
     background: color-mix(in srgb, var(--note-color) 14%, var(--bg));
 }
 .highlight_text {
@@ -238,6 +262,19 @@
     cursor: pointer;
 }
 .row_cite:hover { color: var(--accent); border-color: var(--accent); }
+/* styles dress it like their chips (some make chips position: relative): it stays in the card's corner */
+.source_item .row_cite { position: absolute; top: 8px; right: 8px; margin: 0; z-index: 1; }
 @media (pointer: coarse) {
     .row_cite { min-height: 36px; padding: 4px 12px; }
 }
+
+/* + From library */
+.from_library { display: grid; gap: 10px; }
+.library_results { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; max-height: 50vh; overflow: auto; }
+.library_result { display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-rows: auto auto; column-gap: 10px; align-items: center; padding: 6px 8px; border-radius: 6px; }
+.library_result:hover { background: var(--bg); }
+.library_result strong { font-size: .9rem; }
+.library_result small { grid-row: 2; color: var(--muted); font-size: .76rem; }
+.library_result .btn { grid-row: 1 / span 2; grid-column: 2; }
+.library_results .none { color: var(--muted); font-style: italic; font-size: .9rem; padding: 6px 8px; }
+.from_library .actions small { color: var(--accent); font-size: .82rem; }

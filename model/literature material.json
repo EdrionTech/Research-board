@@ -11,6 +11,8 @@
     "url": "https://example.com/bla-bla",
     "doi": "",
     "pdfUrl": "https://example.com/bla-bla.pdf",
+    "thumbnail": "",
+    "preview": { "from": "https://example.com/bla-bla.pdf", "image": "asset:a9" },
     "file": {
       "assetId": "a0",
       "name": "bla-bla.pdf",

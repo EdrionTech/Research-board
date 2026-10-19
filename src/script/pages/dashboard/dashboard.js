@@ -32,6 +32,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 function init() {
     document.title = project.title + ' · Research Board';
+    Nav.backLink($('.bar .back'), '../index.html', 'Projects');
     $('#project_title').textContent = project.title;
     $('#project_desc').textContent = project.desc || 'No description yet.';
 
@@ -40,6 +41,12 @@ function init() {
     render();
     const tab = location.hash.slice(1);
     showTab(TABS.includes(tab) ? tab : 'overview');
+    // ?item=ID (from a paper's "In your notes"): open that note
+    const linked = items.find(i => i.id === new URLSearchParams(location.search).get('item'));
+    if (linked) {
+        showTab(SECTIONS[linked.type]?.tab || 'overview');
+        openForm(linked);
+    }
 }
 
 // ---- layout ----
@@ -99,14 +106,32 @@ function itemRow(item) {
     li.tabIndex = 0;
     li.dataset.id = item.id;
 
+    const sources = items.filter(i => i.type === 'source');
+    const style = project.citeStyle || 'apa';
     const title = document.createElement('strong');
-    title.textContent = displayTitle(item);
+    title.textContent = item.title || PaperLinks.preview((item.body || '').split('\n')[0], sources, style);
     li.append(title);
 
     if (item.title && item.body) {
         const preview = document.createElement('p');
-        preview.textContent = item.body;
+        preview.textContent = PaperLinks.preview(item.body, sources, style);
         li.append(preview);
+    }
+
+    // the papers it's about
+    const papers = PaperLinks.isGeneralNote(item) ? PaperLinks.papersOf(item, sources) : [];
+    if (papers.length) {
+        const chips = document.createElement('div');
+        chips.className = 'paper_chips';
+        chips.append(...papers.map(s => {
+            const a = document.createElement('a');
+            a.className = 'paper_chip';
+            a.href = 'material.html?id=' + encodeURIComponent(s.id);
+            a.textContent = shortCitation(s) || s.title;
+            a.title = s.title;
+            return a;
+        }));
+        li.append(chips);
     }
 
     const meta = document.createElement('small');
@@ -142,6 +167,8 @@ function renderStats() {
 
 // ---- item form (quick notes and generic sections) ----
 
+let linkedIds = new Set(); // papers linked to the note in the form ("+ Link a paper")
+
 function openForm(item, type = 'inbox') {
     editingId = item?.id ?? null;
     form.reset();
@@ -155,19 +182,107 @@ function openForm(item, type = 'inbox') {
     f.title.value = item?.title ?? '';
     f.body.value = item?.body ?? '';
     f.sourceId.value = item?.sourceId ?? '';
+    linkedIds = new Set(item?.sourceIds || []);
+    $('#paper_picker').hidden = true;
+    $('#link_paper').setAttribute('aria-expanded', 'false');
 
-    $('#form_heading').textContent = item ? 'Edit' : 'Add to ' + SECTIONS[f.type.value].label;
+    $('#form_heading').textContent = item ? 'Edit note'
+        : type === 'inbox' ? 'Quick note' : 'New in ' + SECTIONS[type].label;
     $('#delete_item').hidden = !item;
     updateConditionalFields();
+    renderLinkChips();
 
     openModal(form);
-    (item || type !== 'inbox' ? f.title : f.body).focus();
+    f.body.focus();
 }
 
 function updateConditionalFields() {
     const type = form.elements.type.value;
     for (const label of $$('[data-for]', form)) label.hidden = label.dataset.for !== type;
+    $('.paper_links', form).hidden = type === 'source_note'; // that one is about its source already
 }
+
+// ---- papers in the note: linked chips (×), cited ones marked; a picker to add more ----
+
+const projectSources = () => {
+    const sources = items.filter(i => i.type === 'source');
+    assignCitekeys(sources);
+    return sources;
+};
+
+function renderLinkChips() {
+    const sources = projectSources();
+    const cited = PaperLinks.citedKeys(form.elements.body.value);
+    const shown = sources.filter(s => linkedIds.has(s.id) || cited.has(s.citekey));
+    $('#link_chips').replaceChildren(...shown.map(s => {
+        const li = el('li', 'link_chip');
+        li.title = s.title;
+        li.append(shortCitation(s) || s.title);
+        if (cited.has(s.citekey)) li.append(el('small', '', ' cited'));
+        else {
+            const x = el('button', 'link', '×');
+            x.type = 'button';
+            x.dataset.unlink = s.id;
+            x.setAttribute('aria-label', 'Unlink ' + s.title);
+            li.append(x);
+        }
+        return li;
+    }));
+}
+
+function renderPaperResults() {
+    const query = $('#paper_search').value.trim().toLowerCase();
+    const sources = projectSources().filter(s => !query || [s.title, shortCitation(s), s.citekey, s.venue].join(' ').toLowerCase().includes(query));
+    $('#paper_results').replaceChildren(...(sources.length ? sources.slice(0, 30).map(s => {
+        const btn = el('button', 'paper_result');
+        btn.type = 'button';
+        btn.dataset.id = s.id;
+        btn.append(el('strong', '', s.title), el('small', '', [shortCitation(s), linkedIds.has(s.id) ? 'linked' : ''].filter(Boolean).join(' · ')));
+        return btn;
+    }) : [el('li', 'none', 'No sources match. Add papers on the Literature tab.')]));
+}
+
+$('#link_paper').onclick = () => {
+    const picker = $('#paper_picker');
+    picker.hidden = !picker.hidden;
+    $('#link_paper').setAttribute('aria-expanded', !picker.hidden);
+    if (!picker.hidden) {
+        renderPaperResults();
+        $('#paper_search').focus();
+    }
+};
+$('#paper_search').oninput = renderPaperResults;
+// keep the caret in the note while picking, so a citation goes where you were typing
+$('#paper_results').addEventListener('mousedown', e => e.preventDefault());
+$('#paper_results').addEventListener('click', e => {
+    const btn = e.target.closest('.paper_result');
+    if (!btn) return;
+    const source = projectSources().find(s => s.id === btn.dataset.id);
+    linkedIds.add(source.id);
+    if ($('#cite_in_text').checked) {
+        const area = form.elements.body;
+        const { selectionStart: start, selectionEnd: end, value } = area;
+        const before = start && !/\s$/.test(value.slice(0, start)) ? ' ' : '';
+        MdBar.replace(area, start, end, `${before}[@${source.citekey}]`);
+    }
+    renderLinkChips();
+    renderPaperResults();
+});
+$('#link_chips').addEventListener('click', e => {
+    const id = e.target.closest('[data-unlink]')?.dataset.unlink;
+    if (!id) return;
+    linkedIds.delete(id);
+    renderLinkChips();
+});
+form.elements.body.addEventListener('input', renderLinkChips);
+MdImages.enable(form.elements.body); // paste or drop images
+$('#note_image').onclick = () => MdImages.pick(form.elements.body);
+form.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+        e.preventDefault();
+        form.requestSubmit();
+    }
+});
 
 // ---- events ----
 
@@ -205,6 +320,9 @@ form.addEventListener('submit', e => {
     if (data.type === 'source_note') {
         data.sourceId = f.sourceId.value;
         if (!data.sourceId) return f.sourceId.focus();
+    } else {
+        // linked here or cited in the text
+        data.sourceIds = PaperLinks.papersOf({ body: data.body, sourceIds: [...linkedIds] }, projectSources()).map(s => s.id);
     }
 
     Store.saveItem(data);

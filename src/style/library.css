@@ -1,0 +1,57 @@
+/* Library: every material on bookshelves (library.js). Spines or covers (bookshelf.css); a book opens its profile. */
+
+.bar .search { width: min(280px, 40vw); margin-left: auto; }
+.bar .brand { margin-right: 0; }
+
+.library_page { display: grid; gap: 16px; padding: 20px 24px 40px; max-width: 1400px; margin: 0 auto; }
+
+.shelf_tools { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; }
+.shelf_tools .spacer { flex: 1; }
+.shelf_tools small { color: var(--muted); }
+.shelf_pick { display: flex; align-items: center; gap: 6px; font-size: .85rem; color: var(--muted); }
+.shelf_pick select { padding: 4px 8px; font-size: .85rem; }
+
+/* ---- shelves (the books themselves: bookshelf.css) ---- */
+.book_shelf { display: grid; gap: 28px; }
+
+.empty { color: var(--muted); font-style: italic; text-align: center; padding: 40px 16px; }
+
+/* ---- a book's profile ---- */
+.book_profile { width: min(680px, 100%); padding: 20px; display: grid; gap: 14px; }
+.book_profile_body { display: grid; grid-template-columns: 110px minmax(0, 1fr); gap: 16px; align-items: start; }
+.book_profile_cover {
+    display: grid;
+    align-content: end;
+    aspect-ratio: 3 / 4;
+    padding: 10px;
+    overflow: hidden;
+    border-radius: 3px 6px 6px 3px;
+    color: var(--book-ink);
+    font-size: .72rem;
+    background: linear-gradient(90deg, color-mix(in srgb, var(--book) 70%, #000) 0 6px, var(--book) 6px);
+    box-shadow: 2px 4px 10px rgba(0, 0, 0, .3);
+}
+.book_profile_cover:has(img) { padding: 0; background: #fff; }
+.book_profile_cover img { width: 100%; height: 100%; object-fit: cover; object-position: top; }
+.book_profile_info { display: grid; gap: 6px; }
+.book_profile h2 { margin: 0; font-size: 1.2rem; line-height: 1.3; }
+.book_profile h3 { margin: 0 0 6px; font-size: .85rem; color: var(--muted); }
+.book_meta { margin: 0; font-size: .8rem; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+.book_authors { margin: 0; }
+.book_links { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: .85rem; }
+.book_abstract .md { max-height: 26vh; overflow: auto; font-size: .9rem; }
+.book_projects ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.book_projects li { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; }
+.book_projects small { color: var(--muted); }
+.add_to { display: flex; align-items: center; gap: 6px; font-size: .85rem; color: var(--muted); }
+.add_to[hidden] { display: none; }
+.add_to select { padding: 4px 8px; font-size: .85rem; }
+.pick_project { padding: 20px; display: grid; gap: 12px; }
+.pick_project .hint { margin: 0; color: var(--muted); font-size: .88rem; }
+
+/* ---- phones ---- */
+@media (max-width: 600px) {
+    .library_page { padding: 12px 12px 32px; }
+    .bar .search { order: 3; width: 100%; margin-left: 0; }
+    .book_profile_body { grid-template-columns: 80px minmax(0, 1fr); }
+}

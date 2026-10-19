@@ -62,7 +62,8 @@ h1, h2, h3, .brand { font-family: var(--font-sans); font-weight: 600; }
 /* ---- glass: big surfaces (real blur) ---- */
 
 .bar, .panel, .section, .library, .figures_panel, .review_card, .settings_section, .stat,
-.modal, .composer, .workspacetabs {
+.modal, .composer, .workspacetabs,
+.colors_panel {
     background-color: var(--glass);
     background-image: linear-gradient(155deg, var(--glass-sheen) 0%, var(--glass-sheen-end) 34%, transparent 58%, var(--glass-glow) 100%);
     -webkit-backdrop-filter: blur(var(--blur-glass)) saturate(180%);
@@ -75,14 +76,17 @@ h1, h2, h3, .brand { font-family: var(--font-sans); font-weight: 600; }
         inset 0 0 0 1px var(--glass-edge-low),
         inset 0 -18px 30px -18px var(--glass-glow);
 }
-.panel, .section, .library, .figures_panel, .review_card, .settings_section, .modal { border-radius: var(--radius-lg); }
+.panel, .section, .library, .figures_panel, .review_card, .settings_section, .modal,
+.colors_panel { border-radius: var(--radius-lg); }
 .stat { border-radius: var(--radius-md); }
 .composer { border-radius: var(--radius-lg); }
 
 /* the curved reflection across the top-left of the glass */
-.panel, .section, .library, .figures_panel, .review_card, .settings_section, .stat, .modal { position: relative; isolation: isolate; }
+.panel, .section, .library, .figures_panel, .review_card, .settings_section, .stat, .modal,
+.colors_panel { position: relative; isolation: isolate; }
 .panel::before, .section::before, .library::before, .figures_panel::before, .review_card::before,
-.settings_section::before, .stat::before, .modal::before {
+.settings_section::before, .stat::before, .modal::before,
+.colors_panel::before {
     content: "";
     position: absolute;
     z-index: -1;
@@ -108,7 +112,9 @@ h1, h2, h3, .brand { font-family: var(--font-sans); font-weight: 600; }
 /* ---- glass: small things inside panels (strong tint, no blur) ---- */
 
 .item, .source_row, .source_note, .source_card, .figure_card, .picker, .style_card, .card_notes li,
-.digest_preview, .export_form textarea, .settings .setting code, .md code {
+.digest_preview, .export_form textarea, .settings .setting code, .md code,
+.ref, .get_paper, .drop_zone, .highlight, .review_answer,
+.paper_picker {
     background-color: var(--glass-strong);
     background-image: linear-gradient(180deg, var(--glass-sheen-end) 0%, transparent 60%);
     border: 1px solid var(--glass-edge);
@@ -205,7 +211,9 @@ form.modal label, .style_pick, .picker_head strong, .checks > span, .attach_mode
 
 .attach_mode button, .tag_chip, .group_chip, .seg_chip, .cite_suggest button, .toolbar button,
 .view_toggle button, .mode_toggle button, .segmented button, .workspacetabs button, .tabs button,
-.badge, .tag, .keywords li {
+.badge, .tag, .keywords li,
+.color_chip, .md_bar button, .zoom_ctl button, .row_cite,
+.link_chip, .paper_chip {
     border-radius: var(--radius-pill);
     border: 1px solid var(--glass-edge);
     background-color: var(--glass-strong);
@@ -221,7 +229,8 @@ form.modal label, .style_pick, .picker_head strong, .checks > span, .attach_mode
 
 .attach_mode button[aria-pressed="true"], .tag_chip.active, .group_chip.on,
 .view_toggle button[aria-pressed="true"], .toolbar .mode_toggle button[aria-pressed="true"],
-.segmented button[aria-checked="true"], .workspacetabs button[aria-selected="true"], .tabs button[aria-selected="true"] {
+.segmented button[aria-checked="true"], .workspacetabs button[aria-selected="true"], .tabs button[aria-selected="true"],
+.color_chip[aria-pressed="true"], .color_chip[aria-checked="true"] {
     background-image: linear-gradient(180deg, var(--aqua-light) 0%, var(--aqua) 55%, var(--aqua-deep) 100%);
     border-color: var(--aqua-deep);
     color: var(--on-color);
@@ -287,7 +296,8 @@ html[data-theme="dark"] .tag { color: var(--ink); }
 }
 @media (max-width: 599px) {
     .source_title { font-size: 1.5rem; }
-    .panel, .section, .library, .figures_panel { border-radius: var(--radius-md); }
+    .panel, .section, .library, .figures_panel,
+.colors_panel { border-radius: var(--radius-md); }
 }
 /* touch: every control at least 44px (the guide's target-min) */
 @media (pointer: coarse) {
@@ -297,7 +307,8 @@ html[data-theme="dark"] .tag { color: var(--ink); }
 /* reduced transparency, or no backdrop blur: frosted glass becomes solid glass */
 @media (prefers-reduced-transparency: reduce) {
     .bar, .panel, .section, .library, .figures_panel, .review_card, .settings_section, .stat, .modal,
-    .composer, .workspacetabs, .reader_bar, .side {
+    .composer, .workspacetabs, .reader_bar, .side,
+.colors_panel {
         background-color: var(--glass-solid);
         -webkit-backdrop-filter: none;
         backdrop-filter: none;
@@ -305,14 +316,47 @@ html[data-theme="dark"] .tag { color: var(--ink); }
 }
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
     .bar, .panel, .section, .library, .figures_panel, .review_card, .settings_section, .stat, .modal,
-    .composer, .workspacetabs, .reader_bar, .side { background-color: var(--glass-solid); }
+    .composer, .workspacetabs, .reader_bar, .side,
+.colors_panel { background-color: var(--glass-solid); }
 }
 /* high contrast: no shine or reflections, plain system borders */
 @media (forced-colors: active) {
     .btn::before, .panel::before, .section::before, .library::before, .figures_panel::before,
-    .review_card::before, .settings_section::before, .stat::before, .modal::before { display: none; }
-    .btn, .tag_chip, .group_chip, .attach_mode button, input, select, textarea { border: 2px solid ButtonText; }
+    .review_card::before, .settings_section::before, .stat::before, .modal::before,
+.colors_panel::before { display: none; }
+    .btn, .tag_chip, .group_chip, .attach_mode button, input, select, textarea,
+.color_chip, .md_bar button, .zoom_ctl button, .row_cite,
+.link_chip, .paper_chip { border: 2px solid ButtonText; }
 }
 @media (prefers-reduced-motion: reduce) {
     .btn { transition: none; }
+}
+
+/* things that float over the text need solid glass */
+.writer .toolbar, .menu_items { background-color: var(--glass-solid); }
+
+/* ---- library shelves: glossy glass tubes on a frosted shelf ---- */
+html[data-style="skyglass"][data-theme] {
+    --book-0: var(--blue); --book-1: var(--green); --book-2: var(--aqua); --book-3: var(--orange-deep);
+    --book-4: var(--red); --book-5: var(--blue-deep); --book-6: var(--aqua-deep); --book-7: var(--green-deep);
+    --book-ink: var(--on-color);
+}
+.book.spine, .cover_face, .book_profile_cover {
+    background:
+        linear-gradient(90deg, transparent 0 12%, var(--glass-sheen) 28%, transparent 46%),
+        linear-gradient(180deg, color-mix(in srgb, var(--book) 70%, #fff) 0%, var(--book) 45%, color-mix(in srgb, var(--book) 75%, #000) 100%);
+    border: 1px solid var(--glass-edge);
+    box-shadow: var(--shadow-gloss), inset 0 1px 0 var(--glass-shine);
+    text-shadow: 0 1px 1px var(--gloss-depth);
+}
+.book.spine { border-radius: var(--radius-pill) var(--radius-pill) 10px 10px; }
+.cover_face, .book_profile_cover { border-radius: var(--radius-md); }
+.shelf_row_base {
+    height: 16px;
+    border-radius: var(--radius-pill);
+    background: linear-gradient(180deg, var(--glass-sheen) 0%, var(--glass-strong) 60%, var(--glass) 100%);
+    border: 1px solid var(--glass-edge);
+    -webkit-backdrop-filter: blur(var(--blur-glass));
+    backdrop-filter: blur(var(--blur-glass));
+    box-shadow: var(--shadow-glass);
 }

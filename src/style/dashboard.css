@@ -100,3 +100,59 @@
     .workspacetabs { padding: 0 16px; }
     .workspace { padding: 16px; }
 }
+
+/* ---- the note popup: the note first, the papers it's about, where it goes ---- */
+.item_form textarea[name="body"] { min-height: 9em; }
+.paper_links { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; }
+.paper_links[hidden] { display: none; }
+.paper_links_label { font-size: .85rem; color: var(--muted); }
+.link_chips { list-style: none; margin: 0; padding: 0; display: contents; }
+.link_chip, .paper_chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 10px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: var(--bg);
+    font-size: .8rem;
+    color: var(--text);
+}
+.link_chip small { color: var(--muted); }
+.link_chip .link { font-size: 1rem; line-height: 1; color: var(--muted); }
+.paper_picker { display: grid; gap: 6px; padding: 8px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--bg); }
+.paper_picker[hidden] { display: none; }
+.picker_row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; }
+.picker_row input[type="search"] { flex: 1; min-width: 160px; }
+.picker_row .check { margin: 0; font-size: .82rem; color: var(--text); display: flex; align-items: center; gap: 6px; }
+.paper_results { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; max-height: 30vh; overflow: auto; }
+.paper_result {
+    display: grid;
+    width: 100%;
+    padding: 6px 8px;
+    border: 0;
+    border-radius: 6px;
+    background: none;
+    color: var(--text);
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+.paper_result:hover, .paper_result:focus-visible { background: var(--surface); }
+.paper_result strong { font-size: .88rem; font-weight: 600; }
+.paper_result small { color: var(--muted); font-size: .76rem; }
+.paper_results .none { color: var(--muted); font-size: .85rem; font-style: italic; padding: 4px 8px; }
+.save_to { display: flex !important; align-items: center; gap: 6px; font-size: .85rem; }
+.save_to select { padding: 4px 8px; font-size: .85rem; }
+
+/* linked papers on a note in the lists */
+.paper_chips { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+.paper_chip { text-decoration: none; }
+.paper_chip:hover { border-color: var(--accent); color: var(--accent); }
+@media (max-width: 600px) {
+    .item_form .actions { flex-wrap: wrap; }
+    .save_to { flex-basis: 100%; }
+    .item_form .shortcut { display: none; }
+}
+
+.item_form .shortcut { align-self: center; color: var(--muted); font-size: .75rem; }

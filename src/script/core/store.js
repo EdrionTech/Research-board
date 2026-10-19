@@ -1,7 +1,7 @@
 // Shared data layer for every page. Prototype only: records live in localStorage,
 // files (uploaded PDFs, later images/audio) live in IndexedDB.
 //
-// projects: [{ id, title, desc, image }]
+// projects: [{ id, title, desc, image }]   image: a link, 'asset:<id>' (an uploaded picture) or '' (the style's own)
 // items:    [{ id, projectId, type, title, body, ..., createdAt, updatedAt }]
 //           `type` decides which section an item shows in (see dashboard.js);
 //           sources follow model/literature material.json.
@@ -9,6 +9,10 @@
 const Store = (() => {
     const PROJECTS_KEY = 'research_board_projects';
     const ITEMS_KEY = 'research_board_items';
+    // Materials added in the Library belong to no project: projectId LIBRARY_ID. The library has its own
+    // settings (citation style, highlight colours) like a project, kept under LIBRARY_KEY.
+    const LIBRARY_ID = 'library';
+    const LIBRARY_KEY = 'research_board_library';
     // Projects without a picture store image: ''; the page shows the style's default (Settings.defaultImage).
     // Older projects stored this stock photo as their picture: it is treated as "no picture" too.
     const DEFAULT_IMAGE = 'https://images.pexels.com/photos/6325886/pexels-photo-6325886.jpeg';
@@ -39,10 +43,16 @@ const Store = (() => {
     }
 
     function getProject(id) {
+        if (id === LIBRARY_ID) return { ...(read(LIBRARY_KEY) || {}), id: LIBRARY_ID, title: 'Library', library: true };
         return getProjects().find(p => p.id === id);
     }
 
     function saveProject(data) {
+        if (data.id === LIBRARY_ID) {
+            const { id, title, library, ...settings } = data;
+            write(LIBRARY_KEY, { ...(read(LIBRARY_KEY) || {}), ...settings });
+            return;
+        }
         const projects = getProjects();
         const existing = projects.find(p => p.id === data.id);
         if (existing) Object.assign(existing, data);
@@ -59,6 +69,7 @@ const Store = (() => {
     function deleteProject(id) {
         const items = allItems();
         for (const item of items) if (item.projectId === id) deleteItemAssets(item);
+        deleteItemAssets(getProject(id) || {});
         write(PROJECTS_KEY, getProjects().filter(p => p.id !== id));
         write(ITEMS_KEY, items.filter(i => i.projectId !== id));
     }
@@ -112,12 +123,15 @@ const Store = (() => {
         return dbPromise;
     }
 
+    // a write resolves once it's committed (not just requested), so leaving the page right after can't lose it
     async function assetRequest(mode, makeRequest) {
-        const store = (await db()).transaction('assets', mode).objectStore('assets');
+        const tx = (await db()).transaction('assets', mode);
         return new Promise((resolve, reject) => {
-            const req = makeRequest(store);
-            req.onsuccess = () => resolve(req.result);
+            const req = makeRequest(tx.objectStore('assets'));
+            if (mode === 'readwrite') tx.oncomplete = () => resolve(req.result);
+            else req.onsuccess = () => resolve(req.result);
             req.onerror = () => reject(req.error);
+            tx.onabort = () => reject(tx.error || new Error('not saved'));
         });
     }
 
@@ -149,9 +163,9 @@ const Store = (() => {
     // Everything as one object (for a .json file). With files: PDFs, images and videos are included too.
     async function backup({ includeFiles = false } = {}) {
         const items = allItems();
-        const data = { app: 'research-board', version: 1, exported: new Date().toISOString(), projects: getProjects(), items, files: {} };
+        const data = { app: 'research-board', version: 1, exported: new Date().toISOString(), projects: getProjects(), library: read(LIBRARY_KEY) || {}, items, files: {} };
         if (includeFiles) {
-            for (const id of new Set(items.flatMap(assetIdsOf))) {
+            for (const id of new Set([...items, ...getProjects()].flatMap(assetIdsOf))) {
                 const blob = await getAsset(id).catch(() => null);
                 if (blob) data.files[id] = { type: blob.type, name: blob.name || '', data: await toDataUrl(blob) };
             }
@@ -167,6 +181,7 @@ const Store = (() => {
         await clearAll();
         write(PROJECTS_KEY, data.projects);
         write(ITEMS_KEY, data.items);
+        if (data.library) write(LIBRARY_KEY, data.library);
         for (const [id, file] of Object.entries(data.files || {})) {
             const blob = await (await fetch(file.data)).blob();
             const stored = file.name ? new File([blob], file.name, { type: file.type }) : blob;
@@ -179,12 +194,13 @@ const Store = (() => {
         try {
             localStorage.removeItem(PROJECTS_KEY);
             localStorage.removeItem(ITEMS_KEY);
+            localStorage.removeItem(LIBRARY_KEY);
         } catch { /* storage unavailable */ }
         await assetRequest('readwrite', store => store.clear()).catch(() => { });
     }
 
     return {
-        DEFAULT_IMAGE,
+        DEFAULT_IMAGE, LIBRARY_ID,
         getProjects, getProject, saveProject, deleteProject,
         getItems, getItem, saveItem, deleteItem,
         putAsset, getAsset, deleteAsset,

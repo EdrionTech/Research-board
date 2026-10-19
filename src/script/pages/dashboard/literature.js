@@ -1,4 +1,5 @@
-// Literature tab: the review card and the source library. Filter by text, status and your own tags,
+// Literature tab: the review card and the source library (each card shows its paper's first page, blurred,
+// behind it: sources/bookshelf.js). Filter by text, status and your own tags,
 // and export a bibliography or a digest of your summaries; which sources go in is chosen in each
 // popup (sources/picker.js). Each source has its own page (material.html).
 // Uses helpers from core/ui.js and sources/*, and items/project from dashboard.js.
@@ -53,6 +54,7 @@ function renderLiterature() {
     const shown = shownSources();
     $('#source_list').replaceChildren(...(shown.length ? shown.map(sourceRow)
         : [el('li', 'none', all.length ? 'No sources match.' : 'No sources yet. Add one with + Source, a link is enough.')]));
+    Bookshelf.whenVisible($$('#source_list .row_preview[data-source]'), (preview, url) => { preview.style.backgroundImage = `url("${url}")`; });
     $('#selection_info').textContent = `${shown.length} of ${all.length} shown`;
     renderColors();
     renderFigures();
@@ -378,6 +380,14 @@ function sourceRow(source) {
     const status = source.status || 'to_read';
     const link = el('a', 'source_row');
     link.href = materialUrl(source.id);
+    // a preview of it, blurred, behind the card: its PDF's first page or the video's thumbnail
+    if (Bookshelf.canPreview(source)) {
+        const preview = el('span', 'row_preview');
+        preview.setAttribute('aria-hidden', 'true');
+        preview.dataset.source = source.id;
+        link.append(preview);
+        link.classList.add('has_preview');
+    }
     link.append(el('strong', '', source.title), el('small', '', shortCitation(source) || 'No authors yet'));
 
     const badges = el('div', 'row_tags');
@@ -492,6 +502,47 @@ function updateDigest() {
 }
 
 // ---- events ----
+
+// ---- + From library: a material from the library (on its own, or in another project) ----
+
+function renderLibraryResults() {
+    const query = $('#library_search').value.trim().toLowerCase();
+    const books = Library.books().filter(b => !Library.inProject(b, project.id))
+        .filter(b => !query || [b.source.title, authorsLine(b.source), b.source.venue, ...b.copies.map(c => c.project.title)].join(' ').toLowerCase().includes(query))
+        .sort((a, b) => b.added - a.added);
+    $('#library_results').replaceChildren(...(books.length ? books.map(book => {
+        const li = el('li', 'library_result');
+        const where = book.copies.map(c => (c.project.library ? 'Library only' : c.project.title)).join(', ');
+        li.append(el('strong', '', book.source.title), el('small', '', [shortCitation(book.source), where].filter(Boolean).join(' · ')));
+        const add = el('button', 'btn small', '+ Add');
+        add.type = 'button';
+        add.dataset.key = book.key;
+        li.append(add);
+        return li;
+    }) : [el('li', 'none', query ? 'Nothing in your library matches.' : 'Everything in your library is in this project already.')]));
+}
+
+$('#from_library').onclick = () => {
+    $('#library_search').value = '';
+    $('#library_state').textContent = '';
+    renderLibraryResults();
+    openModal($('#from_library_form'));
+    $('#library_search').focus();
+};
+$('#library_search').oninput = renderLibraryResults;
+$('#from_library_form').addEventListener('submit', e => e.preventDefault());
+$('#library_results').addEventListener('click', async e => {
+    const btn = e.target.closest('button[data-key]');
+    if (!btn) return;
+    btn.disabled = true;
+    const book = Library.books().find(b => b.key === btn.dataset.key);
+    // prefer the copy on its own in the library (it moves here); else copy one from another project
+    const from = book.copies.find(c => c.project.library)?.source || book.source;
+    await Library.addToProject(from, project.id);
+    $('#library_state').textContent = `Added "${book.source.title}" ✓`;
+    render();
+    renderLibraryResults();
+});
 
 $('#add_source').onclick = () => SourceForm.open(null, {
     projectId: project.id,

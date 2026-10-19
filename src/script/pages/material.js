@@ -25,7 +25,7 @@ const MODE_HINTS = {
 };
 
 let source = Store.getItem(sourceId);
-const project = source && Store.getProject(source.projectId);
+const project = source && Store.getProject(source.projectId); // the library's own settings for library-only materials
 let notes = [];
 let editingNoteId = null;
 let attachMode = 'block';
@@ -76,9 +76,10 @@ const snippet = text => {
 };
 
 function init() {
-    const back = $('#back_link');
-    back.href = 'project_dashboard.html?id=' + encodeURIComponent(project.id) + '#literature';
-    back.textContent = '← ' + project.title;
+    // back to where you came from (the library, the project, another paper…)
+    if (project.library) Nav.backLink($('#back_link'), 'library.html', 'Library');
+    else Nav.backLink($('#back_link'), 'project_dashboard.html?id=' + encodeURIComponent(project.id) + '#literature', project.title);
+    renderAddToProject();
 
     for (const [value, label] of Object.entries(Cite.STYLES)) $('#cite_style').append(new Option(label, value));
     $('#cite_style').value = project.citeStyle || 'apa'; // the project's default (set on the Literature tab)
@@ -103,6 +104,7 @@ function render() {
     notes = Store.getItems(project.id)
         .filter(i => i.type === 'source_note' && i.sourceId === source.id)
         .sort(byPosition);
+    renderInNotes();
     renderHead();
     renderNotes();
     markNoted();
@@ -1361,6 +1363,9 @@ function openCapture(blob, context) {
     form.elements.caption.value = context.caption || source.title;
     form.elements.kind.value = pendingCapture.kind;
     form.elements.credit.value = pendingCapture.credit;
+    // project figures need a project: a material on its own in the library keeps images as notes
+    form.elements.asFigure.disabled = !!project.library;
+    if (project.library) form.elements.asFigure.checked = false;
     form.elements.note.value = '';
     openModal(form);
     form.elements.caption.select();
@@ -1621,6 +1626,54 @@ async function playNoteSegment(segment) {
     await showView('video');
     playSegment(segment);
     $('#reader_video').scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+}
+
+// ---- add this material to (another) project ----
+// On its own in the library: it moves into the project you pick, with your notes. Already in a project:
+// the other project gets its own copy.
+
+function renderAddToProject() {
+    const book = Library.bookOf(source);
+    const others = Store.getProjects().filter(p => !book || !Library.inProject(book, p.id));
+    $('#add_project').hidden = !others.length;
+    $('#add_project_label').textContent = project.library ? 'Add to a project' : 'Also add to';
+    $('#add_project_select').replaceChildren(new Option(project.library ? 'Add to a project…' : 'Also add to…', ''), ...others.map(p => new Option(p.title, p.id)));
+    $('#in_library').hidden = !project.library;
+}
+
+$('#add_project_select').onchange = async e => {
+    const projectId = e.target.value;
+    if (!projectId) return;
+    const target = Store.getProject(projectId);
+    const id = await Library.addToProject(source, projectId);
+    if (id === source.id) {
+        // moved out of the library: this page now belongs to the project
+        location.replace('material.html?id=' + encodeURIComponent(id));
+        return;
+    }
+    $('#add_project_state').replaceChildren(`Added to ${target.title} ✓ `, Object.assign(el('a', '', 'Open it there'), { href: 'material.html?id=' + encodeURIComponent(id) }));
+    renderAddToProject();
+};
+
+// ---- your general notes about this paper (dashboard notes that link or cite it) ----
+
+function renderInNotes() {
+    const all = Store.getItems(project.id);
+    const sources = all.filter(i => i.type === 'source');
+    assignCitekeys(sources);
+    const me = sources.find(s => s.id === source.id) || source;
+    const about = PaperLinks.notesAbout(me, all).sort((a, b) => b.updatedAt - a.updatedAt);
+    $('#in_notes').hidden = !about.length;
+    $('#in_notes_count').textContent = about.length ? `(${about.length})` : '';
+    $('#in_notes_list').replaceChildren(...about.map(note => {
+        const li = el('li');
+        const a = el('a', 'in_note');
+        a.href = `project_dashboard.html?id=${encodeURIComponent(project.id)}&item=${encodeURIComponent(note.id)}`;
+        a.append(el('strong', '', note.title || PaperLinks.preview((note.body || '').split('\n')[0], sources, project.citeStyle || 'apa')));
+        if (note.title && note.body) a.append(el('span', '', PaperLinks.preview(note.body, sources, project.citeStyle || 'apa').slice(0, 160)));
+        li.append(a);
+        return li;
+    }));
 }
 
 // ---- notes list ----
@@ -2063,6 +2116,29 @@ async function attachFile(file) {
     refresh();
     currentView = isVideo ? 'video' : 'pdf';
     setupReader();
+    if (!isVideo) fillBlanksFromPdf(file);
+}
+
+// A PDF brought in by hand (a paywalled paper, say): what the source is missing, read from the PDF itself.
+// Only empty fields are filled; nothing you entered is replaced.
+async function fillBlanksFromPdf(file) {
+    let pdf;
+    try {
+        pdf = await pdfDetails(file);
+    } catch {
+        return;
+    }
+    const update = {};
+    if (!source.abstract && pdf.abstract) update.abstract = pdf.abstract;
+    if (!source.authors?.length && pdf.authors.length) update.authors = pdf.authors;
+    if (!source.keywords?.length && pdf.keywords.length) update.keywords = pdf.keywords;
+    if (!source.venue && pdf.venue) update.venue = pdf.venue;
+    if (!source.published && pdf.published) update.published = pdf.published;
+    if (!source.doi && pdf.doi) update.doi = pdf.doi;
+    if (!Object.keys(update).length) return;
+    Store.saveItem({ id: source.id, ...update });
+    refresh();
+    toast(`Filled in from the PDF: ${Object.keys(update).join(', ')}.`);
 }
 
 $('#paste_text').onclick = () => {
@@ -2119,7 +2195,7 @@ $('#delete_source').onclick = () => {
     if (!confirm(`Delete "${source.title}"${notes.length ? ` and its ${notes.length} notes` : ''}?`)) return;
     notes.forEach(n => Store.deleteItem(n.id));
     Store.deleteItem(source.id);
-    location.href = $('#back_link').href;
+    location.href = Nav.backHref(project.library ? 'library.html' : 'project_dashboard.html?id=' + encodeURIComponent(project.id) + '#literature');
 };
 
 $('#tag_input').addEventListener('keydown', e => {

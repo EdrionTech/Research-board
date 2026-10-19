@@ -302,7 +302,10 @@ form.modal .checks label { display: flex; align-items: center; gap: 6px; color: 
 .color_row { display: grid; grid-template-columns: auto minmax(0, 1fr) auto auto; align-items: center; gap: 8px; }
 .color_row small { color: var(--muted); font-size: .78rem; white-space: nowrap; }
 .color_row .link { font-size: 1.1rem; color: var(--muted); }
-.color_input { width: 34px; height: 34px; padding: 0; border: 1px solid var(--line); border-radius: 50%; background: none; cursor: pointer; }
+.color_rows .color_input {
+    width: 34px; height: 34px; padding: 0; border: 1px solid var(--line); border-radius: 50%;
+    background: none; box-shadow: none; clip-path: none; cursor: pointer; /* whatever a style does to inputs */
+}
 .color_input::-webkit-color-swatch-wrapper { padding: 3px; }
 .color_input::-webkit-color-swatch { border: none; border-radius: 50%; }
 .color_input::-moz-color-swatch { border: none; border-radius: 50%; }
@@ -314,3 +317,19 @@ form.modal .checks label { display: flex; align-items: center; gap: 6px; color: 
 @media (pointer: coarse) {
     .color_input { width: 44px; height: 44px; }
 }
+
+/* the source form: "or Upload a PDF or document" */
+.upload_row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; margin-top: -4px; font-size: .85rem; color: var(--muted); }
+.upload_row .upload_name { color: var(--text); overflow-wrap: anywhere; }
+.upload_row .upload_name:empty { display: none; }
+
+/* a picture: a link or an uploaded image (images.js) — project and material forms */
+.image_field { display: grid; gap: 4px; }
+.image_field_row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.image_field_link { flex: 1; min-width: 160px; }
+.image_field_preview { width: 56px; height: 42px; object-fit: cover; border-radius: 6px; border: 1px solid var(--line); }
+.image_field_preview[hidden] { display: none; }
+form.modal .image_field label.image_field_upload { display: inline-flex; align-items: center; color: var(--text); font-size: .85rem; cursor: pointer; }
+.image_field_clear { color: var(--danger); }
+.image_field_clear[hidden], .image_field_note[hidden] { display: none; }
+.image_field_note { font-size: .78rem; overflow-wrap: anywhere; }

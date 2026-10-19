@@ -57,7 +57,8 @@ h1, h2, h3, .brand, .project_title, .source_title, .section h3, .md_field h3, #n
 .bar .back { font-family: var(--font-mono); font-size: 14px; }
 
 .panel, .section, .library, .figures_panel, .review_card, .stat, .library_list, .source_pane,
-.project, .picker, .digest_preview, .export_form textarea {
+.project, .picker, .digest_preview, .export_form textarea,
+.colors_panel {
     background-color: var(--surface-window);
     border: var(--border-pixel) solid var(--line);
     border-radius: 0;
@@ -66,10 +67,14 @@ h1, h2, h3, .brand, .project_title, .source_title, .section h3, .md_field h3, #n
 .review_card { border-left-width: var(--border-heavy); border-left-color: var(--line); }
 
 /* things inside a window: wells */
-.item, .source_row, .source_note, .source_card, .figure_card, .card_notes li, .notes li, .stats .stat b {
+.item, .source_row, .source_note, .source_card, .figure_card, .card_notes li, .notes li, .stats .stat b,
+.ref, .get_paper, .drop_zone, .highlight, .review_answer,
+.paper_picker {
     border-radius: 0;
 }
-.item, .source_row, .source_note, .source_card, .figure_card {
+.item, .source_row, .source_note, .source_card, .figure_card,
+.ref, .get_paper, .drop_zone, .highlight, .review_answer,
+.paper_picker {
     background: var(--surface-inset);
     border: var(--border-pixel) solid var(--line);
 }
@@ -185,13 +190,16 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--candy-green); 
 .view_toggle button[aria-pressed="true"],
 .toolbar .mode_toggle button[aria-pressed="true"] { background: var(--candy-teal); color: var(--on-candy); }
 
-.attach_mode button, .tag_chip, .group_chip, .seg_chip, .cite_suggest button, .toolbar button {
+.attach_mode button, .tag_chip, .group_chip, .seg_chip, .cite_suggest button, .toolbar button,
+.color_chip, .md_bar button, .zoom_ctl button, .row_cite,
+.link_chip, .paper_chip {
     border: var(--border-pixel) solid var(--line);
     border-radius: 0;
     background: var(--surface-inset);
     color: var(--ink);
 }
-.attach_mode button[aria-pressed="true"], .tag_chip.active, .group_chip.on {
+.attach_mode button[aria-pressed="true"], .tag_chip.active, .group_chip.on,
+.color_chip[aria-pressed="true"], .color_chip[aria-checked="true"] {
     background: var(--candy-teal);
     border-color: var(--line);
     color: var(--on-candy);
@@ -280,3 +288,35 @@ progress, .reader_progress { accent-color: var(--candy-blue); }
 
 /* states switch instantly: no easing */
 *, *::before, *::after { transition: none !important; }
+
+/* ---- library shelves: candy blocks with ink outlines on a pixel shelf ---- */
+html[data-style="pixel-pop"][data-theme] {
+    --book-0: var(--candy-teal); --book-1: var(--candy-orange); --book-2: var(--candy-pink); --book-3: var(--candy-lavender);
+    --book-4: var(--candy-green); --book-5: var(--candy-yellow); --book-6: var(--candy-blue); --book-7: var(--lip-cream);
+    --book-ink: var(--on-candy);
+}
+.book.spine, .cover_face, .book_profile_cover {
+    background: var(--book);
+    border: var(--border-pixel) solid var(--line);
+    border-radius: 0;
+    box-shadow: inset 0 calc(var(--border-pixel) * -2) 0 rgba(0, 0, 0, .18), 3px 3px 0 var(--shadow-ink);
+    font-family: var(--font-display);
+}
+.book.spine::before {
+    content: '';
+    position: absolute;
+    left: 4px;
+    right: 4px;
+    top: 14px;
+    height: 4px;
+    background: var(--line);
+    opacity: .5;
+}
+.cover_face { background: linear-gradient(90deg, var(--line) 0 var(--border-pixel), var(--book) var(--border-pixel)); }
+.shelf_row_base {
+    height: 14px;
+    border: var(--border-pixel) solid var(--line);
+    border-radius: 0;
+    background: repeating-linear-gradient(90deg, var(--candy-orange) 0 12px, var(--lip-orange) 12px 14px);
+    box-shadow: 3px 3px 0 var(--shadow-ink);
+}

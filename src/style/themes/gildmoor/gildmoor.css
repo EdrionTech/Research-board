@@ -60,7 +60,8 @@ html[data-style="gildmoor"][data-theme="light"] body {
     background-attachment: fixed;
 }
 /* the big frames let a little of the landscape through */
-html[data-style="gildmoor"][data-theme="light"] :is(.panel, .section, .library, .figures_panel, .review_card, .settings_section, .stat) {
+html[data-style="gildmoor"][data-theme="light"] :is(.panel, .section, .library, .figures_panel, .review_card, .settings_section, .stat),
+.colors_panel {
     background: linear-gradient(180deg, color-mix(in srgb, var(--surface-top) 90%, transparent), color-mix(in srgb, var(--surface-bottom) 86%, transparent));
 }
 
@@ -85,7 +86,8 @@ code, pre, kbd { font-family: ui-monospace, Consolas, monospace; }
 /* ---- frames: gold line, inner hairline, soft gold glow ---- */
 
 .bar, .panel, .section, .library, .figures_panel, .review_card, .settings_section, .stat,
-.modal, .composer, .workspacetabs {
+.modal, .composer, .workspacetabs,
+.colors_panel {
     background: linear-gradient(180deg, var(--surface-top), var(--surface-bottom));
     border: 1px solid var(--gold);
     border-radius: 0;
@@ -95,9 +97,11 @@ code, pre, kbd { font-family: ui-monospace, Consolas, monospace; }
 .settings_section { overflow: visible; } /* room for the corners (it only clipped the rounding) */
 
 /* diamond corners (::after) and the finial at the top centre (::before), on the frames that don't scroll */
-.panel, .section, .library, .figures_panel, .review_card, .settings_section, .stat { position: relative; }
+.panel, .section, .library, .figures_panel, .review_card, .settings_section, .stat,
+.colors_panel { position: relative; }
 .panel::after, .section::after, .library::after, .figures_panel::after, .review_card::after,
-.settings_section::after, .stat::after {
+.settings_section::after, .stat::after,
+.colors_panel::after {
     content: "";
     position: absolute;
     inset: -5px;
@@ -113,7 +117,8 @@ code, pre, kbd { font-family: ui-monospace, Consolas, monospace; }
         10px calc(100% - 5px), 5px 100%, 0 calc(100% - 5px), 5px calc(100% - 10px),
         5px 10px, 0 5px);
 }
-.panel::before, .section::before, .library::before, .figures_panel::before, .settings_section::before {
+.panel::before, .section::before, .library::before, .figures_panel::before, .settings_section::before,
+.colors_panel::before {
     content: "";
     position: absolute;
     top: -7px;
@@ -129,8 +134,10 @@ code, pre, kbd { font-family: ui-monospace, Consolas, monospace; }
 
 /* frame titles: centred-feeling carved capitals */
 .section h3, .figures_panel h3, .side h3, .review_card h3, .settings_section > header h2,
-.settings_section > header h3, form.modal h2 { font-family: var(--font-caps); color: var(--title); letter-spacing: .08em; }
-.settings_section > header, .figures_panel header { border-bottom: 1px solid var(--gold-deep); }
+.settings_section > header h3, form.modal h2,
+.colors_panel h3 { font-family: var(--font-caps); color: var(--title); letter-spacing: .08em; }
+.settings_section > header, .figures_panel header,
+.colors_panel header { border-bottom: 1px solid var(--gold-deep); }
 
 /* the top bar: a gilded strip */
 .bar { border-width: 0 0 1px; box-shadow: inset 0 -4px 0 -3px var(--gold-deep), 0 0 24px 0 var(--gold-glow); }
@@ -145,7 +152,9 @@ code, pre, kbd { font-family: ui-monospace, Consolas, monospace; }
 /* ---- small things inside frames: inset wells with a gold-deep line ---- */
 
 .item, .source_row, .source_note, .source_card, .figure_card, .picker, .style_card, .card_notes li,
-.digest_preview, .export_form textarea, .settings .setting code, .md code, .figure_credit_preview {
+.digest_preview, .export_form textarea, .settings .setting code, .md code, .figure_credit_preview,
+.ref, .get_paper, .drop_zone, .highlight, .review_answer,
+.paper_picker {
     background: var(--inset);
     border: 1px solid var(--gold-deep);
     border-radius: 0;
@@ -239,7 +248,9 @@ input[type="range"] { accent-color: var(--gold); box-shadow: none; background: n
 /* ---- chips, tabs, toggles: square plates; selected = the ruby plate with a gold finial ---- */
 
 .attach_mode button, .tag_chip, .group_chip, .seg_chip, .cite_suggest button, .toolbar button,
-.view_toggle button, .mode_toggle button, .segmented button, .workspacetabs button, .tabs button {
+.view_toggle button, .mode_toggle button, .segmented button, .workspacetabs button, .tabs button,
+.color_chip, .md_bar button, .zoom_ctl button, .row_cite,
+.link_chip, .paper_chip {
     position: relative;
     border-radius: 0;
     border: 1px solid var(--gold-deep);
@@ -250,14 +261,17 @@ input[type="range"] { accent-color: var(--gold); box-shadow: none; background: n
     letter-spacing: .06em;
 }
 .attach_mode button:hover, .tag_chip:hover, .group_chip:hover, .toolbar button:hover, .view_toggle button:hover,
-.mode_toggle button:hover, .segmented button:hover, .workspacetabs button:hover, .tabs button:hover { color: var(--title); border-color: var(--gold); }
+.mode_toggle button:hover, .segmented button:hover, .workspacetabs button:hover, .tabs button:hover,
+.color_chip:hover, .md_bar button:hover, .zoom_ctl button:hover, .row_cite:hover,
+.link_chip:hover, .paper_chip:hover { color: var(--title); border-color: var(--gold); }
 .view_toggle, .mode_toggle, .segmented { border: 0; gap: 4px; overflow: visible; border-radius: 0; }
 .segmented button + button { border-left: 1px solid var(--gold-deep); }
 .workspacetabs button, .tabs button { border-width: 1px 1px 0; background: transparent; }
 
 .attach_mode button[aria-pressed="true"], .tag_chip.active, .group_chip.on,
 .view_toggle button[aria-pressed="true"], .toolbar .mode_toggle button[aria-pressed="true"],
-.segmented button[aria-checked="true"], .workspacetabs button[aria-selected="true"], .tabs button[aria-selected="true"] {
+.segmented button[aria-checked="true"], .workspacetabs button[aria-selected="true"], .tabs button[aria-selected="true"],
+.color_chip[aria-pressed="true"], .color_chip[aria-checked="true"] {
     background: linear-gradient(180deg, var(--ruby-light), var(--ruby) 60%, var(--ruby-deep));
     border-color: var(--gold);
     color: var(--on-gem);
@@ -361,8 +375,46 @@ input[type="range"] { accent-color: var(--gold); box-shadow: none; background: n
 @media (forced-colors: active) {
     .panel::before, .section::before, .library::before, .figures_panel::before, .settings_section::before,
     .btn.primary::before, .btn.primary::after,
-    .workspacetabs button[aria-selected="true"]::after, .tabs button[aria-selected="true"]::after, .segmented button[aria-checked="true"]::after { display: none; }
+    .workspacetabs button[aria-selected="true"]::after, .tabs button[aria-selected="true"]::after, .segmented button[aria-checked="true"]::after,
+.colors_panel::before { display: none; }
     .panel::after, .section::after, .library::after, .figures_panel::after, .review_card::after,
-    .settings_section::after, .stat::after { forced-color-adjust: none; background: CanvasText; }
-    .btn, .tag_chip, .group_chip, .attach_mode button, input, select, textarea { border: 1px solid ButtonText; }
+    .settings_section::after, .stat::after,
+.colors_panel::after { forced-color-adjust: none; background: CanvasText; }
+    .btn, .tag_chip, .group_chip, .attach_mode button, input, select, textarea,
+.color_chip, .md_bar button, .zoom_ctl button, .row_cite,
+.link_chip, .paper_chip { border: 1px solid ButtonText; }
+}
+
+/* ---- library shelves: jewel-toned books with gold bands on a gilded shelf ---- */
+html[data-style="gildmoor"][data-theme] {
+    --book-0: var(--sapphire); --book-1: var(--emerald); --book-2: var(--ruby); --book-3: var(--amethyst);
+    --book-4: var(--night); --book-5: var(--sapphire-deep); --book-6: var(--ruby-deep); --book-7: var(--emerald-deep);
+    --book-ink: var(--on-gem);
+}
+.book.spine {
+    border-radius: 2px;
+    border: 1px solid var(--gold-deep);
+    background:
+        linear-gradient(var(--gold), var(--gold)) 0 18px / 100% 1px no-repeat,
+        linear-gradient(var(--gold), var(--gold)) 0 22px / 100% 1px no-repeat,
+        linear-gradient(var(--gold), var(--gold)) 0 calc(100% - 26px) / 100% 1px no-repeat,
+        linear-gradient(var(--gold), var(--gold)) 0 calc(100% - 22px) / 100% 1px no-repeat,
+        linear-gradient(90deg, color-mix(in srgb, var(--book) 70%, #000), var(--book) 30%, color-mix(in srgb, var(--book) 80%, #fff) 50%, var(--book) 70%, color-mix(in srgb, var(--book) 65%, #000));
+    box-shadow: 0 0 10px var(--gold-glow);
+    font-family: var(--font-caps);
+}
+.spine_title { letter-spacing: .06em; }
+.cover_face, .book_profile_cover {
+    border-radius: 2px;
+    border: 1px solid var(--gold);
+    background: radial-gradient(90% 60% at 50% 0%, color-mix(in srgb, var(--book) 60%, #fff) 0%, transparent 70%), var(--book);
+    box-shadow: inset 0 0 0 4px var(--book), inset 0 0 0 5px var(--gold-deep), 0 0 18px var(--gold-glow);
+    font-family: var(--font-caps);
+}
+.shelf_row_base {
+    height: 14px;
+    border-radius: 0;
+    border: 1px solid var(--gold);
+    background: linear-gradient(180deg, var(--surface-top), var(--surface-bottom));
+    box-shadow: inset 0 0 0 2px var(--frame-gap), inset 0 0 0 3px var(--gold-deep), 0 0 18px var(--gold-glow);
 }

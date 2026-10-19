@@ -9,6 +9,7 @@
     <link rel="stylesheet" href="../style/material.css">
     <!-- theme + style, before the page draws -->
     <script src="../script/core/settings.js"></script>
+    <script src="../script/core/nav.js"></script>
 </head>
 
 <body>
@@ -48,6 +49,12 @@
 
         <!-- copy a reference for your bibliography; styles come from cite.js -->
         <div class="cite_box">
+            <!-- in the library on its own: add it to a project; in a project: add it to another (library.js) -->
+            <p class="in_library" id="in_library" hidden>In your library, not in a project yet.</p>
+            <label class="add_project" id="add_project" hidden><span id="add_project_label">Add to a project</span>
+                <select id="add_project_select" aria-label="Add to a project"></select>
+            </label>
+            <small class="add_project_state" id="add_project_state" aria-live="polite"></small>
             <select id="cite_style" aria-label="Citation style"></select>
             <button type="button" class="btn small primary" id="copy_cite">Copy citation</button>
         </div>
@@ -221,6 +228,12 @@
                     </div>
                 </div>
             </section>
+            <!-- your general notes about this paper (linked or cited there: sources/links.js) -->
+            <section class="panel in_notes" id="in_notes" hidden>
+                <h3>In your notes <small id="in_notes_count"></small></h3>
+                <ul class="in_notes_list" id="in_notes_list"></ul>
+            </section>
+
             <!-- the paper's own references: add one, some or all to the project (material_refs.js) -->
             <details class="panel refs_panel" id="refs_panel" hidden>
                 <summary><h3>References <small id="refs_count"></small></h3></summary>
@@ -342,13 +355,17 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     <script src="../script/core/ui.js"></script>
     <script src="../script/core/store.js"></script>
+    <script src="../script/core/images.js"></script>
     <script src="../script/writing/markdown.js"></script>
     <script src="../script/writing/mdimages.js"></script>
     <script src="../script/writing/mdbar.js"></script>
+    <script src="../script/reader/documents.js"></script>
     <script src="../script/sources/sources.js"></script>
     <script src="../script/sources/cite.js"></script>
     <script src="../script/sources/colors.js"></script>
     <script src="../script/sources/references.js"></script>
+    <script src="../script/sources/links.js"></script>
+    <script src="../script/sources/library.js"></script>
     <script src="../script/reader/textrange.js"></script>
     <script src="../script/reader/zoom.js"></script>
     <script src="../script/reader/reader.js"></script>

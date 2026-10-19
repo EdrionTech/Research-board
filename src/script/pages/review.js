@@ -36,9 +36,7 @@ const escapeHtml = text => String(text).replace(/&/g, '&amp;').replace(/</g, '&l
 
 function init() {
     document.title = project.title + ' · Literature review';
-    const back = $('#back_link');
-    back.href = 'project_dashboard.html?id=' + encodeURIComponent(project.id) + '#literature';
-    back.textContent = '← ' + project.title;
+    Nav.backLink($('#back_link'), 'project_dashboard.html?id=' + encodeURIComponent(project.id) + '#literature', project.title);
 
     for (const [value, label] of Object.entries(Cite.INLINE_STYLES)) $('#cite_style').append(new Option(label, value));
     $('#cite_style').value = styleOf();

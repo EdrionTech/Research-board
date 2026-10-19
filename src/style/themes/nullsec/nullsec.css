@@ -66,7 +66,8 @@ code, pre, kbd, .md code, .seg_chip, .timestamp { font-family: var(--font-mono);
 
 /* ---- frames: neon outline, chamfered corners, brackets on the square ones ---- */
 
-.panel:not(.reader), .section, .library, .figures_panel, .review_card, .settings_section, .stat, .modal, .composer {
+.panel:not(.reader), .section, .library, .figures_panel, .review_card, .settings_section, .stat, .modal, .composer,
+.colors_panel {
     --c: var(--cut-lg);
     --edge: var(--line-strong);   /* the outline */
     --t: var(--cyan);             /* the brackets */
@@ -96,14 +97,17 @@ code, pre, kbd, .md code, .seg_chip, .timestamp { font-family: var(--font-mono);
 
 /* frame headings read like HUD tabs */
 .section h3, .figures_panel h3, .side h3, .review_card h3, .settings_section > header h2,
-.settings_section > header h3, form.modal h2 {
+.settings_section > header h3, form.modal h2,
+.colors_panel h3 {
     font-family: var(--font-display);
     font-weight: 700;
     letter-spacing: .12em;
     text-transform: uppercase;
 }
-.section h3, .figures_panel h3, .settings_section > header h2, .settings_section > header h3 { color: var(--red-ink); font-size: 14px; }
-.settings_section > header, .figures_panel header { border-bottom: 1px dashed var(--line); }
+.section h3, .figures_panel h3, .settings_section > header h2, .settings_section > header h3,
+.colors_panel h3 { color: var(--red-ink); font-size: 14px; }
+.settings_section > header, .figures_panel header,
+.colors_panel header { border-bottom: 1px dashed var(--line); }
 
 /* the top bar: a strip with a red tick ruler along the bottom */
 .bar, .workspacetabs {
@@ -126,7 +130,9 @@ code, pre, kbd, .md code, .seg_chip, .timestamp { font-family: var(--font-mono);
 /* ---- small things inside frames: flat raised plates with a hairline ---- */
 
 .item, .source_row, .source_note, .source_card, .figure_card, .picker, .style_card, .card_notes li,
-.digest_preview, .export_form textarea, .settings .setting code, .md code, .figure_credit_preview {
+.digest_preview, .export_form textarea, .settings .setting code, .md code, .figure_credit_preview,
+.ref, .get_paper, .drop_zone, .highlight, .review_answer,
+.paper_picker {
     background-color: var(--surface-raised);
     border: 1px solid var(--line);
     border-radius: 0;
@@ -226,7 +232,9 @@ input[type="range"] { accent-color: var(--red); border: 0; background: none; }
 /* ---- chips, tabs, toggles: outlined plates; selected = solid red with a clipped corner ---- */
 
 .attach_mode button, .tag_chip, .group_chip, .seg_chip, .cite_suggest button, .toolbar button,
-.view_toggle button, .mode_toggle button, .segmented button, .workspacetabs button, .tabs button {
+.view_toggle button, .mode_toggle button, .segmented button, .workspacetabs button, .tabs button,
+.color_chip, .md_bar button, .zoom_ctl button, .row_cite,
+.link_chip, .paper_chip {
     border-radius: 0;
     border: 1px solid var(--line);
     background: var(--surface-raised);
@@ -239,7 +247,9 @@ input[type="range"] { accent-color: var(--red); border: 0; background: none; }
 }
 .attach_mode button:hover, .toolbar button:hover, .view_toggle button:hover, .mode_toggle button:hover,
 .segmented button:hover, .workspacetabs button:hover, .tabs button:hover { background: var(--red-dim); }
-.tag_chip:hover, .group_chip:hover { background: var(--cyan-dim); }
+.tag_chip:hover, .group_chip:hover,
+.color_chip:hover, .md_bar button:hover, .zoom_ctl button:hover, .row_cite:hover,
+.link_chip:hover, .paper_chip:hover { background: var(--cyan-dim); }
 .view_toggle, .mode_toggle, .segmented { border: 0; gap: 2px; overflow: visible; border-radius: 0; }
 .segmented button + button { border-left: 1px solid var(--line); }
 .workspacetabs button, .tabs button { border-width: 0 0 1px; background: transparent; }
@@ -252,7 +262,8 @@ input[type="range"] { accent-color: var(--red); border: 0; background: none; }
     clip-path: polygon(0 0, calc(100% - var(--cut-sm)) 0, 100% var(--cut-sm), 100% 100%, 0 100%);
 }
 /* filters that are on = checked = cyan */
-.tag_chip.active, .group_chip.on { background: var(--cyan); border-color: var(--cyan); color: var(--on-cyan); }
+.tag_chip.active, .group_chip.on,
+.color_chip[aria-pressed="true"], .color_chip[aria-checked="true"] { background: var(--cyan); border-color: var(--cyan); color: var(--on-cyan); }
 .group_chip.partial { border-color: var(--cyan); border-style: dashed; color: var(--cyan-ink); }
 
 /* status tags: notched corner, always the word */
@@ -327,7 +338,8 @@ input[type="range"] { accent-color: var(--red); border: 0; background: none; }
 }
 @media (max-width: 599px) {
     .source_title { font-size: 1.4rem; }
-    .panel:not(.reader), .section, .library, .figures_panel, .review_card, .settings_section, .modal { --c: var(--cut-md); }
+    .panel:not(.reader), .section, .library, .figures_panel, .review_card, .settings_section, .modal,
+.colors_panel { --c: var(--cut-md); }
 }
 /* touch 44px, mouse 32px (target-min / target-min-pointer) */
 @media (pointer: fine) {
@@ -345,9 +357,46 @@ input[type="range"] { accent-color: var(--red); border: 0; background: none; }
 @media (forced-colors: active) {
     .panel, .section, .library, .figures_panel, .review_card, .settings_section, .stat, .modal, .composer,
     .btn, .badge, .tag, .project, .show_side, .selection_btn, .img_note_btn,
-    .attach_mode button, .segmented button, .workspacetabs button, .tabs button, .view_toggle button { clip-path: none; }
-    .btn, .tag_chip, .group_chip, .attach_mode button, input, select, textarea { border: 1px solid ButtonText; }
+    .attach_mode button, .segmented button, .workspacetabs button, .tabs button, .view_toggle button,
+.colors_panel { clip-path: none; }
+    .btn, .tag_chip, .group_chip, .attach_mode button, input, select, textarea,
+.color_chip, .md_bar button, .zoom_ctl button, .row_cite,
+.link_chip, .paper_chip { border: 1px solid ButtonText; }
 }
 @media (prefers-reduced-motion: reduce) {
     .btn:active { transform: none; }
+}
+
+/* ---- library shelves: neon-outlined cases on a tick-ruler rail ---- */
+html[data-style="nullsec"][data-theme] {
+    --book-0: var(--red); --book-1: var(--cyan); --book-2: var(--amber); --book-3: var(--ink);
+    --book-4: var(--cyan); --book-5: var(--red); --book-6: var(--line-strong); --book-7: var(--amber);
+    --book-ink: var(--ink);
+}
+.book.spine, .cover_face, .book_profile_cover {
+    background: linear-gradient(180deg, color-mix(in srgb, var(--book) 16%, var(--panel)), var(--panel));
+    border: 1px solid var(--book);
+    border-radius: 0;
+    box-shadow: 0 0 var(--glow-size) color-mix(in srgb, var(--book) 45%, transparent);
+    font-family: var(--font-display);
+    text-transform: uppercase;
+}
+.book.spine { clip-path: polygon(0 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%); }
+.book.spine::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    height: 6px;
+    background: repeating-linear-gradient(-45deg, var(--book) 0 4px, transparent 4px 8px);
+}
+.spine_foot { font-family: var(--font-mono); text-transform: none; }
+.cover_face { clip-path: polygon(14px 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%, 0 14px); }
+.shelf_row_base {
+    height: 10px;
+    border-radius: 0;
+    border-top: 1px solid var(--red);
+    background: repeating-linear-gradient(90deg, var(--red) 0 1px, transparent 1px 8px) top / 100% 5px no-repeat, var(--panel);
+    box-shadow: 0 0 var(--glow-size) var(--red-glow);
 }

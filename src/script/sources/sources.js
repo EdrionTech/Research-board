@@ -261,6 +261,16 @@ const SourceForm = (() => {
                 <button type="button" class="btn lookup">Look up</button>
             </span>
         </label>
+        <!-- or the file itself: a PDF is read for its DOI or title (to fill the details) and kept to read here;
+             a Word, text or Markdown document becomes its readable text -->
+        <div class="upload_row">
+            <span>or</span>
+            <label class="btn small upload_btn">Upload a PDF or document
+                <input type="file" name="upload" hidden
+                    accept="application/pdf,.pdf,.docx,.txt,.md,.markdown,text/plain,text/markdown">
+            </label>
+            <small class="upload_name"></small>
+        </div>
         <p class="lookup_status" aria-live="polite"></p>
         <label>Title <input name="title" required></label>
         <div class="form_row">
@@ -279,6 +289,7 @@ const SourceForm = (() => {
         </div>
         <label>Abstract <textarea name="abstract" rows="4"></textarea></label>
         <label>Status <select name="status"></select></label>
+        ${Images.fieldHtml('Thumbnail', 'Image link, or leave blank for its first page')}
         <div class="actions">
             <button type="button" class="btn" data-close>Cancel</button>
             <button type="submit" class="btn primary">Save</button>
@@ -293,18 +304,25 @@ const SourceForm = (() => {
     let editingId = null;
     let projectId = null;
     let onSaved = null;
+    let upload = null; // { file } for a PDF, { text, name } for a document, until saved
+    // its own thumbnail (a link or an uploaded image); without one it shows its first page (bookshelf.js)
+    const thumbnail = Images.field($('.image_field', form));
+    $('[data-close]', form).addEventListener('click', () => thumbnail.discard());
 
     // options: { projectId, onSaved(id) }
     function open(source, options) {
         ({ projectId, onSaved } = options);
         editingId = source?.id ?? null;
         form.reset();
+        upload = null;
+        $('.upload_name', form).textContent = '';
         status.textContent = '';
         $('h2', form).textContent = source ? 'Edit source' : 'New source';
         if (source) {
             fill(source);
             f.status.value = source.status || 'to_read';
         }
+        thumbnail.set(source?.thumbnail || '');
         openModal(form);
         (source ? f.title : f.url).focus();
     }
@@ -348,15 +366,83 @@ const SourceForm = (() => {
         }
     }
 
+    // ---- an uploaded file ----
+
+    async function readUpload(file) {
+        upload = null;
+        $('.upload_name', form).textContent = file.name;
+        const isPdf = file.type === 'application/pdf' || /\.pdf$/i.test(file.name);
+        if (!isPdf && !Documents.accepts(file)) {
+            status.textContent = 'Choose a PDF, a Word document (.docx), or a text or Markdown file.';
+            return;
+        }
+        status.textContent = 'Reading the file…';
+        try {
+            if (!isPdf) {
+                const text = await Documents.text(file);
+                upload = { text, name: file.name };
+                if (!f.title.value.trim()) f.title.value = (text.split('\n').find(l => l.trim()) || file.name).replace(/^#+\s*/, '').slice(0, 200);
+                status.textContent = `Its text (${text.split(/\s+/).filter(Boolean).length.toLocaleString()} words) will be readable on its page. Check the details below.`;
+                return;
+            }
+            upload = { file };
+            const pdf = await pdfDetails(file);
+            // a DOI or arXiv id in the paper: the full details; else its title
+            const found = (pdf.doi || pdf.arxiv) ? await lookupMaterial(pdf.arxiv ? 'arXiv:' + pdf.arxiv : pdf.doi).catch(() => null)
+                : pdf.title ? await lookupMaterial(pdf.title).catch(() => null) : null;
+            if (found?.title) {
+                // the catalogue's details; what it lacks (often the abstract or keywords) from the PDF
+                fill({
+                    ...found,
+                    pdfUrl: found.pdfUrl || '',
+                    abstract: found.abstract || pdf.abstract,
+                    keywords: found.keywords?.length ? found.keywords : pdf.keywords,
+                    venue: found.venue || pdf.venue,
+                });
+                status.textContent = 'Details found from the PDF. It\'s kept here, so you can read and annotate it.';
+            } else {
+                fill(pdf);
+                if (pdf.doi) f.doi.value = pdf.doi;
+                const got = ['title', 'authors', 'abstract', 'keywords', 'published', 'venue'].filter(k => (Array.isArray(pdf[k]) ? pdf[k].length : pdf[k]));
+                status.textContent = got.length > 1
+                    ? `Not found online, so the details were read from the PDF itself (${got.join(', ')}): check them below.`
+                    : 'The PDF is kept to read here. Its details weren\'t found online: check them below.';
+            }
+        } catch (err) {
+            status.textContent = `Couldn't read this file (${err.message}).`;
+        }
+    }
+
+    f.upload.addEventListener('change', () => {
+        const file = f.upload.files[0];
+        if (file) readUpload(file);
+    });
+
     $('.lookup', form).onclick = lookup;
     f.url.addEventListener('change', () => { if (!f.title.value.trim()) lookup(); });
     f.url.addEventListener('keydown', e => {
         if (e.key === 'Enter') { e.preventDefault(); lookup(); }
     });
 
-    form.addEventListener('submit', e => {
+    form.addEventListener('submit', async e => {
         e.preventDefault();
+        // the uploaded file: a PDF is kept (replacing an earlier one), a document's text becomes the text
+        const extra = {};
+        if (upload?.file) {
+            try {
+                const assetId = await Store.putAsset(upload.file);
+                const old = editingId && Store.getItem(editingId)?.file?.assetId;
+                if (old) Store.deleteAsset(old);
+                extra.file = { assetId, name: upload.file.name, size: upload.file.size, mime: upload.file.type || 'application/pdf' };
+                extra.text = '';
+            } catch {
+                return alert("Couldn't keep the file in this browser (private window or storage full?).");
+            }
+        } else if (upload?.text) {
+            extra.text = upload.text;
+        }
         const id = Store.saveItem({
+            ...extra,
             id: editingId,
             projectId,
             type: 'source',
@@ -372,7 +458,9 @@ const SourceForm = (() => {
             tags: [...new Set(f.tags.value.split(',').map(t => t.trim()).filter(Boolean))],
             abstract: f.abstract.value.trim(),
             status: f.status.value,
+            thumbnail: thumbnail.value,
         });
+        thumbnail.commit();
         closeModals();
         onSaved?.(id);
     });
@@ -447,4 +535,199 @@ async function findArxivByTitle(title) {
     const hit = ((await res.json()).results || []).find(w => wordOverlap(w.title, title) >= 0.9 && wordOverlap(title, w.title) >= 0.9);
     const urls = [hit?.doi, ...(hit?.locations || []).flatMap(l => [l.landing_page_url, l.pdf_url])].filter(Boolean);
     return urls.map(u => findArxivId(u) || u.match(/10\.48550\/arxiv\.(\d{4}\.\d{4,5})/i)?.[1]).find(Boolean) || '';
+}
+
+// PDF.js, loaded the first time a page needs it (most pages that add sources don't otherwise)
+const PDFJS_BASE = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/';
+let pdfJsLoad = null;
+function ensurePdfJs() {
+    if (window.pdfjsLib) return Promise.resolve(window.pdfjsLib);
+    pdfJsLoad ??= new Promise((resolve, reject) => {
+        const script = document.createElement('script');
+        script.src = PDFJS_BASE + 'pdf.min.js';
+        script.onload = () => {
+            pdfjsLib.GlobalWorkerOptions.workerSrc = PDFJS_BASE + 'pdf.worker.min.js';
+            resolve(pdfjsLib);
+        };
+        script.onerror = () => {
+            pdfJsLoad = null;
+            reject(new Error('the PDF reader did not load (offline?)'));
+        };
+        document.head.append(script);
+    });
+    return pdfJsLoad;
+}
+
+// ---- what a PDF says about itself ----
+// For when a paper isn't found online (or to fill what the catalogue lacks): the PDF's own properties and its
+// first page. Title: the biggest text near the top (or the PDF's title property when it's a real one).
+// Authors: the lines under the title, before affiliations, e-mails and the abstract. Abstract: from "Abstract"
+// (or IEEE's "Abstract—") to the keywords or the introduction. Keywords: "Keywords:" / "Index Terms—".
+// Year and venue: a conference or journal line in the header or footer, a © line, or the file's date.
+// Resolves to { title, authors: [{ firstName, lastName }], abstract, keywords: [], published, venue, doi, arxiv }.
+async function pdfDetails(blob) {
+    const pdfjs = await ensurePdfJs();
+    const pdf = await pdfjs.getDocument({ data: await blob.arrayBuffer() }).promise;
+    try {
+        const info = (await pdf.getMetadata().catch(() => null))?.info || {};
+        const pages = [];
+        let rawText = '';
+        for (let n = 1; n <= Math.min(2, pdf.numPages); n++) {
+            const page = await pdf.getPage(n);
+            const { height } = page.getViewport({ scale: 1 });
+            const { items } = await page.getTextContent();
+            rawText += ' ' + items.map(i => i.str).join(' ');
+            pages.push(pdfLinesOf(items, height));
+        }
+        const first = pages[0] || [];
+        const text = pages.flat().map(l => l.text).join('\n');
+        const body = first.filter(l => !l.margin);
+
+        // title: the biggest text in the top part of page 1 (several lines if it wraps)
+        const top = body.filter(l => l.top < 0.45 && l.text.length > 3 && !/^(arxiv|preprint|accepted|published|proceedings|journal)/i.test(l.text));
+        const biggest = Math.max(0, ...top.map(l => l.size));
+        const titleLines = top.filter(l => l.size >= biggest * 0.92);
+        const ownTitle = (info.Title || '').trim();
+        const flat = t => t.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+        const goodOwn = ownTitle.length > 8 && flat(text).includes(flat(ownTitle)); // not a file name or a template's placeholder
+        const title = (goodOwn ? ownTitle : titleLines.map(l => l.text).join(' ')).replace(/\s+/g, ' ').trim().slice(0, 300);
+
+        // authors: the lines between the title and the abstract (names, affiliations, places, e-mails, in rows
+        // or side-by-side columns); the names are picked out of them (authorsFromLines)
+        const afterTitle = body.slice(body.indexOf(titleLines.at(-1)) + 1);
+        const authorLines = [];
+        for (const line of afterTitle) {
+            if (/^(abstract|a\s*b\s*s\s*t\s*r\s*a\s*c\s*t|keywords|index terms)\b/i.test(line.text)) break;
+            if (/^((\d+|[IVX]+)\.?\s+)?introduction\b/i.test(line.text)) break;
+            if (line.text.length > 160 && /[.!?]$/.test(line.text)) break; // running text: the paper has begun
+            authorLines.push(line.cells);
+            if (authorLines.length >= 14) break;
+        }
+        let authors = authorsFromLines(authorLines);
+        // the PDF's own author list (LaTeX papers often have one) when the page gave fewer names
+        const listed = info.Author ? authorsFromLines([info.Author.replace(/\s+and\s+|;/g, ',')]) : [];
+        if (listed.length > authors.length) authors = listed;
+
+        // abstract: from its heading to the keywords or the introduction
+        const lines = pages.flat().filter(l => !l.margin).map(l => l.text);
+        const at = lines.findIndex(t => /^(abstract|a\s*b\s*s\s*t\s*r\s*a\s*c\s*t)\b/i.test(t));
+        let abstract = '';
+        if (at >= 0) {
+            const parts = [lines[at].replace(/^(abstract|a\s*b\s*s\s*t\s*r\s*a\s*c\s*t)\s*[—–:.\-]?\s*/i, '')];
+            for (const t of lines.slice(at + 1)) {
+                if (/^((\d+|[IVX]+)\.?\s+)?(introduction|background|related work)\b|^(keywords|key words|index terms|ccs concepts|acm reference)\b/i.test(t)) break;
+                parts.push(t);
+                if (parts.join(' ').length > 3000) break;
+            }
+            abstract = parts.join(' ').replace(/(\w)-\s+(\w)/g, '$1$2').replace(/\s+/g, ' ').trim();
+        } else if (info.Subject && info.Subject.length > 120) {
+            abstract = info.Subject.trim();
+        }
+
+        // keywords
+        const kwAt = lines.findIndex(t => /^(keywords|key words|index terms)\b/i.test(t));
+        let kwLine = info.Keywords || '';
+        if (kwAt >= 0) {
+            kwLine = lines[kwAt].replace(/^(keywords|key words|index terms)\s*[—–:.\-]?\s*/i, '');
+            for (const t of lines.slice(kwAt + 1, kwAt + 4)) {
+                // the list carries on when the line above ended mid-list or this one starts in lower case
+                if (!(kwLine === '' || /[,;·•]\s*$/.test(kwLine) || /^\p{Ll}/u.test(t))) break;
+                kwLine += ' ' + t;
+            }
+        }
+        const keywords = kwLine.replace(/\s+/g, ' ').split(/\s*[;,·•]\s*/).map(k => k.replace(/\.$/, '').trim()).filter(k => k && k.length < 60).slice(0, 12);
+
+        // venue and year: a header/footer line naming a conference or journal
+        const margins = first.filter(l => l.margin || l.top > 0.85).map(l => l.text);
+        const venueLine = [...margins, ...body.slice(0, 4).map(l => l.text)]
+            .find(t => /proceedings|conference|journal|transactions|letters|workshop|symposium|\bieee\b|\bacm\b|springer|elsevier|neurips|icml|iclr|cvpr|iccv|eccv|icra|iros|aaai|ijcai|acl|emnlp/i.test(t) && t.length < 200) || '';
+        const venue = venueLine
+            .replace(/^©\s*(?:(?:19|20)\d{2}\s*)?[^.]*\.\s*/, '')          // "© 2024 Association for Computing Machinery. "
+            .replace(/^(published|accepted|appeared|to appear)\s+(in|at)\s+/i, '')
+            .replace(/,?\s*(pp?\.|pages)\s*[\d–-]+.*$/i, '')
+            .replace(/\s*[|©].*$/, '')                                      // "| Exampleton, UK", a © after it
+            .replace(/[.,\s]+$/, '')
+            .trim();
+        const year = venueLine.match(/\b(19|20)\d{2}\b/)?.[0] || text.match(/©\s*((?:19|20)\d{2})/)?.[1]
+            || (info.CreationDate || '').match(/^D:((?:19|20)\d{2})/)?.[1] || '';
+
+        const doi = findDoi(rawText);
+        return {
+            title, authors, abstract, keywords, venue, published: year,
+            doi: doi && !/^10\.48550/i.test(doi) ? doi : '',
+            arxiv: rawText.match(/arxiv:\s*(\d{4}\.\d{4,5})/i)?.[1] || '',
+        };
+    } finally {
+        pdf.destroy();
+    }
+}
+
+// pdf.js text pieces → lines (top to bottom), each with its size, place on the page and whether it's in
+// the top or bottom margin (running headers, footers, page numbers); sideways text (arXiv's stamp) is left out
+function pdfLinesOf(items, pageHeight) {
+    const pieces = items.filter(i => i.str?.trim() && Math.abs(i.transform[1]) < 0.01)
+        .map(i => ({ str: i.str, x: i.transform[4], y: i.transform[5], w: i.width || 0, size: Math.abs(i.transform[3]) || 10 }))
+        .sort((a, b) => b.y - a.y || a.x - b.x);
+    const lines = [];
+    for (const p of pieces) {
+        const line = lines.at(-1);
+        if (line && Math.abs(line.y - p.y) <= Math.max(2, p.size * 0.4)) {
+            line.parts.push(p);
+            line.size = Math.max(line.size, p.size);
+        } else {
+            lines.push({ y: p.y, size: p.size, parts: [p] });
+        }
+    }
+    return lines.map(line => {
+        const parts = line.parts.sort((a, b) => a.x - b.x);
+        // side-by-side columns (author blocks): a wide gap is kept as a tab in `cells`
+        const cells = parts.reduce((out, p, i) => {
+            const prev = parts[i - 1];
+            if (prev && p.x - (prev.x + prev.w) > Math.max(prev.size, p.size) * 1.5) out.push('');
+            out[out.length - 1] += (out[out.length - 1] ? ' ' : '') + p.str;
+            return out;
+        }, ['']).map(c => c.replace(/\s+/g, ' ').trim()).filter(Boolean);
+        const text = cells.join(' ');
+        const top = 1 - line.y / pageHeight;
+        return { text, cells: cells.join('\t'), size: line.size, top, margin: top < 0.06 || top > 0.94 };
+    });
+}
+
+// Names out of the lines under a title. Each line is split into its columns (tabs) and then at commas, "and",
+// "&" and ";". What's left is a name when it looks like one: 2–5 words, capitalised (particles like "van der",
+// "de la" allowed), no digits. Affiliations, places, e-mails, footnote marks and superscripts (Smith1,2 / Lee*)
+// are dropped. Names in capitals are written normally (OLUWASEUN ADEYEMI → Oluwaseun Adeyemi).
+const NAME_PARTICLES = new Set(['van', 'von', 'der', 'den', 'de', 'del', 'della', 'da', 'di', 'du', 'la', 'le', 'bin', 'binti', 'al', 'el', 'ter', 'ten', 'dos', 'das', 'y']);
+const NOT_A_NAME = /\b(university|universit[äéà]|universidad|institut|institute|department|dept|school|college|faculty|laborator|lab|labs|center|centre|inc|ltd|llc|gmbh|corporation|company|research|group|hospital|academy|foundation|google|microsoft|meta|amazon|ibm|nvidia|deepmind|openai|abstract|introduction|keywords|correspond|equal contribution|contributed|email|e-mail)\b/i;
+
+function authorsFromLines(lines) {
+    const names = [];
+    for (const line of lines) {
+        for (const cell of String(line).split('\t')) {
+            if (NOT_A_NAME.test(cell) || /\S@\S/.test(cell)) continue; // an affiliation or an e-mail
+            const cleaned = cell
+                .replace(/(\p{L})[\d*∗†‡§¶♯]+(?:,[\d*∗†‡§¶♯]+)*(?=\s|,|$)/gu, '$1')   // superscripts stuck to a name: Smith1,2 / Lee*
+                .replace(/[∗*†‡§¶♯#]|\{[^}]*\}|\(\s*\d*\s*\)/g, ' ')
+                .replace(/\b\d+\b/g, ' ');
+            for (const part of cleaned.split(/\s*(?:,|;|\band\b|&)\s*/i)) {
+                const words = part.replace(/\s+/g, ' ').trim().split(' ').filter(Boolean);
+                const main = words.filter(w => !NAME_PARTICLES.has(w.toLowerCase()));
+                const looksLikeName = main.length >= 2 && main.length <= 5 && words.length <= 7
+                    && main.every(w => /^\p{Lu}[\p{L}'’.-]*$/u.test(w))
+                    && words.every(w => NAME_PARTICLES.has(w.toLowerCase()) || /^\p{Lu}/u.test(w))
+                    && !/\d/.test(part);
+                if (!looksLikeName) continue;
+                // names in capitals: "OLUWASEUN ADEYEMI" → "Oluwaseun Adeyemi" (initials like "J." stay)
+                const written = words.map(w => (w.length > 2 && w === w.toUpperCase() ? w[0] + w.slice(1).toLowerCase() : w));
+                names.push(written);
+            }
+        }
+    }
+    const seen = new Set();
+    return names.filter(w => !seen.has(w.join(' ')) && seen.add(w.join(' '))).slice(0, 40).map(words => {
+        // the surname starts at its particles: "Lisa van der Berg" → Lisa / van der Berg
+        const firstParticle = words.findIndex((w, i) => i > 0 && NAME_PARTICLES.has(w.toLowerCase()));
+        const cut = firstParticle > 0 ? firstParticle : words.length - 1;
+        return { firstName: words.slice(0, cut).join(' '), lastName: words.slice(cut).join(' '), affiliation: '' };
+    });
 }

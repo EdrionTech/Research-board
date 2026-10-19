@@ -11,9 +11,23 @@ const viewer = $('#open_project');
 let editingId = null;
 let openId = null;
 
-// the project's own picture, or the current style's default ('thumb' for cards, 'cover' for the wide view)
+// the thumbnail: a link or an uploaded image
+$('#project_image').outerHTML = Images.fieldHtml('Thumbnail', 'Image link, or leave blank for the style’s own picture');
+const imageField = Images.field($('.image_field', form));
+
+// the project's own picture (a link or one you uploaded), or the current style's default ('thumb' for cards,
+// 'cover' for the wide view)
 const hasOwnImage = p => Boolean(p.image) && p.image !== Store.DEFAULT_IMAGE;
-const projectImage = (p, kind) => hasOwnImage(p) ? p.image : Settings.defaultImage(kind);
+function showImage(img, p, kind) {
+    const fallback = () => { img.onerror = null; img.src = Settings.defaultImage(kind); };
+    if (!hasOwnImage(p)) return fallback();
+    img.src = Settings.defaultImage(kind); // until the picture is ready
+    Images.url(p.image).then(src => {
+        if (!src) return fallback();
+        img.onerror = fallback;
+        img.src = src;
+    });
+}
 
 function render() {
     const projects = Store.getProjects();
@@ -24,9 +38,7 @@ function render() {
     shelf.replaceChildren(...visible.map(p => {
         const card = template.content.firstElementChild.cloneNode(true);
         card.dataset.id = p.id;
-        const img = $('.project_thumbnail', card);
-        img.src = projectImage(p, 'thumb');
-        img.onerror = () => { img.onerror = null; img.src = Settings.defaultImage('thumb'); };
+        showImage($('.project_thumbnail', card), p, 'thumb');
         $('.project_title', card).textContent = p.title;
         $('.desc', card).textContent = p.desc;
         return card;
@@ -47,6 +59,7 @@ function showModal(modal) {
 }
 
 function closeModals() {
+    if (!form.hidden) imageField.discard(); // an image uploaded but not saved
     modals.hidden = true;
     editingId = null;
     openId = null;
@@ -59,17 +72,15 @@ function openForm(project) {
     if (project) {
         form.elements.title.value = project.title;
         form.elements.desc.value = project.desc;
-        form.elements.image.value = hasOwnImage(project) ? project.image : '';
     }
+    imageField.set(project && hasOwnImage(project) ? project.image : '');
     showModal(form);
     form.elements.title.focus();
 }
 
 function openProject(project) {
     openId = project.id;
-    const hero = $('.hero', viewer);
-    hero.src = projectImage(project, 'cover');
-    hero.onerror = () => { hero.onerror = null; hero.src = Settings.defaultImage('cover'); };
+    showImage($('.hero', viewer), project, 'cover');
     $('.title', viewer).textContent = project.title;
     $('.desc', viewer).textContent = project.desc;
     $('.open', viewer).href = 'page/project_dashboard.html?id=' + encodeURIComponent(project.id);
@@ -83,7 +94,7 @@ $('#new_project').onclick = () => openForm();
 addEventListener('settingschange', () => {
     render();
     const open = openId && Store.getProject(openId);
-    if (open) $('.hero', viewer).src = projectImage(open, 'cover');
+    if (open) showImage($('.hero', viewer), open, 'cover');
 });
 $('#search').oninput = render;
 
@@ -113,8 +124,9 @@ form.addEventListener('submit', e => {
         id: editingId,
         title: form.elements.title.value.trim(),
         desc: form.elements.desc.value.trim(),
-        image: form.elements.image.value.trim(),
+        image: imageField.value,
     });
+    imageField.commit();
     render();
     closeModals();
 });

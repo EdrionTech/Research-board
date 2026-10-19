@@ -135,3 +135,6 @@ $('#delete_all').onclick = async () => {
 
 renderAppearance();
 renderStorage();
+
+// back to the page that opened Settings
+Nav.backLink($('#back_link'), '../index.html', 'Projects');

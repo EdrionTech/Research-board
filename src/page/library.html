@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Library · Research Board</title>
+
+    <link rel="stylesheet" href="../style/base.css">
+    <link rel="stylesheet" href="../style/bookshelf.css">
+    <link rel="stylesheet" href="../style/library.css">
+    <!-- theme + style, before the page draws -->
+    <script src="../script/core/settings.js"></script>
+    <script src="../script/core/nav.js"></script>
+</head>
+
+<body>
+
+    <div class="bar">
+        <a href="../index.html" class="back">← Projects</a>
+        <h2 class="brand">Library</h2>
+        <input type="search" class="search" id="search" placeholder="Search the library…" aria-label="Search the library">
+        <a class="btn small settings_link" href="settings.html" title="Theme, style and your data">Settings</a>
+        <button type="button" class="btn small primary" id="new_material">+ New material</button>
+    </div>
+
+    <main class="library_page">
+        <!-- how the shelves look and what's on them -->
+        <div class="shelf_tools">
+            <div class="segmented" id="shelf_mode" role="radiogroup" aria-label="Show as">
+                <button type="button" role="radio" data-mode="spines" aria-checked="true" title="Book spines: many at a glance">Spines</button>
+                <button type="button" role="radio" data-mode="covers" aria-checked="false" title="Covers: the first page">Covers</button>
+            </div>
+            <label class="shelf_pick">Shelves
+                <select id="shelf_group">
+                    <option value="project">By project</option>
+                    <option value="all">All together</option>
+                    <option value="kind">By kind</option>
+                </select>
+            </label>
+            <label class="shelf_pick">Sort
+                <select id="shelf_sort">
+                    <option value="recent">Recently added</option>
+                    <option value="title">Title</option>
+                    <option value="author">Author</option>
+                    <option value="year">Year</option>
+                </select>
+            </label>
+            <span class="spacer"></span>
+            <small id="shelf_count"></small>
+        </div>
+
+        <!-- one bookshelf per group: rows of books on wooden boards (library.js) -->
+        <div class="book_shelf" id="book_shelf"></div>
+        <p class="empty" id="shelf_empty" hidden></p>
+    </main>
+
+    <div class="modals" id="modals" hidden>
+        <!-- one material, across the projects it's in -->
+        <div class="book_profile modal" id="book_profile" hidden role="dialog" aria-labelledby="book_title">
+            <div class="book_profile_body">
+                <div class="book_profile_cover" id="book_cover"></div>
+                <div class="book_profile_info">
+                    <p class="book_meta" id="book_meta"></p>
+                    <h2 id="book_title"></h2>
+                    <p class="book_authors" id="book_authors"></p>
+                    <div class="book_links" id="book_links"></div>
+                </div>
+            </div>
+            <section class="book_abstract" id="book_abstract_box" hidden>
+                <h3>Abstract</h3>
+                <div class="md" id="book_abstract"></div>
+            </section>
+            <section class="book_projects">
+                <h3>In your projects</h3>
+                <ul id="book_projects"></ul>
+            </section>
+            <div class="actions">
+                <button type="button" class="btn" id="book_copy">Copy citation</button>
+                <label class="add_to" id="book_add_to">Add to
+                    <select id="book_add_project"></select>
+                </label>
+                <span class="spacer"></span>
+                <button type="button" class="btn" data-close>Close</button>
+                <a class="btn primary" id="book_open">Open ↗</a>
+            </div>
+        </div>
+
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.min.js"></script>
+    <script src="../script/core/ui.js"></script>
+    <script src="../script/core/store.js"></script>
+    <script src="../script/core/images.js"></script>
+    <script src="../script/writing/markdown.js"></script>
+    <script src="../script/reader/documents.js"></script>
+    <script src="../script/sources/sources.js"></script>
+    <script src="../script/sources/cite.js"></script>
+    <script src="../script/sources/library.js"></script>
+    <script src="../script/sources/bookshelf.js"></script>
+    <script src="../script/pages/library.js"></script>
+</body>
+
+</html>

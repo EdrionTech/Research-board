@@ -15,7 +15,13 @@
     align-items: start;
     padding-top: 20px;
 }
-.cite_box { display: flex; gap: 6px; }
+.cite_box { display: flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: 6px; }
+.in_library { margin: 0; flex-basis: 100%; text-align: right; font-size: .8rem; color: var(--muted); }
+.add_project { display: flex; align-items: center; gap: 6px; font-size: .85rem; color: var(--muted); }
+.add_project[hidden], .in_library[hidden] { display: none; }
+.add_project select { padding: 4px 8px; font-size: .85rem; }
+.add_project_state { flex-basis: 100%; text-align: right; font-size: .8rem; color: var(--accent); }
+.add_project_state:empty { display: none; }
 .cite_box select { padding: 4px 8px; font-size: .85rem; }
 .source_meta { margin: 0; font-size: .8rem; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
 .source_title { margin: 4px 0; font-size: 1.6rem; line-height: 1.25; }
@@ -581,12 +587,13 @@ body.side_collapsed .side { display: none; }
 }
 
 /* ---- zoom control: − 100% + (the percentage goes back to fit the width) ---- */
-.zoom_ctl { display: flex; align-items: center; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; flex: none; }
+.zoom_ctl { display: flex; align-items: center; gap: 2px; flex: none; }
 .zoom_ctl[hidden] { display: none; }
 .zoom_ctl button {
     min-width: 34px;
     padding: 4px 8px;
-    border: 0;
+    border: 1px solid var(--line);
+    border-radius: 6px;
     background: none;
     color: var(--text);
     font: inherit;
@@ -594,7 +601,6 @@ body.side_collapsed .side { display: none; }
     font-variant-numeric: tabular-nums;
     cursor: pointer;
 }
-.zoom_ctl button + button { border-left: 1px solid var(--line); }
 .zoom_ctl button:hover:not(:disabled) { background: var(--bg); }
 .zoom_ctl button:disabled { opacity: .35; cursor: default; }
 #zoom_level { min-width: 52px; }
@@ -693,3 +699,11 @@ body.reading_full .reader_html { height: calc(100dvh - 120px); }
 .reader.file_over .drop_zone, .reader.file_over .get_paper { border-color: var(--accent); color: var(--accent); }
 .reader.file_over { outline: 3px dashed var(--accent); outline-offset: -3px; }
 #find_copy { justify-self: start; font-size: .85rem; }
+
+/* your general notes about this paper */
+.in_notes h3 { margin: 0 0 8px; font-size: 1rem; }
+.in_notes h3 small { color: var(--muted); font-weight: normal; }
+.in_notes_list { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.in_note { display: grid; gap: 2px; padding: 6px 8px; border-radius: 6px; color: var(--text); text-decoration: none; font-size: .85rem; }
+.in_note:hover { background: var(--bg); }
+.in_note span { color: var(--muted); font-size: .8rem; }
