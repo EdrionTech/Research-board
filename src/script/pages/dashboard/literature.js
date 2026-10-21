@@ -352,7 +352,7 @@ async function uploadFigures(files) {
                 file: { assetId, mime: file.type, name: file.name },
             });
         } catch {
-            alert("Couldn't save the image in this browser (private window or storage full?).");
+            alert("Couldn't save the image (is Research Board still running?).");
             return;
         }
     }
@@ -455,7 +455,7 @@ function updateExport() {
 
 // ---- summaries digest ----
 
-// your images are stored in this browser only, so exported text names them instead
+// your images are kept with your data, not in the exported text, so it names them instead
 const forExport = markdown => markdown.replace(/!\[([^\]]*)\]\(asset:[a-z0-9]+\)/gi, '[image: $1]');
 
 // one bullet per sentence; lines that are already a list stay as they are

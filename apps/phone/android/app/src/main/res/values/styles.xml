@@ -16,7 +16,12 @@
     </style>
 
 
+    <!-- While the app starts: the logo on white (Android 12+ draws it from the windowSplashScreen items, older
+         versions show the background drawable). Change the logo with devbuilduild.ps1 icons. -->
     <style name="AppTheme.NoActionBarLaunch" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/ic_launcher_background</item>
+        <item name="windowSplashScreenAnimatedIcon">@mipmap/ic_launcher_foreground</item>
+        <item name="postSplashScreenTheme">@style/AppTheme.NoActionBar</item>
         <item name="android:background">@drawable/splash</item>
     </style>
 </resources>

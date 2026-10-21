@@ -37,7 +37,7 @@ The storage itself isn't in the server: it's [src/script/core/place/place.js](..
 
 ## How the app uses it
 
-Every page loads `/api/boot.js` first. When it answers, `src/script/core/store.js` reads from the copy it receives and sends each change back. Changes that can't be sent wait in the browser (one outbox per open page) and go once the server is back; a "Not saved yet" notice shows meanwhile. Other open tabs are told about each change. When `/api/boot.js` doesn't answer (the files opened directly, or Live Server), the app keeps its data in the browser as before. The first time the server runs, the app offers to copy in what the browser has.
+Every page starts with `src/script/core/boot.js`, which asks for `/api/boot` and then runs the page's scripts. `src/script/core/store.js` reads from the copy it receives and sends each change back. Changes that can't be sent wait in the browser (one outbox per open page) and go once the server is back; a "Not saved yet" notice shows meanwhile. Other open tabs are told about each change. Without the server (the files opened directly, or Live Server) the pages say how to start it: nothing is kept in the browser. The first time the server runs, the app offers to copy in what an older version kept in the browser.
 
 Small per-device preferences (reader zoom, view modes, panel states, which shelf view) stay in each browser on purpose, so a phone and a PC can differ.
 
@@ -47,7 +47,7 @@ This is everything the app needs. A desktop or mobile version, or another framew
 
 | Request | |
 | --- | --- |
-| `GET /api/boot.js` | Everything, as `window.RB_SERVER = { data: { projects, items, library, settings }, empty, dataDir }` |
+| `GET /api/boot` | Everything: `{ data: { projects, items, library, settings }, empty, dataDir }` |
 | `GET /api/health` | `{ ok: true }` when the server is up |
 | `GET /api/changes?since=N` | What changed after change `N`: `{ changes: [{ seq, kind, id, op }] }` (for synced copies later) |
 | `PUT /api/items/:id` | Save one item (the whole item). One older than the stored copy (`updatedAt`) is ignored: `{ ok, kept: "newer" }` |

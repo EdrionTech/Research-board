@@ -37,8 +37,16 @@ async function copyText(text) {
     }
 }
 
-// Saves text as a file in the viewer's downloads.
+// Saves text as a file in the viewer's downloads. In the apps there's no browser to do it: the desktop app puts it
+// in Downloads, the phone app in Documents/Research Board (boot.js), and a message says where.
 function downloadText(filename, text, type = 'text/plain') {
+    if (window.RB_SERVER?.save) {
+        const tell = message => (typeof toast === 'function' ? toast(message) : alert(message)); // (toast: the material page)
+        window.RB_SERVER.save(filename, text).then(
+            where => tell(`Saved to ${where}`),
+            err => tell(`Couldn't save ${filename}: ${err?.message || err}`));
+        return;
+    }
     const url = URL.createObjectURL(new Blob([text], { type: type + ';charset=utf-8' }));
     const a = el('a');
     a.href = url;

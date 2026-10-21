@@ -22,7 +22,7 @@
     </div>
 
     <main class="settings">
-        <!-- customization: how the app looks (saved in this browser) -->
+        <!-- customization: how the app looks (kept with your data; a copy in this browser draws the page at once) -->
         <section class="settings_section customization">
             <header>
                 <h3>Appearance</h3>
@@ -78,16 +78,15 @@
             </div>
         </section>
 
-        <!-- your data: in the data folder when the local server runs, else in this browser (settings.js) -->
+        <!-- your data: in the server's data folder, or the app's own storage (settings.js) -->
         <section class="settings_section">
             <header>
                 <h3>Your data</h3>
             </header>
             <div class="setting">
                 <div>
-                    <strong id="storage_where">Stored in this browser</strong>
-                    <p class="hint" id="storage_info">Projects, sources, notes and files are kept in this browser
-                        only. Back them up to move to another computer or keep them safe.</p>
+                    <strong id="storage_where">Stored on this computer</strong>
+                    <p class="hint" id="storage_info">Projects, sources, notes and files.</p>
                 </div>
             </div>
             <div class="setting">

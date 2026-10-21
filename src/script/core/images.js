@@ -1,5 +1,5 @@
-// Pictures for projects and materials: a link, or an image you upload. Uploads are scaled down and kept in
-// this browser (store.js) and referred to as 'asset:<id>', so backups and deleting take care of them.
+// Pictures for projects and materials: a link, or an image you upload. Uploads are scaled down and kept with
+// your data (store.js) and referred to as 'asset:<id>', so backups and deleting take care of them.
 // Images.url(ref) gives a URL to show either kind; Images.field(root) runs the picker in a form
 // (markup: Images.fieldHtml(label, placeholder)).
 
@@ -113,7 +113,7 @@ const Images = (() => {
                 note.textContent = picked.name;
                 show();
             } catch {
-                note.textContent = 'Couldn\'t keep the image in this browser (private window or storage full?).';
+                note.textContent = 'Couldn\'t keep the image (is Research Board still running?).';
             }
         });
 

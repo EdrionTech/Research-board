@@ -1,12 +1,12 @@
 // Gets a source's material ready for the reader on the material page:
 //   arXiv HTML version -> a self-contained page for an iframe (looks like the paper)
-//   PDF                -> pages drawn with PDF.js (loaded from cdnjs) plus the position of every text line
+//   PDF                -> pages drawn with PDF.js (src/vendor/pdfjs) plus the position of every text line
 //   pasted text        -> numbered lines
 
 const Reader = (() => {
     if (window.pdfjsLib) {
-        pdfjsLib.GlobalWorkerOptions.workerSrc =
-            'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+        // kept in the app (src/vendor), so PDFs open offline in the desktop and phone apps
+        pdfjsLib.GlobalWorkerOptions.workerSrc = new URL('../../vendor/pdfjs/pdf.worker.min.js', document.currentScript.src).href;
     }
 
     // ---- arXiv HTML ----

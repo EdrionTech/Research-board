@@ -54,6 +54,8 @@ npm run apk          # copies src/ in and builds android/app/build/outputs/apk/d
 npm run open         # or open it in Android Studio (run on a phone or emulator, build a release)
 ```
 
+**If Android Studio offers to upgrade Gradle, say no.** Capacitor 8's Android build plugin needs Gradle 8.x; Gradle 9.6 and newer refuse it ("relies on a Gradle internal API that was removed"). If it happened: `git checkout -- apps/phone/android/gradle/wrapper/gradle-wrapper.properties`.
+
 Install the `.apk` on an Android phone by copying it over and opening it (allow "install unknown apps"), or with `adb install`.
 
 **Data:** the app's private storage on the phone (removed with the app: back up from Settings).

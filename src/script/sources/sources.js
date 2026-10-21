@@ -538,7 +538,7 @@ async function findArxivByTitle(title) {
 }
 
 // PDF.js, loaded the first time a page needs it (most pages that add sources don't otherwise)
-const PDFJS_BASE = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/';
+const PDFJS_BASE = new URL('../../vendor/pdfjs/', document.currentScript.src).href; // kept in the app (src/vendor)
 let pdfJsLoad = null;
 function ensurePdfJs() {
     if (window.pdfjsLib) return Promise.resolve(window.pdfjsLib);

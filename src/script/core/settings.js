@@ -24,7 +24,7 @@ const Settings = (() => {
             label: 'Pixel Pop',
             description: 'A cheerful retro desktop: cream windows on a blue grid, pixel outlines, candy keys.',
             // fonts wait briefly (display=block) rather than swapping in later, which looked like a flash
-            fonts: 'https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@500;600;700&family=Nunito:wght@400;600;800&family=JetBrains+Mono:wght@400;500&display=block',
+            fonts: 'style/themes/pixel-pop/fonts.css', // Pixelify Sans, Nunito, JetBrains Mono, kept here to work offline
             css: ['style/themes/pixel-pop/tokens.css', 'style/themes/pixel-pop/pixel-pop.css'],
             images: true,
             swatch: ['#d8e3f8', '#fbe6cf', '#a3d56e', '#2a2421'],
@@ -32,7 +32,7 @@ const Settings = (() => {
         skyglass: {
             label: 'Skyglass',
             description: 'Bright and airy: frosted glass over a blue sky, glossy bubble buttons. Dark is Deep sea.',
-            fonts: 'https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@300;400;600;700&display=block',
+            fonts: 'style/themes/skyglass/fonts.css', // Source Sans 3, kept here to work offline
             css: ['style/themes/skyglass/tokens.css', 'style/themes/skyglass/skyglass.css'],
             images: true,
             swatch: ['#56bdf0', 'rgba(255, 255, 255, .45)', '#1565c0', '#0b2a4a'],
@@ -300,7 +300,7 @@ const Settings = (() => {
     // the stylesheets a style needs, in order (fonts first)
     function styleHrefs(style) {
         const { fonts, css } = STYLES[style];
-        return [...(fonts ? [fonts] : []), ...css.map(path => new URL(path, appRoot).href)];
+        return [...(fonts ? [fonts] : []), ...css].map(path => new URL(path, appRoot).href);
     }
 
     function setTheme(settings) {
@@ -317,7 +317,6 @@ const Settings = (() => {
     function writeInitial(settings) {
         const style = setTheme(settings);
         const hrefs = styleHrefs(style);
-        if (STYLES[style].fonts) document.write('<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>');
         for (const href of hrefs) document.write(`<link rel="stylesheet" data-app-style href="${attr(href)}">`);
         document.write(`<style id="palette_css">${paletteCss(settings)}</style>`);
         document.write(`<style id="custom_css">${(settings.customCss || '').replace(/<\/style/gi, '<\\/style')}</style>`);

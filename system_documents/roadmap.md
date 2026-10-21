@@ -4,12 +4,11 @@ Everything still to do, by category. Details are in the linked plans. Done work 
 
 ## 1. Next session (planned)
 
-**Storage and clients** ([platforms/platforms.md](platforms/platforms.md), [apps/README.md](../apps/README.md)). Built: SQLite storage (the shared `place.js`), the boot loader that picks the client, the desktop app (Tauri) and the phone app (Capacitor, Android `.apk`).
-- [ ] Try the desktop installer and the `.apk` on real devices (the phone's storage is untested on a device)
-- [ ] **The apps need the internet for some libraries:** marked, DOMPurify, PDF.js and Turndown load from CDNs. Keep copies in `src/` so the apps work offline
-- [ ] Phone splash screen (still Capacitor's); your own app icon when it's ready (see apps/README.md)
-- [ ] Downloads (backup file) and links that open a new tab: check they work inside the apps
-- [ ] Remove the browser-only storage path once the apps or the server are the normal way to run
+**Storage and clients** ([platforms/platforms.md](platforms/platforms.md), [apps/README.md](../apps/README.md)). Built: SQLite storage (the shared `place.js`), the boot loader that picks the client, the desktop app (Tauri) and the phone app (Capacitor, Android `.apk`), working offline, saving files and opening links in the apps, `devbuild`.
+- [ ] Try the desktop installer and the `.apk` on real devices: the phone's storage, saving a backup (Documents/Research Board) and the status bar colour are untested on a phone; on the desktop, saving to Downloads and links opening in your browser
+- [ ] **arXiv papers offline:** the HTML version is fetched from arXiv each time it's opened. Keep a copy with the material (like an uploaded PDF) so it opens without the internet
+- [ ] Your own app icon when it's ready: `devbuild\build.ps1 icons <logo>` (desktop, phone launcher and splash)
+
 
 **Citation style creator and editor** ([citation_styles/citation_styles.md](citation_styles/citation_styles.md))
 - [ ] Styles as CSL, rendered by citeproc-js (kept in the app)
@@ -44,11 +43,8 @@ Everything still to do, by category. Details are in the linked plans. Done work 
 - [ ] **A Milanote-like feature** (noted 2026-10-21; you'll define it better later). Milanote is a visual board where notes, images, links and files are laid out freely and grouped on a canvas. Exactly what it means for Research Board is still to be decided.
 
 ## 5. Tidy-ups and known issues
-- [ ] `assets/logo.svg` (the original) contains the logo twice; the app uses a fixed copy in `src/assets/`
-- [ ] "+ New project" wraps onto two lines in Gildmoor and Pixel Pop at about 900 px width
-- [ ] Untested so far: `start.bat` / `start.sh` opening the browser (`--open`), and resuming a video where you left off
-- [ ] The YouTube player test fails in the test browser (only the test; worth a manual check)
-- [ ] Not committed: the SQLite storage, the apps, the reader's phone layout (since `883f946`)
+- [ ] `start.bat` opening the browser: the server side works (tested); confirm a tab opens
+- [ ] Branch `feature/sqlite-and-apps` isn't pushed or merged yet
 
 ## 6. Development workflow
 - [ ] Move the test suites into the repo (e.g. `tests/`) so anyone can run them

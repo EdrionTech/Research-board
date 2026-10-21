@@ -1,10 +1,10 @@
 // Shared data layer for every page. Everything goes through here, so where the data lives can change
 // without the pages knowing:
-//   - with a place to keep it (boot.js → window.RB_SERVER): the local server's data/ folder, or in the desktop
-//     and phone apps their own SQLite. Every page is handed the records first; reads come from that copy and
-//     each change is sent back (RB_SERVER.request). Changes that couldn't be sent wait in this browser (the
-//     outbox) and go when the server is back.
-//   - without one (the files opened directly, Live Server): records in localStorage, files in IndexedDB.
+// the local server's data/ folder, or in the desktop and phone apps their own SQLite (boot.js → window.RB_SERVER).
+// Every page is handed the records first; reads come from that copy and each change is sent back
+// (RB_SERVER.request). Changes that couldn't be sent wait in this browser (the outbox) and go when the server is
+// back. Nothing else is kept in the browser: without a server or app, boot.js says how to start one. (Older
+// versions kept everything in the browser; that is brought in once, see browserData.)
 //
 // projects: [{ id, title, desc, image }]   image: a link, 'asset:<id>' (an uploaded picture) or '' (the style's own)
 // items:    [{ id, projectId, type, title, body, ..., createdAt, updatedAt }]
@@ -23,30 +23,23 @@ const Store = (() => {
     const DEFAULT_IMAGE = 'https://images.pexels.com/photos/6325886/pexels-photo-6325886.jpeg';
 
     const newId = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
-    const server = window.RB_SERVER || null;
-    const remote = server ? Remote(server) : null;
+    const server = window.RB_SERVER; // always there: boot.js runs the page's scripts only once it is
+    const remote = Remote(server);
 
     // ---- where records are read and written ----
 
     const SERVER_KEYS = { [PROJECTS_KEY]: 'projects', [ITEMS_KEY]: 'items', [LIBRARY_KEY]: 'library' };
 
-    // a copy each time (pages change what they're given without it being saved, as with localStorage)
+    // a copy each time (pages change what they're given without it being saved)
     function read(key) {
-        if (server) {
-            const value = server.data[SERVER_KEYS[key]];
-            return value == null ? null : structuredClone(value);
-        }
-        try { return JSON.parse(localStorage.getItem(key)); } catch { return null; }
+        const value = server.data[SERVER_KEYS[key]];
+        return value == null ? null : structuredClone(value);
     }
 
     // `change` says what changed, for the server: { item }, { deleted: [ids] }, { project }, { deletedProject }
     function write(key, value, change) {
-        if (server) {
-            server.data[SERVER_KEYS[key]] = structuredClone(value);
-            remote.send(key, change, value);
-            return;
-        }
-        try { localStorage.setItem(key, JSON.stringify(value)); } catch { /* storage unavailable */ }
+        server.data[SERVER_KEYS[key]] = structuredClone(value);
+        remote.send(key, change, value);
     }
 
     // ---- projects ----
@@ -126,15 +119,25 @@ const Store = (() => {
         write(ITEMS_KEY, items.filter(i => i.id !== id), { deleted: [id] });
     }
 
-    // the theme and style (settings.js), kept with the rest of the data when there's a server
+    // the theme and style (settings.js), kept with the rest of the data
     function saveSettings(settings) {
-        if (!server) return;
         server.data.settings = settings;
         remote.queue({ method: 'PUT', path: 'kv/settings', body: settings });
     }
 
-    // ---- files: on the server, or in this browser (IndexedDB) ----
+    // ---- files ----
 
+    // Saves a File/Blob and returns its id.
+    async function putAsset(blob) {
+        const id = newId();
+        await remote.putFile(id, blob);
+        return id;
+    }
+
+    const getAsset = id => remote.getFile(id);
+    const deleteAsset = id => remote.deleteFile(id).catch(() => { });
+
+    // files older versions kept in this browser (IndexedDB), read once to bring them in (browserData)
     let dbPromise = null;
 
     function db() {
@@ -147,28 +150,13 @@ const Store = (() => {
         return dbPromise;
     }
 
-    // a write resolves once it's committed (not just requested), so leaving the page right after can't lose it
-    async function assetRequest(mode, makeRequest) {
-        const tx = (await db()).transaction('assets', mode);
-        return new Promise((resolve, reject) => {
-            const req = makeRequest(tx.objectStore('assets'));
-            if (mode === 'readwrite') tx.oncomplete = () => resolve(req.result);
-            else req.onsuccess = () => resolve(req.result);
+    function oldBrowserFile(id) {
+        return db().then(base => new Promise((resolve, reject) => {
+            const req = base.transaction('assets', 'readonly').objectStore('assets').get(id);
+            req.onsuccess = () => resolve(req.result);
             req.onerror = () => reject(req.error);
-            tx.onabort = () => reject(tx.error || new Error('not saved'));
-        });
+        }));
     }
-
-    // Saves a File/Blob and returns its id.
-    async function putAsset(blob) {
-        const id = newId();
-        if (server) await remote.putFile(id, blob);
-        else await assetRequest('readwrite', store => store.put(blob, id));
-        return id;
-    }
-
-    const getAsset = id => (server ? remote.getFile(id) : assetRequest('readonly', store => store.get(id)));
-    const deleteAsset = id => (server ? remote.deleteFile(id) : assetRequest('readwrite', store => store.delete(id))).catch(() => { });
 
     // ---- backup (Settings page) ----
 
@@ -189,7 +177,7 @@ const Store = (() => {
     async function backup({ includeFiles = false } = {}) {
         const items = allItems();
         const data = { app: 'research-board', version: 1, exported: new Date().toISOString(), projects: getProjects(), library: read(LIBRARY_KEY) || {}, items, files: {} };
-        if (server?.data.settings) data.settings = server.data.settings;
+        if (server.data.settings) data.settings = server.data.settings;
         if (includeFiles) {
             for (const id of new Set([...items, ...getProjects()].flatMap(assetIdsOf))) {
                 const blob = await getAsset(id).catch(() => null);
@@ -204,39 +192,18 @@ const Store = (() => {
         if (data?.app !== 'research-board' || !Array.isArray(data.projects) || !Array.isArray(data.items)) {
             throw new Error("this isn't a Research Board backup");
         }
-        if (server) {
-            await remote.call('POST', 'restore', data);
-            Object.assign(server.data, { projects: data.projects, items: data.items, library: data.library || {}, settings: data.settings || server.data.settings });
-            return;
-        }
-        await clearAll();
-        write(PROJECTS_KEY, data.projects);
-        write(ITEMS_KEY, data.items);
-        if (data.library) write(LIBRARY_KEY, data.library);
-        for (const [id, file] of Object.entries(data.files || {})) {
-            const blob = await (await fetch(file.data)).blob();
-            const stored = file.name ? new File([blob], file.name, { type: file.type }) : blob;
-            await assetRequest('readwrite', store => store.put(stored, id));
-        }
+        await remote.call('POST', 'restore', data);
+        Object.assign(server.data, { projects: data.projects, items: data.items, library: data.library || {}, settings: data.settings || server.data.settings });
     }
 
-    // Deletes every project, item and file (in the data folder, or in this browser).
+    // Deletes every project, item and file.
     async function clearAll() {
-        if (server) {
-            await remote.call('POST', 'clear');
-            Object.assign(server.data, { projects: [], items: [], library: {} });
-            return;
-        }
-        try {
-            localStorage.removeItem(PROJECTS_KEY);
-            localStorage.removeItem(ITEMS_KEY);
-            localStorage.removeItem(LIBRARY_KEY);
-        } catch { /* storage unavailable */ }
-        await assetRequest('readwrite', store => store.clear()).catch(() => { });
+        await remote.call('POST', 'clear');
+        Object.assign(server.data, { projects: [], items: [], library: {} });
     }
 
-    // What this browser kept before the server was used (the same address: localStorage and IndexedDB),
-    // as a backup with its files, or null when there's nothing.
+    // What an older version kept in this browser (at this address: localStorage and IndexedDB), as a backup with
+    // its files, or null when there's nothing: offered once, when the data folder is new (below).
     async function browserData() {
         const local = key => { try { return JSON.parse(localStorage.getItem(key)); } catch { return null; } };
         const items = local(ITEMS_KEY) || [];
@@ -246,7 +213,7 @@ const Store = (() => {
         const settings = local('research_board_settings');
         if (settings) data.settings = settings;
         for (const id of new Set([...items, ...projects].flatMap(assetIdsOf))) {
-            const blob = await assetRequest('readonly', store => store.get(id)).catch(() => null);
+            const blob = await oldBrowserFile(id).catch(() => null);
             if (blob) data.files[id] = { type: blob.type, name: blob.name || '', data: await toDataUrl(blob) };
         }
         return data;
@@ -254,7 +221,7 @@ const Store = (() => {
 
     return {
         DEFAULT_IMAGE, LIBRARY_ID,
-        mode: server ? (server.app ? 'app' : 'server') : 'browser',
+        mode: server.app ? 'app' : 'server',
         getProjects, getProject, saveProject, deleteProject,
         getItems, getItem, saveItem, deleteItem,
         saveSettings,

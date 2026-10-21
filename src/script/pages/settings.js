@@ -121,17 +121,8 @@ async function renderStorage() {
         $('#storage_info').textContent = `${counts}, kept by the Research Board app on this device${window.RB_SERVER.dataDir ? `: ${window.RB_SERVER.dataDir}` : ''}. Back them up with a backup file below.`;
         return;
     }
-    if (Store.mode === 'server') {
-        $('#storage_where').textContent = 'Stored on this computer';
-        $('#storage_info').textContent = `${counts}, kept in the data folder by the Research Board server: ${window.RB_SERVER.dataDir}. Back it up by copying that folder, or with a backup file below.`;
-        return;
-    }
-    let usage = '';
-    try {
-        const estimate = await navigator.storage?.estimate();
-        if (estimate?.usage !== undefined) usage = ` About ${mb(estimate.usage)} used in this browser.`;
-    } catch { /* not available */ }
-    $('#storage_info').textContent = `${counts}, kept in this browser only.${usage} Start the Research Board server (start.bat, or node server/server.js) to keep them in a folder on this computer instead, or back them up to keep them safe.`;
+    $('#storage_where').textContent = 'Stored on this computer';
+    $('#storage_info').textContent = `${counts}, kept in the data folder by the Research Board server: ${window.RB_SERVER.dataDir}. Back it up by copying that folder, or with a backup file below.`;
 }
 
 $('#backup').onclick = async () => {

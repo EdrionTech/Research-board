@@ -13,3 +13,5 @@
 /devbuild/out
 
 .fake
+
+.github

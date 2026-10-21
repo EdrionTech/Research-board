@@ -332,6 +332,7 @@ async function loadHtml(load) {
         frame.srcdoc = paper.srcdoc;
     });
     const doc = frame.contentDocument;
+    window.RB_SERVER?.watchLinks?.(doc); // in the desktop app: the paper's links open in your browser
     doc.body.dataset.mode = attachMode;
     for (const block of doc.querySelectorAll('.ltx_para[id], figure[id], .ltx_abstract[id]')) {
         block.dataset.anchor = block.id;

@@ -106,7 +106,7 @@ The browser is one of the three clients, with nothing installed: opening a place
 - **Per-device preferences**: reader zoom, view modes, panel states.
 - **The outbox**: changes waiting for a connection that dropped, so an edit is never lost.
 
-The browser-only mode in `Store` (localStorage, IndexedDB) is removed once the desktop app or the server is the normal way to run Research Board. Until then it stays, so nothing breaks.
+The browser-only mode in `Store` (localStorage, IndexedDB) was removed on 2026-10-21: opened without a server or app, the pages say how to start Research Board. What an older version kept in a browser is still offered for copying in, once, when a data folder is new.
 
 ## Offline
 

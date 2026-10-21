@@ -123,6 +123,26 @@ fn blob_delete(data: State<Data>, hash: String) -> Answer<()> {
     }
 }
 
+// A file the app gives you (a backup, a bibliography, the review as Markdown…): into your Downloads folder, under
+// a name not already taken there. Returns where it went.
+#[tauri::command]
+fn save_download(app: tauri::AppHandle, name: String, contents: String) -> Answer<String> {
+    let dir = app.path().download_dir().map_err(text)?;
+    let name: String = name.chars().map(|c| if r#"\/:*?"<>|"#.contains(c) { '_' } else { c }).collect();
+    let (stem, ext) = match name.rsplit_once('.') {
+        Some((stem, ext)) => (stem.to_string(), format!(".{ext}")),
+        None => (name.clone(), String::new()),
+    };
+    let mut path = dir.join(&name);
+    let mut n = 1;
+    while path.exists() {
+        n += 1;
+        path = dir.join(format!("{stem} ({n}){ext}"));
+    }
+    fs::write(&path, contents).map_err(text)?;
+    Ok(path.to_string_lossy().into_owned())
+}
+
 fn main() {
     tauri::Builder::default()
         .setup(|app| {
@@ -134,7 +154,8 @@ fn main() {
             app.manage(Data { db: Mutex::new(db), dir, files });
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![sql_open, sql_exec, sql_run, sql_all, blob_put, blob_get, blob_delete])
+        .plugin(tauri_plugin_opener::init())
+        .invoke_handler(tauri::generate_handler![sql_open, sql_exec, sql_run, sql_all, blob_put, blob_get, blob_delete, save_download])
         .run(tauri::generate_context!())
         .expect("Research Board couldn't start");
 }
