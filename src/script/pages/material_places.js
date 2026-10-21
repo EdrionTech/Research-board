@@ -293,6 +293,7 @@ const Places = (() => {
 
     function openList(open = true) {
         $('#bookmark_list_box').hidden = !open;
+        sheetOnPhone($('#bookmark_list_box'), open);
         $('#bookmarks_btn').setAttribute('aria-expanded', open);
         if (open) current().then(place => { $('#bookmark_here').textContent = place ? `+ Bookmark where I am (${place.label})` : '+ Bookmark where I am'; });
     }
@@ -369,7 +370,10 @@ const Places = (() => {
                 go(b.place);
             }
         });
-        document.addEventListener('click', e => { if (!e.composedPath().includes($('#bookmarks_menu'))) openList(false); });
+        document.addEventListener('click', e => {
+            const path = e.composedPath();
+            if (!path.includes($('#bookmarks_menu')) && !path.includes($('#bookmark_list_box'))) openList(false); // (a sheet on phones)
+        });
 
         $('#summary_btn').onclick = () => openPad($('#summary_pad').hidden);
         $('#summary_pad_close').onclick = () => openPad(false);

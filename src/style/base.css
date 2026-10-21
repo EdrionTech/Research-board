@@ -42,7 +42,22 @@
 * { box-sizing: border-box; }
 [hidden] { display: none !important; }
 
+/* Phones that draw the page under the status bar (viewport-fit=cover: the phone app, iPhones): the strip behind the
+   clock and battery takes the top bar's colour (--status-bg, set by settings.js), and the page starts below it.
+   Capacitor gives the strip's height as --safe-area-inset-top on WebViews without env(); elsewhere it's 0. */
+:root { --inset-top: max(env(safe-area-inset-top, 0px), var(--safe-area-inset-top, 0px)); }
+body::before {
+    content: '';
+    position: fixed;
+    inset: 0 0 auto 0;
+    z-index: 1001;
+    height: var(--inset-top);
+    background: var(--status-bg, var(--bg));
+    pointer-events: none;
+}
+
 body {
+    padding-top: var(--inset-top);
     margin: 0;
     font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
     background: var(--bg);
@@ -66,7 +81,7 @@ button { font: inherit; cursor: pointer; }
 /* top bar */
 .bar {
     position: sticky;
-    top: 0;
+    top: var(--inset-top);
     z-index: 5;
     display: flex;
     align-items: center;
@@ -83,7 +98,7 @@ button { font: inherit; cursor: pointer; }
 .modals {
     position: fixed;
     inset: 0;
-    z-index: 10;
+    z-index: 55; /* over the pop-up boxes (the note box, summary pad: 20–50), under toasts (60) */
     display: grid;
     place-items: center;
     padding: 16px;
@@ -237,6 +252,39 @@ form.modal .checks label { display: flex; align-items: center; gap: 6px; color: 
     .brand { font-size: 1.05rem; }
     .modals { padding: 8px; align-items: end; }
     .modal { max-height: 92dvh; }
+}
+
+/* a button's words stay on one line (a squeezed bar wraps whole buttons instead, never their words) */
+.bar .btn { white-space: nowrap; flex: none; }
+
+/* ---- buttons with an icon (icons.css): icon and words; on phones the icon alone, the words still read out ---- */
+.has_i { display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+.more_btn { display: none; } /* ⋯: phones only */
+@media (max-width: 700px) {
+    .has_i { gap: 0; }
+    .has_i .lbl {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip-path: inset(50%);
+        white-space: nowrap;
+    }
+    .has_i .i { width: 1.3em; height: 1.3em; }
+    .has_i .count:not(:empty) { margin-left: 4px; }
+    .more_btn { display: inline-flex; }
+
+    /* a dropdown opened on a phone (sheetOnPhone, ui.js): a sheet along the bottom of the screen */
+    .sheet {
+        position: fixed !important;
+        inset: auto 0 0 0 !important;
+        z-index: 40 !important;
+        width: auto !important;
+        max-height: 70dvh !important;
+        overflow: auto;
+        padding-bottom: calc(12px + env(safe-area-inset-bottom)) !important;
+        border-radius: 16px 16px 0 0 !important;
+    }
 }
 
 /* touch screens: finger-sized targets; 16px text in fields so phones don't zoom in on them */

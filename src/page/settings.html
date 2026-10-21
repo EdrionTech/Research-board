@@ -3,14 +3,14 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <link rel="icon" type="image/svg+xml" href="../assets/logo.svg">
     <title>Settings · Research Board</title>
     <link rel="stylesheet" href="../style/base.css">
     <link rel="stylesheet" href="../style/settings.css">
     <!-- theme + style, before the page draws -->
-    <!-- the data, when the local server is running (server/server.js); else the browser keeps it -->
-    <script src="/api/boot.js"></script>
+    <!-- where the data is (the server, or the app on this device); then it runs the page's scripts (data-src) -->
+    <script src="../script/core/boot.js"></script>
     <script src="../script/core/settings.js"></script>
     <script src="../script/core/nav.js"></script>
 </head>
@@ -119,9 +119,9 @@
         </section>
     </main>
 
-    <script src="../script/core/ui.js"></script>
-    <script src="../script/core/store.js"></script>
-    <script src="../script/pages/settings.js"></script>
+    <script data-src="../script/core/ui.js"></script>
+    <script data-src="../script/core/store.js"></script>
+    <script data-src="../script/pages/settings.js"></script>
 </body>
 
 </html>

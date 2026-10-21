@@ -1,6 +1,6 @@
 # Platforms and storage
 
-Status: **next up: the clients (web, desktop, phone) with SQLite for local storage.** Today the local server in `server/` keeps data in `data/` (built). Online places (our service, private servers), signing in, invite links, phase B and sharing on the local network are **on hold**, along with collaboration.
+Status: **SQLite storage built** (shared `place.js`, used by the local server; 2026-10-21). Next: the desktop app (Tauri). The local server in `server/` keeps data in `data/research-board.db`. Online places (our service, private servers), signing in, invite links, phase B and sharing on the local network are **on hold**, along with collaboration.
 How Research Board runs on desktop, phone and in a browser; where its data lives; how one app reaches local and online data. Working on projects together is in [../collaboration/collaboration.md](../collaboration/collaboration.md).
 
 ## Decisions
@@ -8,6 +8,7 @@ How Research Board runs on desktop, phone and in a browser; where its data lives
 | Question | Decision |
 | --- | --- |
 | Storage | **One method everywhere: SQLite**, plus a files folder |
+| Storage code | **Written once, in JavaScript** (`src/script/core/place/place.js`), run by the server and inside the apps; each platform only adds a small SQL and files adapter |
 | Browser storage | **Dropped** unless necessary (see "What the browser may keep") |
 | Where data can be | **Places**: this device, our online service, private servers. Every client reaches all of them |
 | Clients | **Desktop app** (Tauri; Electron is too heavy), **phone app** (Capacitor), **browser** (a thin client, nothing installed) |
@@ -41,7 +42,7 @@ Pages talk to `Store`. `Store` talks to a place through one set of actions:
 There are two implementations of those actions:
 
 - **Remote place:** the actions over the network, which is the server API in `server/README.md` plus sign-in.
-- **This device:** the same actions run directly on the app's own SQLite (Tauri's and Capacitor's SQLite plugins), with no network.
+- **This device:** the same actions run directly on the app's own SQLite (Tauri's and Capacitor's SQLite plugins), with no network. This is `place.js` itself: the code the server runs, in the app.
 
 Because of this, pages never need to know where a project lives.
 
@@ -74,13 +75,27 @@ The tables are the same everywhere (device, our server, private servers):
 - **Versioned data format**, with upgrade steps. Once copies exist on phones, an older app can meet newer data.
 - **Backup or moving a place** means copying its `.db` file and `files/` folder.
 
-| Where | SQLite from | Files in |
-| --- | --- | --- |
-| Desktop app (Tauri) | Tauri's SQL plugin | the app's data folder |
-| Phone app (Capacitor) | Capacitor's SQLite plugin | the app's files folder |
-| Our server, private servers | Node's built-in `node:sqlite` (Node 22+, no npm) | `files/` beside the database |
+### One storage code for every platform
 
-Today's `data/research-board.json` and `journal.ndjson` become `research-board.db`, with SQLite's own crash safety. The first run of the new version converts the current data.
+`src/script/core/place/place.js` holds the tables, their upgrades, and every action (boot, save, delete, files, changes since N, replace everything). It never touches SQLite or the disk itself: it's given two adapters.
+
+```
+pages ─► Store ─┬─ browser: remote (HTTP) ─► server.js ─► place.js ─► sql/node + files  (server/place-node.js)
+                ├─ desktop: ──────────────────────────► place.js ─► sql/tauri + files     (later)
+                └─ phone:   ──────────────────────────► place.js ─► sql/capacitor + files (later)
+```
+
+| Adapter | `sql`: exec, run, get, all | `blobs`: put, get, delete (by hash) |
+| --- | --- | --- |
+| Server | Node's built-in `node:sqlite` (Node 22.13+, no npm) | `files/` beside the database |
+| Desktop app (Tauri) | Tauri's SQL plugin | the app's data folder (file system plugin) |
+| Phone app (Capacitor) | Capacitor's SQLite plugin | the app's files folder (Filesystem plugin) |
+
+`Store` tells the clients apart by what the page finds: `window.__TAURI_INTERNALS__` (desktop), `window.Capacitor.isNativePlatform()` (phone), `window.RB_SERVER` (a browser served by a server), checked in that order, and loads only that client's adapter.
+
+**Files:** an uploaded file keeps its own id (`asset:<id>` in items, so copies of a material stay independent), and the `files` table points it at its bytes, `files/<sha-256>`. The same bytes are kept once, and removed when no file uses them.
+
+`data/research-board.json` and `journal.ndjson` became `research-board.db`, with SQLite's own crash safety. The first run of the new server converts them and keeps the originals in `data/before-sqlite/`.
 
 ## The browser
 
@@ -116,10 +131,10 @@ Phase A is built so that B adds to it rather than replacing it: the same schema,
 
 ## Build order
 
-1. **SQLite in the server.** `server/` moves from the JSON file and journal to `node:sqlite` (Node 22+), with the tables above, the `changes` feed and content-named files. It converts the current data on first run. The API stays the same for the app.
+1. **SQLite in the server (done).** The shared `place.js` with the tables above, the `changes` feed and content-named files; `server/` runs it on `node:sqlite`. It converts the current data on first run. The API stayed the same for the app.
 2. **Places in `Store`.** One interface; the remote implementation (today's server code, plus sign-in); the place list in Settings.
 3. **Server sign-in.** Accounts, device tokens, invite links, the host's list of who has access. This one program serves both our online service and private servers.
-4. **Desktop app (Tauri)** with "This device" on its own SQLite (no built-in server).
+4. **Desktop app (Tauri)** with "This device" on its own SQLite (no built-in server): `place.js` with a Tauri adapter, picked by `Store`.
 5. **Phone app (Capacitor)** the same way as the desktop app.
 6. **Phase B:** synced offline copies of online places.
 7. **Collaboration** (see the collaboration document), behind the Collab button.

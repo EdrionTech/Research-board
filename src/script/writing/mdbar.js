@@ -3,6 +3,9 @@
 // (notes, summaries). The edits are also used by the review's own toolbar in Markdown mode.
 // Edits go through the browser's insertText, so they can be undone like typing.
 
+// Afterwards: text you had selected stays selected (so bold and italic can be stacked); if you were just typing,
+// the cursor goes where you'd carry on (after "- ", between ** and **), never over text already written.
+
 const MdBar = (() => {
     // Replaces start..end with text, then selects selStart..selEnd (offsets from start)
     function replace(area, start, end, text, selStart = text.length, selEnd = selStart) {
@@ -16,16 +19,15 @@ const MdBar = (() => {
         area.setSelectionRange(start + selStart, start + selEnd);
     }
 
-    // **bold** / _italic_ around the selection (or around "text" to type over)
-    function wrap(area, mark, placeholder = 'text') {
+    // **bold** / _italic_ around the selection, or an empty pair with the cursor inside
+    function wrap(area, mark) {
         const { selectionStart: start, selectionEnd: end, value } = area;
         const inner = value.slice(start, end);
         // already wrapped: unwrap
         if (value.slice(start - mark.length, start) === mark && value.slice(end, end + mark.length) === mark) {
             return replace(area, start - mark.length, end + mark.length, inner, 0, inner.length);
         }
-        const text = inner || placeholder;
-        replace(area, start, end, mark + text + mark, mark.length, mark.length + text.length);
+        replace(area, start, end, mark + inner + mark, mark.length, mark.length + inner.length);
     }
 
     // Toggles a line prefix ("## ", "- ", "1. ", "> ") on the selected lines
@@ -37,20 +39,28 @@ const MdBar = (() => {
         const lines = value.slice(start, end).split('\n');
         const has = line => (mark === '1. ' ? /^\d+\.\s/.test(line) : line.startsWith(mark));
         const all = lines.every(has);
+        const bareOf = line => line.replace(/^(#{1,6}|[-*>]|\d+\.)\s+/, '');
         const out = lines.map((line, i) => {
-            const bare = line.replace(/^(#{1,6}|[-*>]|\d+\.)\s+/, '');
+            const bare = bareOf(line);
             if (all) return bare;
             return (mark === '1. ' ? `${i + 1}. ` : mark) + bare;
         }).join('\n');
-        replace(area, start, end, out, 0, out.length);
+        if (area.selectionStart !== area.selectionEnd) return replace(area, start, end, out, 0, out.length);
+        // just typing (one line): the cursor stays in the same place in your words, past the new prefix
+        const bare = bareOf(lines[0]).length;
+        const before = lines[0].length - bare;
+        const after = out.length - bare;
+        replace(area, start, end, out, Math.max(after, area.selectionStart - start - before + after));
     }
 
-    // [selected text](https://) with the address selected, ready to type or paste over
+    // [selected text](https://) with the address selected, ready to paste over; with nothing selected,
+    // [](https://) with the cursor where the link's words go
     function link(area) {
         const { selectionStart: start, selectionEnd: end, value } = area;
-        const text = value.slice(start, end) || 'link';
+        const text = value.slice(start, end);
         const md = `[${text}](https://)`;
-        replace(area, start, end, md, text.length + 3, md.length - 1);
+        if (text) replace(area, start, end, md, text.length + 3, md.length - 1);
+        else replace(area, start, end, md, 1);
     }
 
     function history(area, command) {

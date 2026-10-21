@@ -65,6 +65,22 @@ if ($('.bar')) {
 
 // phones and tablets: notes open as a bottom sheet, the note box sits at the bottom, etc.
 const smallScreen = matchMedia('(max-width: 900px)');
+// phones: toolbars show icons only, dropdowns open as sheets
+const phoneScreen = matchMedia('(max-width: 700px)');
+
+// A dropdown (the contents, bookmarks…) on a phone opens as a sheet at the bottom of the screen. While open it's
+// moved to the end of the page, so the toolbar it belongs to (a swipeable row, or blurred by a style) can't clip
+// it; it goes back when closed. Call it each time the dropdown opens or closes.
+function sheetOnPhone(drop, open) {
+    if (open && phoneScreen.matches) {
+        drop.rbHome ??= drop.parentElement;
+        document.body.append(drop);
+        drop.classList.add('sheet');
+    } else if (!open && drop.rbHome) {
+        drop.rbHome.append(drop);
+        drop.classList.remove('sheet');
+    }
+}
 
 // ---- popups: every .modal sits inside #modals and one shows at a time ----
 

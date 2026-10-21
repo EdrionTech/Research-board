@@ -1,0 +1,19 @@
+{
+  "name": "research-board-phone",
+  "private": true,
+  "description": "Research Board's phone app (Capacitor): builds src/ into Android (and iOS, on a Mac). The app code itself has no npm packages; these are only the build tools and the native plugins.",
+  "scripts": {
+    "sync": "cap sync android",
+    "open": "cap open android",
+    "apk": "cap sync android && cd android && gradlew assembleDebug"
+  },
+  "dependencies": {
+    "@capacitor-community/sqlite": "8.1.1",
+    "@capacitor/android": "8.5.3",
+    "@capacitor/core": "8.5.3",
+    "@capacitor/filesystem": "8.1.5"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "8.5.3"
+  }
+}

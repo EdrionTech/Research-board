@@ -26,6 +26,9 @@ const Reader = (() => {
         .ltx_note, .ltx_note_outer, .ltx_note_content, .ltx_creator, .ltx_personname, .ltx_contact, .ltx_author_notes {
             min-width: 0; max-width: 100%; box-sizing: border-box; }
         .ltx_p, .ltx_title, .ltx_note_content { overflow-wrap: anywhere; } /* long URLs and identifiers */
+        /* all the authors share one row: on a narrow screen each got a sliver ("Po- / Heng / Chen"), so they wrap */
+        .ltx_authors { flex-wrap: wrap; row-gap: 12px; }
+        .ltx_authors > .ltx_creator { flex: 1 1 9em; }
         @media (max-width: 600px) { body { padding: 8px 12px 32px; } }
         .ltx_ERROR.undefined { display: none; } /* arXiv's marker for a macro it couldn't convert, e.g. \\dspfont */
         [data-anchor] { border-radius: 4px; transition: background .2s; }

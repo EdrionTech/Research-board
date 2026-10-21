@@ -3,15 +3,15 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <link rel="icon" type="image/svg+xml" href="../assets/logo.svg">
     <title>Dashboard</title>
     <link rel="stylesheet" href="../style/base.css">
     <link rel="stylesheet" href="../style/dashboard.css">
     <link rel="stylesheet" href="../style/literature.css">
     <!-- theme + style, before the page draws -->
-    <!-- the data, when the local server is running (server/server.js); else the browser keeps it -->
-    <script src="/api/boot.js"></script>
+    <!-- where the data is (the server, or the app on this device); then it runs the page's scripts (data-src) -->
+    <script src="../script/core/boot.js"></script>
     <script src="../script/core/settings.js"></script>
     <script src="../script/core/nav.js"></script>
 </head>
@@ -302,27 +302,27 @@
         </form>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.min.js"></script>
-    <script src="../script/core/ui.js"></script>
-    <script src="../script/core/store.js"></script>
-    <script src="../script/core/images.js"></script>
-    <script src="../script/writing/markdown.js"></script>
-    <script src="../script/writing/mdbar.js"></script>
-    <script src="../script/writing/citepicker.js"></script>
-    <script src="../script/writing/mdimages.js"></script>
-    <script src="../script/reader/documents.js"></script>
-    <script src="../script/sources/sources.js"></script>
-    <script src="../script/sources/cite.js"></script>
-    <script src="../script/sources/colors.js"></script>
-    <script src="../script/sources/links.js"></script>
-    <script src="../script/sources/reading.js"></script>
-    <script src="../script/sources/library.js"></script>
-    <script src="../script/sources/bookshelf.js"></script>
-    <script src="../script/sources/picker.js"></script>
-    <script src="../script/sources/figures.js"></script>
-    <script src="../script/pages/dashboard/dashboard.js"></script>
-    <script src="../script/pages/dashboard/literature.js"></script>
+    <script data-src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js"></script>
+    <script data-src="https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.min.js"></script>
+    <script data-src="../script/core/ui.js"></script>
+    <script data-src="../script/core/store.js"></script>
+    <script data-src="../script/core/images.js"></script>
+    <script data-src="../script/writing/markdown.js"></script>
+    <script data-src="../script/writing/mdbar.js"></script>
+    <script data-src="../script/writing/citepicker.js"></script>
+    <script data-src="../script/writing/mdimages.js"></script>
+    <script data-src="../script/reader/documents.js"></script>
+    <script data-src="../script/sources/sources.js"></script>
+    <script data-src="../script/sources/cite.js"></script>
+    <script data-src="../script/sources/colors.js"></script>
+    <script data-src="../script/sources/links.js"></script>
+    <script data-src="../script/sources/reading.js"></script>
+    <script data-src="../script/sources/library.js"></script>
+    <script data-src="../script/sources/bookshelf.js"></script>
+    <script data-src="../script/sources/picker.js"></script>
+    <script data-src="../script/sources/figures.js"></script>
+    <script data-src="../script/pages/dashboard/dashboard.js"></script>
+    <script data-src="../script/pages/dashboard/literature.js"></script>
 </body>
 
 </html>

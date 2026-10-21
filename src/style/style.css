@@ -83,7 +83,11 @@
 .open_project .title { margin: 0 0 6px; }
 .open_project .desc { margin: 0; color: var(--muted); }
 
+/* narrower: the search box gets a row of its own under the buttons, so they keep their words on one line */
+@media (max-width: 900px) {
+    .bar { flex-wrap: wrap; }
+    .search { order: 3; flex: 1 1 100%; width: auto; }
+}
 @media (max-width: 560px) {
-    .search { order: 3; width: 100%; }
     .project_shelf { padding: 16px; }
 }

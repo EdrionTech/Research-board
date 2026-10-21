@@ -1,0 +1,7 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "default",
+  "description": "What the app's window may use: Tauri's basics. The storage commands in main.rs are the app's own, allowed by default.",
+  "windows": ["main"],
+  "permissions": ["core:default"]
+}

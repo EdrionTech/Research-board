@@ -152,7 +152,7 @@
     /* the formatting buttons stay in reach while you write: one swipeable row stuck to the top */
     .writer .toolbar {
         position: sticky;
-        top: 0;
+        top: var(--inset-top);
         z-index: 5;
         flex-wrap: nowrap;
         overflow-x: auto;

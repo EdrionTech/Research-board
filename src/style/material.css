@@ -54,7 +54,7 @@
 /* stays in view under the top bar while you scroll through the material (📷 Capture, views…) */
 .reader_bar {
     position: sticky;
-    top: var(--bar-h, 56px);
+    top: calc(var(--bar-h, 56px) + var(--inset-top));
     z-index: 7;
     display: flex;
     flex-wrap: wrap;
@@ -352,7 +352,7 @@ textarea.dropping { outline: 2px dashed var(--accent); outline-offset: 2px; }
 /* side column stays in view while you read */
 .side {
     position: sticky;
-    top: calc(var(--bar-h, 56px) + 16px);
+    top: calc(var(--bar-h, 56px) + var(--inset-top) + 16px);
     max-height: calc(100dvh - var(--bar-h, 56px) - 32px);
     overflow: auto;
     display: grid;
@@ -497,7 +497,8 @@ body.side_collapsed .side { display: none; }
     .reader_html { height: calc(100dvh - var(--bar-h, 0px) - 120px); min-height: 420px; }
 }
 
-/* phones: less padding; the reader's toolbar and the attach switch are single swipeable rows */
+/* phones: less padding; the reader's toolbar is one row of icons (the rest behind ⋯), the attach switch a
+   swipeable row */
 @media (max-width: 700px) {
     .material_head, .material { padding-left: 12px; padding-right: 12px; }
     .material_head { grid-template-columns: 1fr; padding-top: 12px; gap: 8px; }
@@ -513,6 +514,14 @@ body.side_collapsed .side { display: none; }
     }
     .reader_bar::-webkit-scrollbar, .attach_mode::-webkit-scrollbar { display: none; }
     .reader_bar > * { flex: none; }
+    .reader_bar { gap: 6px; }
+    .reader_bar .has_i { padding-left: 10px; padding-right: 10px; }
+    .reader_bar .more_item { display: none; }
+    .reader_bar .more_btn { margin-left: auto; }
+    /* ⋯ open: everything, on as many rows as it takes */
+    .reader_bar.more_open { flex-wrap: wrap; overflow: visible; }
+    .reader_bar.more_open .more_item:not([hidden]) { display: inline-flex; }
+    .reader_bar.more_open .more_btn { order: 1; }
     .attach_mode { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
     .attach_mode > * { flex: none; }
     .video_bar .hint { flex-basis: 100%; }
@@ -605,13 +614,23 @@ body.side_collapsed .side { display: none; }
 .zoom_ctl button:disabled { opacity: .35; cursor: default; }
 #zoom_level { min-width: 52px; }
 
-/* phones only: "Tags, status, citation ▾" folds those away */
+/* phones only: "Details ▾" folds away all but the title, so the paper starts near the top of the screen */
 .head_more { display: none; justify-self: start; font-size: .85rem; }
 @media (max-width: 700px) {
     .head_more { display: inline; }
-    .material_head:not(.head_open) :is(.keywords, .tag_row, .status, .cite_box) { display: none; }
-    /* the zoom control comes first in the swipeable toolbar, so it's always in reach */
-    .reader_bar .zoom_ctl { order: -1; }
+    /* the top bar on one line: the names shorten (…) to leave room for the two icon buttons */
+    .bar { flex-wrap: nowrap; }
+    .bar :is(.back, .brand) { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .bar .brand { flex: 1; }
+    .bar .has_i { flex: none; }
+    .material_head:not(.head_open) :is(.source_authors, .source_links, .cited_in, .keywords, .tag_row, .status, .cite_box) { display: none; }
+    .material_head:not(.head_open) .source_title {
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
+        line-clamp: 2;
+        overflow: hidden;
+    }
 }
 @media (pointer: coarse) {
     .zoom_ctl button { min-width: 44px; min-height: 40px; }
@@ -627,7 +646,7 @@ body.side_collapsed .side { display: none; }
 body.reading_full .bar, body.reading_full .material_head { display: none; }
 body.reading_full { --bar-h: 0px; }
 body.reading_full .material { padding-top: 8px; max-width: none; }
-body.reading_full .reader_bar { top: 0; }
+body.reading_full .reader_bar { top: var(--inset-top); }
 body.reading_full .reader_html { height: calc(100dvh - 120px); }
 #full_btn[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); }
 

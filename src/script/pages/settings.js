@@ -116,6 +116,11 @@ async function renderStorage() {
     const projects = Store.getProjects().length;
     const items = Store.getProjects().reduce((n, p) => n + Store.getItems(p.id).length, 0);
     const counts = `${projects} project${projects === 1 ? '' : 's'} and ${items} sources, notes and other items`;
+    if (Store.mode === 'app') {
+        $('#storage_where').textContent = 'Stored on this device';
+        $('#storage_info').textContent = `${counts}, kept by the Research Board app on this device${window.RB_SERVER.dataDir ? `: ${window.RB_SERVER.dataDir}` : ''}. Back them up with a backup file below.`;
+        return;
+    }
     if (Store.mode === 'server') {
         $('#storage_where').textContent = 'Stored on this computer';
         $('#storage_info').textContent = `${counts}, kept in the data folder by the Research Board server: ${window.RB_SERVER.dataDir}. Back it up by copying that folder, or with a backup file below.`;

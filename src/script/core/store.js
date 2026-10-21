@@ -1,10 +1,10 @@
 // Shared data layer for every page. Everything goes through here, so where the data lives can change
 // without the pages knowing:
-//   - with the local server (`node server/server.js`, or start.bat): records and files are kept in the data/ folder.
-//     The server hands every page the records first (/api/boot.js → window.RB_SERVER); reads come from
-//     that copy and each change is sent back. Changes that couldn't be sent wait in this browser (the outbox)
-//     and go when the server is back.
-//   - without it (the files opened directly, Live Server): records in localStorage, files in IndexedDB.
+//   - with a place to keep it (boot.js → window.RB_SERVER): the local server's data/ folder, or in the desktop
+//     and phone apps their own SQLite. Every page is handed the records first; reads come from that copy and
+//     each change is sent back (RB_SERVER.request). Changes that couldn't be sent wait in this browser (the
+//     outbox) and go when the server is back.
+//   - without one (the files opened directly, Live Server): records in localStorage, files in IndexedDB.
 //
 // projects: [{ id, title, desc, image }]   image: a link, 'asset:<id>' (an uploaded picture) or '' (the style's own)
 // items:    [{ id, projectId, type, title, body, ..., createdAt, updatedAt }]
@@ -254,7 +254,7 @@ const Store = (() => {
 
     return {
         DEFAULT_IMAGE, LIBRARY_ID,
-        mode: server ? 'server' : 'browser',
+        mode: server ? (server.app ? 'app' : 'server') : 'browser',
         getProjects, getProject, saveProject, deleteProject,
         getItems, getItem, saveItem, deleteItem,
         saveSettings,
@@ -294,14 +294,11 @@ const Store = (() => {
             }
         };
 
-        async function call(method, path, body, { raw = false, headers = {} } = {}) {
-            const res = await fetch('/api/' + path, {
-                method,
-                headers: raw ? headers : { 'Content-Type': 'application/json' },
-                body: body === undefined ? undefined : raw ? body : JSON.stringify(body),
-            });
-            if (!res.ok) throw new Error(`the server said ${res.status}`);
-            return res;
+        // to the server, or in the apps to their own storage (boot.js); a file goes and comes as a Blob
+        async function call(method, path, body) {
+            const answer = await server.request(method, path, body);
+            if (answer.status >= 400) throw new Error(answer.body?.error || `the server said ${answer.status}`);
+            return answer;
         }
 
         // what changed in records → requests
@@ -417,16 +414,14 @@ const Store = (() => {
         });
 
         async function putFile(id, blob) {
-            await call('PUT', 'files/' + id, blob, { raw: true, headers: { 'Content-Type': blob.type || 'application/octet-stream', 'X-File-Name': encodeURIComponent(blob.name || '') } });
+            await call('PUT', 'files/' + id, blob);
         }
 
         async function getFile(id) {
-            const res = await fetch('/api/files/' + id);
-            if (res.status === 404) return undefined;
-            if (!res.ok) throw new Error(`the server said ${res.status}`);
-            const blob = await res.blob();
-            const name = decodeURIComponent(res.headers.get('X-File-Name') || '');
-            return name ? new File([blob], name, { type: blob.type }) : blob;
+            const answer = await server.request('GET', 'files/' + id);
+            if (answer.status === 404) return undefined;
+            if (answer.status >= 400) throw new Error(`the server said ${answer.status}`);
+            return answer.file;
         }
 
         const deleteFile = id => call('DELETE', 'files/' + id);
@@ -436,7 +431,7 @@ const Store = (() => {
 })();
 
 // The first time the server is used (its data folder is empty), what this browser kept so far can be brought in.
-if (Store.mode === 'server' && window.RB_SERVER.empty) {
+if (Store.mode === 'server' && window.RB_SERVER.empty) { // (the apps have no browser data to bring in)
     Store.browserData().then(async data => {
         if (!data) return;
         const count = data.items.filter(i => i.type === 'source').length;

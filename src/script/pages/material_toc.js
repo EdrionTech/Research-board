@@ -187,6 +187,7 @@ const Toc = (() => {
 
     function openDrop(open) {
         $('#toc_drop').hidden = !open;
+        sheetOnPhone($('#toc_drop'), open);
         $('#toc_btn').setAttribute('aria-expanded', open);
         if (open) markCurrent();
     }
@@ -240,7 +241,10 @@ const Toc = (() => {
     function setup() {
         $('#toc_drop_list').addEventListener('click', onClick);
         $('#toc_btn').onclick = () => openDrop($('#toc_drop').hidden);
-        document.addEventListener('click', e => { if (!e.composedPath().includes($('#toc_menu'))) openDrop(false); });
+        document.addEventListener('click', e => {
+            const path = e.composedPath();
+            if (!path.includes($('#toc_menu')) && !path.includes($('#toc_drop'))) openDrop(false); // (a sheet on phones: outside the menu)
+        });
         document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('#toc_drop').hidden) openDrop(false); });
     }
 

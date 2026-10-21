@@ -4,13 +4,11 @@ Everything still to do, by category. Details are in the linked plans. Done work 
 
 ## 1. Next session (planned)
 
-**Storage and clients** ([platforms/platforms.md](platforms/platforms.md))
-- [ ] SQLite storage, with the same tables everywhere (`projects`, `items`, `settings`, `files`, `changes`) and files named by their content
-- [ ] Convert existing data on first run: today's `data/` folder, and anything still saved in a browser
-- [ ] `Store` reads "this device" from SQLite through one interface (the shape online places will use later)
-- [ ] Browser client served by the local server
-- [ ] Desktop app (Tauri) wrapping the same `src/`
-- [ ] Phone app (Capacitor), if time allows (the most setup-heavy)
+**Storage and clients** ([platforms/platforms.md](platforms/platforms.md), [apps/README.md](../apps/README.md)). Built: SQLite storage (the shared `place.js`), the boot loader that picks the client, the desktop app (Tauri) and the phone app (Capacitor, Android `.apk`).
+- [ ] Try the desktop installer and the `.apk` on real devices (the phone's storage is untested on a device)
+- [ ] **The apps need the internet for some libraries:** marked, DOMPurify, PDF.js and Turndown load from CDNs. Keep copies in `src/` so the apps work offline
+- [ ] Phone splash screen (still Capacitor's); your own app icon when it's ready (see apps/README.md)
+- [ ] Downloads (backup file) and links that open a new tab: check they work inside the apps
 - [ ] Remove the browser-only storage path once the apps or the server are the normal way to run
 
 **Citation style creator and editor** ([citation_styles/citation_styles.md](citation_styles/citation_styles.md))
@@ -21,13 +19,15 @@ Everything still to do, by category. Details are in the linked plans. Done work 
 - [ ] Styles from templates, guides or example references (closest built-in style, adjusted)
 - [ ] Styles kept with your data, per user, selectable for any project
 
-## 2. Before next session: setup and decisions
-- [ ] Install Node 22+ (the development machine has 20.19): needed for SQLite on the server side
-- [ ] Decide whether npm is acceptable for building the apps (Tauri and Capacitor normally use it); the app code stays build-free
-- [ ] Desktop app tools: Rust and Microsoft C++ Build Tools
-- [ ] Phone app tools: Android Studio and its SDK (iOS needs a Mac)
+## 2. Setup and decisions
+- [ ] Confirm npm only for building the phone app (used in `apps/phone` since 2026-10-21; the app code stays build-free)
+- [ ] iOS: needs a Mac with Xcode (or a cloud build), plus an Apple developer account for real phones
 
 ## 3. Smaller features
+- [ ] **Icons across the app** (the reader has them now: `src/style/icons.css`): the other pages' toolbars, the note toolbar, the dashboard
+- [ ] **The reader on desktop:** what feels off there (still to be described)
+- [ ] **Colour choices that change the style's whole mood** (Settings → Colours). Today a palette mostly recolours accents. It should reshape the style: for example, a Sunset palette in Skyglass should make the page look like a sunset (sky gradient, glass tint, glow), not just swap blue and green. How much each style gives depends on the style: some are fine as they are, some need a little influence, others need a lot. Decide per style which parts a palette drives (background, surfaces, bars, glows, illustrations).
+- [ ] **The attach switch on phones** ("Attach notes to: Paragraph, Sentence…") is still a wide swipeable row
 - [ ] **Library: tag filter** for materials
 - [ ] **The note popup, small until needed.** When a selection in the material opens the pop-up note box, it opens **collapsed**: just what's attached (the words or place) and a few quick buttons, so it covers little of the page. It expands to the full note form when you click it or start typing, and can be collapsed again.
 - [ ] **Marking without a note: underline, highlight, or both.** Mark a selection straight away, with no note to write, as an underline, a highlight or both, in a chosen colour (and its meaning, from the project's highlight colours). Marks are saved and shown like highlights, appear in the paper's notes list and "Highlights across papers", and can be turned into a note later.
@@ -41,13 +41,14 @@ Everything still to do, by category. Details are in the linked plans. Done work 
 
 ## 4. Larger features (to discuss)
 - [ ] **Moving between materials without leaving the reader:** going from one paper to another (a cited reference, a related paper, the next in the project) without going back to the Literature tab. Leaning towards (still to discuss): **a dropdown search** in the reader to find and open any material, and **opening a cited reference beside the current paper**. Other options noted: tabs of open materials, a side list of the project's materials, back and forward through what you've read.
+- [ ] **A Milanote-like feature** (noted 2026-10-21; you'll define it better later). Milanote is a visual board where notes, images, links and files are laid out freely and grouped on a canvas. Exactly what it means for Research Board is still to be decided.
 
 ## 5. Tidy-ups and known issues
 - [ ] `assets/logo.svg` (the original) contains the logo twice; the app uses a fixed copy in `src/assets/`
 - [ ] "+ New project" wraps onto two lines in Gildmoor and Pixel Pop at about 900 px width
 - [ ] Untested so far: `start.bat` / `start.sh` opening the browser (`--open`), and resuming a video where you left off
 - [ ] The YouTube player test fails in the test browser (only the test; worth a manual check)
-- [ ] Not committed: everything since the last push
+- [ ] Not committed: the SQLite storage, the apps, the reader's phone layout (since `883f946`)
 
 ## 6. Development workflow
 - [ ] Move the test suites into the repo (e.g. `tests/`) so anyone can run them

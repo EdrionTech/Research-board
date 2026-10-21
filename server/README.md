@@ -1,6 +1,6 @@
 # Research Board local server
 
-`server.js` serves the app (`src/`) and keeps its data in files on this computer, so nothing depends on the browser's storage (which is kept per address, and can be cleared or evicted). It needs only Node.js 18 or newer, no packages.
+`server.js` serves the app (`src/`) and keeps its data in files on this computer, so nothing depends on the browser's storage (which is kept per address, and can be cleared or evicted). It needs only Node.js 22.13 or newer (for its built-in SQLite), no packages.
 
 ## Starting it
 
@@ -26,13 +26,14 @@ Set these as environment variables:
 
 | File | What it holds |
 | --- | --- |
-| `research-board.json` | Projects; materials, with where you are in each (`readingAt`) and their summaries and reviews; notes and highlights; bookmarks; figures; the literature review; the library's settings; the theme, style, colour choices and your own CSS. Rewritten whole about a second after changes, through a temporary file, so it's never left half-written. |
-| `journal.ndjson` | Changes since that rewrite, one per line. Each is written before the app is told "saved", and replayed on start, so a crash or a closed window loses nothing. |
-| `files/<id>`, `files/<id>.json` | Uploaded PDFs, videos and images (in notes, figures, project and material thumbnails), first-page previews; and each file's type and name. |
+| `research-board.db` | Projects; materials, with where you are in each (`readingAt`) and their summaries and reviews; notes and highlights; bookmarks; figures; the literature review; the library's settings; the theme, style, colour choices and your own CSS; which uploaded file is which. A SQLite database: each change is saved whole or not at all, so a crash or a closed window loses nothing that was confirmed. |
+| `research-board.db-wal`, `-shm` | SQLite's working files while the server runs. Folded back into the `.db` when it stops. |
+| `files/<hash>` | The bytes of uploaded PDFs, videos and images (in notes, figures, project and material thumbnails) and first-page previews, named by their content: the same file added twice (say, a material copied into a project) is kept once, and removed when nothing uses it. |
+| `before-sqlite/` | Left by the first run of this version: the old `research-board.json`, `journal.ndjson` and `files/`, after they were brought into `research-board.db`. Delete it once you're happy. |
 
-If `research-board.json` can't be read, it's copied aside (`.damaged-<time>`), never overwritten.
+The storage itself isn't in the server: it's [src/script/core/place/place.js](../src/script/core/place/place.js), shared with the desktop and phone apps, with the tables described there. [place-node.js](place-node.js) gives it Node's SQLite and the files folder.
 
-**Backing up:** copy the whole `data` folder, best while the server is stopped (then `journal.ndjson` is empty and everything is in `research-board.json`). Or download a backup from Settings, with files. To move to another computer, copy the folder into the project there (or point `DATA` at it).
+**Backing up:** copy the whole `data` folder while the server is stopped. Or download a backup from Settings, with files. To move to another computer, copy the folder into the project there (or point `DATA` at it).
 
 ## How the app uses it
 
@@ -48,6 +49,7 @@ This is everything the app needs. A desktop or mobile version, or another framew
 | --- | --- |
 | `GET /api/boot.js` | Everything, as `window.RB_SERVER = { data: { projects, items, library, settings }, empty, dataDir }` |
 | `GET /api/health` | `{ ok: true }` when the server is up |
+| `GET /api/changes?since=N` | What changed after change `N`: `{ changes: [{ seq, kind, id, op }] }` (for synced copies later) |
 | `PUT /api/items/:id` | Save one item (the whole item). One older than the stored copy (`updatedAt`) is ignored: `{ ok, kept: "newer" }` |
 | `DELETE /api/items/:id` | |
 | `PUT /api/projects/:id` | Save one project; new ones go first |
@@ -63,4 +65,4 @@ Items are anything in a project, told apart by `type`: `source` (a material), `s
 
 ## Later
 
-Where this is going (SQLite, places, the desktop and phone apps, signing in, invite keys) is in [system_documents/platforms/platforms.md](../system_documents/platforms/platforms.md); working together in [system_documents/collaboration/collaboration.md](../system_documents/collaboration/collaboration.md). This server becomes the server program there: the same one for our online service and private servers. Where you are in each material and bookmarks are kept on the material for now; with collaboration they become per person.
+Where this is going (places, the desktop and phone apps, signing in, invite keys) is in [system_documents/platforms/platforms.md](../system_documents/platforms/platforms.md); working together in [system_documents/collaboration/collaboration.md](../system_documents/collaboration/collaboration.md). This server becomes the server program there: the same one for our online service and private servers. Where you are in each material and bookmarks are kept on the material for now; with collaboration they become per person.

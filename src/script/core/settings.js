@@ -332,6 +332,29 @@ const Settings = (() => {
         return new URL(`style/themes/${style}/images/project-${kind}-${theme === 'dark' ? 'dark' : 'light'}.svg`, appRoot).href;
     }
 
+    // The phone's status bar (and on phones the browser's own bar, through theme-color) in the top bar's colour, with
+    // light or dark clock and battery to match. Run once the style's stylesheets have loaded.
+    function paintSystemBars() {
+        if (!document.body) return;
+        const see = el => el && getComputedStyle(el).backgroundColor;
+        const rgba = color => (color?.match(/[\d.]+/g) || []).map(Number);
+        let color = see(document.querySelector('.bar'));
+        if (!color || (rgba(color)[3] ?? 1) < .9) color = see(document.body); // see-through bars (Skyglass): the page's colour
+        document.documentElement.style.setProperty('--status-bg', color);
+        let meta = document.querySelector('meta[name="theme-color"]');
+        if (!meta) {
+            meta = document.createElement('meta');
+            meta.name = 'theme-color';
+            document.head.append(meta);
+        }
+        meta.content = color;
+        const [r = 255, g = 255, b = 255] = rgba(color);
+        const darkBar = 0.299 * r + 0.587 * g + 0.114 * b < 140;
+        // the phone app (Capacitor's SystemBars): LIGHT = dark icons for a light bar, DARK = light icons
+        window.Capacitor?.nativePromise?.('SystemBars', 'setStyle', { style: darkBar ? 'DARK' : 'LIGHT', bar: 'StatusBar' }).catch(() => { });
+    }
+    addEventListener('load', paintSystemBars);
+
     // Later (Settings page, another tab changed them): the new style loads fully, then the old one goes.
     function apply(settings = read()) {
         const style = setTheme(settings);
@@ -349,7 +372,7 @@ const Settings = (() => {
             const after = document.getElementById('palette_css') || document.getElementById('custom_css');
             for (const link of added) document.head.insertBefore(link, after);
             Promise.all(added.map(link => new Promise(done => { link.onload = link.onerror = done; })))
-                .then(() => current.forEach(link => link.remove()));
+                .then(() => { current.forEach(link => link.remove()); paintSystemBars(); });
             if (!added.length) current.forEach(link => link.remove());
         }
         let custom = document.getElementById('custom_css');
@@ -366,6 +389,7 @@ const Settings = (() => {
             document.head.insertBefore(colours, custom);
         }
         colours.textContent = paletteCss(settings);
+        requestAnimationFrame(paintSystemBars); // the theme or colours changed (a new style paints when it has loaded)
         dispatchEvent(new Event('settingschange')); // pages swap in the new style's default pictures
     }
 

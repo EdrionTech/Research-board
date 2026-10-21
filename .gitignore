@@ -2,3 +2,14 @@
 /.history
 # your data (the local server keeps it here)
 /data
+
+# the original design-system packs (reference only; the app uses its copies in src/style/themes)
+/design_document
+
+# app builds (apps/desktop: cargo tauri build; apps/phone: npm run apk)
+/apps/desktop/src-tauri/target
+/apps/desktop/src-tauri/gen
+/apps/phone/node_modules
+/devbuild/out
+
+.fake

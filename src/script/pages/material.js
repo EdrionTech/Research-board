@@ -431,7 +431,11 @@ async function loadVideo(load) {
             player.pause();
             stopAt = null;
         }
-        if (!videoDuration) renderTimeline();
+        // the length, once the video knows it: for the timeline, and for how far through you are (continuing later)
+        if (!videoDuration) {
+            videoDuration = await player.getDuration().catch(() => 0);
+            if (videoDuration) renderTimeline();
+        }
     }, 400);
     updateVideoButtons(0);
     renderTimeline();
@@ -1730,7 +1734,7 @@ let noteFilter = ''; // a colour id: show only its notes
 
 function renderNotes() {
     $('#notes_heading').textContent = `Notes (${notes.length})`;
-    $('#show_side').textContent = `⟨ Notes (${notes.length})`;
+    $('#show_side').innerHTML = `<span class="i" data-i="sticky-note" aria-hidden="true"></span> Notes (${notes.length})`;
     renderNoteFilter();
     const shown = noteFilter ? notes.filter(n => n.color === noteFilter) : notes;
     $('#source_notes').replaceChildren(...shown.map(noteRow));
@@ -2043,7 +2047,8 @@ function setFullScreen(on) {
     if (on === document.body.classList.contains('reading_full')) return;
     document.body.classList.toggle('reading_full', on);
     $('#full_btn').setAttribute('aria-pressed', on);
-    $('#full_btn').textContent = on ? '✕ Exit full screen' : '⛶ Full screen';
+    $('#full_btn .i').dataset.i = on ? 'minimize' : 'maximize';
+    $('#full_btn .lbl').textContent = on ? 'Exit full screen' : 'Full screen';
     if (on) {
         sideBeforeFull = document.body.classList.contains('side_collapsed');
         setSideCollapsed(true);
@@ -2068,10 +2073,16 @@ for (const textarea of [noteForm.elements.body, noteForm.elements.answer, ...$$(
 }
 
 // phones: tags, status and the citation fold away so the reading starts on the first screen
+// phones: ⋯ shows the toolbar's less used tools (zoom, upload, paste, open, full screen) on more rows
+$('#more_btn').onclick = () => {
+    const open = $('.reader_bar').classList.toggle('more_open');
+    $('#more_btn').setAttribute('aria-expanded', open);
+};
+
 $('#head_more').onclick = () => {
     const open = $('.material_head').classList.toggle('head_open');
     $('#head_more').setAttribute('aria-expanded', open);
-    $('#head_more').textContent = open ? 'Less ▴' : 'Tags, status, citation ▾';
+    $('#head_more').textContent = open ? 'Less ▴' : 'Details ▾';
 };
 noteForm.elements.body.addEventListener('input', renderBodyImages);
 

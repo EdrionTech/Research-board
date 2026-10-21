@@ -65,10 +65,28 @@ const VideoPlayer = (() => {
         video.preload = 'metadata';
         video.src = src;
         container.append(video);
+        // Recordings made in a browser (screen or lecture recordings) don't say how long they are (duration Infinity),
+        // so where you are couldn't be worked out or resumed: a seek far past the end makes the browser find it.
+        // Meanwhile a seek (continuing where you were) waits, and happens once the length is known.
+        let finding = false;
+        let wanted = 0;
+        video.addEventListener('loadedmetadata', () => {
+            if (video.duration !== Infinity) return;
+            finding = true;
+            wanted = video.currentTime; // a seek asked for before the video loaded
+            video.addEventListener('durationchange', () => {
+                finding = false;
+                video.currentTime = wanted;
+            }, { once: true });
+            video.currentTime = 1e101;
+        }, { once: true });
         return {
-            getTime: async () => video.currentTime,
+            getTime: async () => (finding ? wanted : video.currentTime),
             getDuration: async () => (Number.isFinite(video.duration) ? video.duration : 0),
-            seek: seconds => { video.currentTime = seconds; },
+            seek: seconds => {
+                if (finding) wanted = seconds;
+                else video.currentTime = seconds;
+            },
             play: () => video.play().catch(() => { }),
             pause: () => video.pause(),
             destroy: () => {
