@@ -1,2 +1,4 @@
 /.vscode
 /.history
+# your data (the local server keeps it here)
+/data

@@ -4,12 +4,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/svg+xml" href="../assets/logo.svg">
     <title>Library · Research Board</title>
 
     <link rel="stylesheet" href="../style/base.css">
     <link rel="stylesheet" href="../style/bookshelf.css">
     <link rel="stylesheet" href="../style/library.css">
     <!-- theme + style, before the page draws -->
+    <!-- the data, when the local server is running (server/server.js); else the browser keeps it -->
+    <script src="/api/boot.js"></script>
     <script src="../script/core/settings.js"></script>
     <script src="../script/core/nav.js"></script>
 </head>
@@ -49,6 +52,12 @@
             <span class="spacer"></span>
             <small id="shelf_count"></small>
         </div>
+
+        <!-- the materials you're in the middle of, across your projects (reading.js) -->
+        <section class="continue_row" id="continue_row" hidden>
+            <h4>Continue reading</h4>
+            <div class="continue_list"></div>
+        </section>
 
         <!-- one bookshelf per group: rows of books on wooden boards (library.js) -->
         <div class="book_shelf" id="book_shelf"></div>
@@ -98,6 +107,7 @@
     <script src="../script/sources/sources.js"></script>
     <script src="../script/sources/cite.js"></script>
     <script src="../script/sources/library.js"></script>
+    <script src="../script/sources/reading.js"></script>
     <script src="../script/sources/bookshelf.js"></script>
     <script src="../script/pages/library.js"></script>
 </body>

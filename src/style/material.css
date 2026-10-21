@@ -707,3 +707,93 @@ body.reading_full .reader_html { height: calc(100dvh - 120px); }
 .in_note { display: grid; gap: 2px; padding: 6px 8px; border-radius: 6px; color: var(--text); text-decoration: none; font-size: .85rem; }
 .in_note:hover { background: var(--bg); }
 .in_note span { color: var(--muted); font-size: .8rem; }
+
+/* ---- places (material_places.js) ---- */
+.toast .toast_action { margin-left: 8px; padding: 2px 10px; border: 1px solid currentColor; border-radius: 999px; background: none; color: inherit; font: inherit; font-weight: 600; cursor: pointer; }
+
+/* 🔖 Bookmarks: the list drops down under its button */
+.bookmarks_menu { position: relative; }
+.bookmarks_menu .count:empty { display: none; }
+.composer.bookmark_list_box {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    z-index: 20;
+    width: min(340px, calc(100vw - 24px));
+    display: grid;
+    gap: 8px;
+}
+.bookmark_list_box[hidden] { display: none; }
+.bookmark_list { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; max-height: 50vh; overflow: auto; }
+.bookmark_list .none { color: var(--muted); font-size: .85rem; font-style: italic; padding: 4px 6px; }
+.bookmark { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: 4px; border-radius: 6px; }
+.bookmark:hover { background: var(--bg); }
+.bookmark_go { display: grid; gap: 1px; padding: 6px 8px; border: 0; background: none; color: var(--text); font: inherit; text-align: left; cursor: pointer; min-width: 0; }
+.bookmark_go strong { font-size: .86rem; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bookmark_go small { color: var(--muted); font-size: .75rem; }
+.bookmark .link { padding: 4px 6px; font-size: .9rem; }
+.bookmark_delete:hover { color: var(--danger); }
+.bookmark_name { width: 100%; margin: 2px 0; }
+.bookmark_list_box .hint { color: var(--muted); font-size: .75rem; }
+
+/* where a bookmark is: a ribbon on the PDF page, beside a text line (the HTML paper has its own: reader.js) */
+.bookmark_mark, .reader_text .line.bookmarked::before {
+    content: '';
+    position: absolute;
+    width: 10px;
+    height: 16px;
+    background: #e8590c;
+    clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 72%, 0 100%);
+    pointer-events: none;
+}
+.bookmark_mark { left: 3px; margin-top: -2px; z-index: 3; } /* inside the page: the reader clips what's beside it */
+.reader_text .line { position: relative; }
+.reader_text .line.bookmarked::before { left: -14px; top: 4px; }
+/* where you jumped to on a PDF page, for a moment */
+.place_flash { position: absolute; left: 0; right: 0; height: 3px; z-index: 3; background: var(--accent); pointer-events: none; animation: place_flash 1.6s ease-out forwards; }
+@keyframes place_flash { from { opacity: 1; } to { opacity: 0; } }
+
+/* 📝 the summary pad, over the reader (also in full screen) */
+.composer.summary_pad {
+    right: 16px;
+    bottom: calc(16px + env(safe-area-inset-bottom));
+    z-index: 32;
+    width: min(400px, calc(100vw - 32px));
+    max-height: none;
+    display: grid;
+    gap: 8px;
+    resize: both;
+    overflow: auto;
+    min-width: 260px;
+    min-height: 200px;
+}
+.summary_pad[hidden] { display: none; }
+.summary_pad header { display: flex; align-items: center; gap: 8px; }
+.summary_pad header .spacer { flex: 1; }
+.summary_pad_state { color: var(--muted); font-size: .78rem; }
+.summary_pad textarea { width: 100%; min-height: 160px; resize: vertical; box-sizing: border-box; }
+.summary_pad_tools { display: flex; flex-wrap: wrap; gap: 6px; }
+#summary_btn[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); }
+@media (max-width: 600px) {
+    /* a sheet along the bottom on phones */
+    .composer.summary_pad { left: 8px; right: 8px; width: auto; bottom: 8px; resize: none; max-height: 55dvh; }
+}
+
+/* ---- table of contents (material_toc.js) ---- */
+.toc_list { list-style: none; margin: 0; padding: 0; }
+.toc_list .toc_list { padding-left: 16px; }
+.toc_list[hidden] { display: none; }
+.toc_row { display: flex; align-items: baseline; gap: 2px; }
+.toc_twist, .toc_twist_space { flex: none; width: 20px; }
+.toc_twist { padding: 2px 0; border: 0; background: none; color: var(--muted); font-size: .8rem; cursor: pointer; transition: transform .15s; }
+.toc_twist[aria-expanded="true"] { transform: rotate(90deg); }
+.toc_go { flex: 1; min-width: 0; display: flex; align-items: baseline; gap: 8px; padding: 3px 6px; border: 0; border-radius: 5px; background: none; color: var(--text); font: inherit; font-size: .88rem; text-align: left; cursor: pointer; }
+.toc_go span { flex: 1; min-width: 0; }
+.toc_go small { flex: none; color: var(--muted); font-size: .74rem; }
+.toc_go:hover { background: var(--bg); }
+.toc_item.current > .toc_row .toc_go { color: var(--accent); font-weight: 600; background: color-mix(in srgb, var(--accent) 10%, transparent); }
+/* "☰ Contents" in the reader bar drops it down */
+.toc_menu { position: relative; }
+.toc_menu[hidden] { display: none; }
+.composer.toc_drop { position: absolute; top: calc(100% + 6px); left: 0; z-index: 20; width: min(380px, calc(100vw - 24px)); max-height: 60vh; overflow: auto; }
+.toc_drop[hidden] { display: none; }

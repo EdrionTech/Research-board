@@ -305,6 +305,7 @@ $('.workspace').addEventListener('keydown', e => {
 
 form.elements.type.addEventListener('change', updateConditionalFields);
 MdBar.attach(form.elements.body); // bold, lists, links as buttons (phones have no Ctrl + B)
+CitePicker.attach(form.elements.body, () => { const list = projectSources(); assignCitekeys(list); return list; }); // @ cites a paper
 
 form.addEventListener('submit', e => {
     e.preventDefault();

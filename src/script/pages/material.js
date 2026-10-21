@@ -91,7 +91,16 @@ function init() {
     $('#float_toggle').checked = floatingNotes;
 
     render();
+    Toc.setup(); // the table of contents (material_toc.js)
     setupReader();
+    Places.setup(); // continue where you left off, bookmarks, the summary pad (material_places.js)
+}
+
+// the project's papers, with their citation keys: what notes can cite (type @: citepicker.js)
+function projectSources() {
+    const sources = Store.getItems(project.id).filter(i => i.type === 'source');
+    assignCitekeys(sources);
+    return sources;
 }
 
 // re-read the source after it was saved
@@ -100,7 +109,10 @@ function refresh() {
     render();
 }
 
+let citeSources = []; // the project's papers, for showing citations in notes as links
+
 function render() {
+    citeSources = projectSources();
     notes = Store.getItems(project.id)
         .filter(i => i.type === 'source_note' && i.sourceId === source.id)
         .sort(byPosition);
@@ -110,7 +122,7 @@ function render() {
     markNoted();
     renderTimeline();
     for (const field of $$('.md_field')) {
-        renderMarkdown($('.md', field), fieldValue(field.dataset.field), 'Nothing written yet.');
+        renderMarkdown($('.md', field), PaperLinks.withLinks(fieldValue(field.dataset.field), citeSources, project.citeStyle || 'apa'), 'Nothing written yet.');
         setMdEditing(field, false);
     }
 }
@@ -184,6 +196,7 @@ function fieldValue(field) {
 function setupReader() {
     loadCount++;
     viewLoads = {};
+    Toc.reset();
     statusByView = {};
     pageObserver?.disconnect();
     pageResizer?.disconnect();
@@ -237,6 +250,7 @@ function showView(view) {
     for (const v of VIEWS) $('#reader_' + v).hidden = v !== view;
     $('.attach_row').hidden = view === 'video'; // video notes attach to a moment instead
     viewLoads[view] ??= loadView(view, loadCount);
+    Toc.show(view);
     requestAnimationFrame(paintRegions); // image areas need the view laid out
     renderStatus();
     updateReaderBar();
@@ -342,8 +356,15 @@ async function loadHtml(load) {
     });
     setupHtmlImageButton(doc);
     ReferencesPanel.fromHtml(doc);
+    Toc.fromHtml(doc);
+    Toc.watchFrame(doc);
     markNoted();
     highlightFormTarget();
+    Places.markBookmarks();
+    // B bookmarks here too (keys pressed inside the paper stay in its frame)
+    doc.addEventListener('keydown', e => {
+        if (e.key.toLowerCase() === 'b' && !e.ctrlKey && !e.metaKey && !e.altKey) document.dispatchEvent(new KeyboardEvent('keydown', { key: e.key }));
+    });
     setStatus('html', '');
 }
 
@@ -521,14 +542,18 @@ async function loadPdf(load) {
         }
     });
     const pageTexts = [];
+    const pageLines = [];
     for (let n = 1; n <= pdfDoc.numPages; n++) {
         if (!current()) return;
         const page = await Reader.pageLines(await pdfDoc.getPage(n));
         pageTexts.push(page.lines.map(line => line.text));
+        pageLines.push(page.lines);
         appendPdfPage(n, page);
         setStatus('pdf', `Reading page ${Math.min(n + 1, pdfDoc.numPages)} of ${pdfDoc.numPages}…`, n, pdfDoc.numPages);
     }
     setStatus('pdf', '');
+    Places.markBookmarks();
+    Toc.fromPdf(pdfDoc, pageLines);
     ReferencesPanel.fromPdf(pageTexts); // its References section, if the HTML version didn't give the list
 }
 
@@ -706,6 +731,8 @@ function loadText() {
     $('#reader_text').replaceChildren(list);
     markNoted();
     highlightFormTarget();
+    Places.markBookmarks();
+    Toc.fromText(Reader.textLines(source.text));
 }
 
 // ---- reader zoom (zoom.js): − / + buttons, pinch, Ctrl + wheel ----
@@ -958,8 +985,8 @@ function finishBox(doc, page, rect, start) {
     finishArea(best, click ? { x: 0, y: 0, w: 1, h: 1 } : regionIn(best.getBoundingClientRect(), rect));
 }
 
-// a short message at the bottom of the screen
-function toast(text) {
+// a short message at the bottom of the screen, with a button if there's something to do about it
+function toast(text, { action, onAction } = {}) {
     let note = $('#toast');
     if (!note) {
         note = el('div', 'toast');
@@ -967,10 +994,19 @@ function toast(text) {
         note.setAttribute('role', 'status');
         document.body.append(note);
     }
-    note.textContent = text;
+    note.replaceChildren(text);
+    if (action) {
+        const btn = el('button', 'toast_action', action);
+        btn.type = 'button';
+        btn.onclick = () => {
+            note.hidden = true;
+            onAction();
+        };
+        note.append(' ', btn);
+    }
     note.hidden = false;
     clearTimeout(note.timer);
-    note.timer = setTimeout(() => { note.hidden = true; }, 3200);
+    note.timer = setTimeout(() => { note.hidden = true; }, action ? 7000 : 3200);
 }
 
 // pictures found on a PDF page (see drawVisiblePages), as boxes in fractions of the page
@@ -1661,16 +1697,28 @@ function renderInNotes() {
     const all = Store.getItems(project.id);
     const sources = all.filter(i => i.type === 'source');
     assignCitekeys(sources);
+    const style = project.citeStyle || 'apa';
     const me = sources.find(s => s.id === source.id) || source;
     const about = PaperLinks.notesAbout(me, all).sort((a, b) => b.updatedAt - a.updatedAt);
-    $('#in_notes').hidden = !about.length;
-    $('#in_notes_count').textContent = about.length ? `(${about.length})` : '';
+    // notes on other papers, and their summaries and reviews, that cite this one
+    const mentions = PaperLinks.mentionsOf(me, all).sort((a, b) => b.item.updatedAt - a.item.updatedAt);
+    const count = about.length + mentions.length;
+    $('#in_notes').hidden = !count;
+    $('#in_notes_count').textContent = count ? `(${count})` : '';
     $('#in_notes_list').replaceChildren(...about.map(note => {
         const li = el('li');
         const a = el('a', 'in_note');
         a.href = `project_dashboard.html?id=${encodeURIComponent(project.id)}&item=${encodeURIComponent(note.id)}`;
-        a.append(el('strong', '', note.title || PaperLinks.preview((note.body || '').split('\n')[0], sources, project.citeStyle || 'apa')));
-        if (note.title && note.body) a.append(el('span', '', PaperLinks.preview(note.body, sources, project.citeStyle || 'apa').slice(0, 160)));
+        a.append(el('strong', '', note.title || PaperLinks.preview((note.body || '').split('\n')[0], sources, style)));
+        if (note.title && note.body) a.append(el('span', '', PaperLinks.preview(note.body, sources, style).slice(0, 160)));
+        li.append(a);
+        return li;
+    }), ...mentions.map(({ item, on, kind, text }) => {
+        const li = el('li');
+        const a = el('a', 'in_note');
+        a.href = 'material.html?id=' + encodeURIComponent(on?.id || item.sourceId) + (kind === 'note' ? '#note=' + encodeURIComponent(item.id) : '');
+        a.append(el('strong', '', { note: 'A note on ', summary: 'The summary of ', review: 'The review of ' }[kind] + (on?.title || 'another paper')),
+            el('span', '', PaperLinks.preview(text, sources, style).slice(0, 160)));
         li.append(a);
         return li;
     }));
@@ -1779,13 +1827,14 @@ function noteRow(note) {
     const thumb = note.captured ? null : regionThumb(note);
     if (thumb) li.append(thumb);
 
+    const style = project.citeStyle || 'apa';
     const body = el('div', 'md');
-    renderMarkdown(body, note.body);
+    renderMarkdown(body, PaperLinks.withLinks(note.body, citeSources, style));
     li.append(body);
 
     if (kind === 'question') {
         const answer = el('div', 'answer md');
-        renderMarkdown(answer, note.answer, 'No answer yet.');
+        renderMarkdown(answer, PaperLinks.withLinks(note.answer, citeSources, style), 'No answer yet.');
         li.append(answer);
     }
     return li;
@@ -2012,8 +2061,11 @@ document.addEventListener('keydown', e => {
     if (e.key === 'Escape' && document.body.classList.contains('reading_full') && !document.fullscreenElement && $('#modals').hidden) setFullScreen(false);
 });
 
-// bold, lists, links… as buttons (phones and tablets have no Ctrl + B)
-for (const textarea of [noteForm.elements.body, noteForm.elements.answer, ...$$('.md_edit textarea')]) MdBar.attach(textarea);
+// bold, lists, links… as buttons (phones and tablets have no Ctrl + B); @ cites a paper
+for (const textarea of [noteForm.elements.body, noteForm.elements.answer, ...$$('.md_edit textarea')]) {
+    MdBar.attach(textarea);
+    CitePicker.attach(textarea, projectSources);
+}
 
 // phones: tags, status and the citation fold away so the reading starts on the first screen
 $('#head_more').onclick = () => {
@@ -2193,7 +2245,8 @@ $('#edit_source').onclick = () => SourceForm.open(source, {
 
 $('#delete_source').onclick = () => {
     if (!confirm(`Delete "${source.title}"${notes.length ? ` and its ${notes.length} notes` : ''}?`)) return;
-    notes.forEach(n => Store.deleteItem(n.id));
+    // its notes and bookmarks go with it
+    Store.getItems(project.id).filter(i => i.sourceId === source.id).forEach(i => Store.deleteItem(i.id));
     Store.deleteItem(source.id);
     location.href = Nav.backHref(project.library ? 'library.html' : 'project_dashboard.html?id=' + encodeURIComponent(project.id) + '#literature');
 };
@@ -2236,7 +2289,7 @@ for (const field of $$('.md_field')) {
 
 $('#source_notes').addEventListener('click', e => {
     const row = e.target.closest('.source_note');
-    if (!row) return;
+    if (!row || e.target.closest('a')) return;
     const note = notes.find(n => n.id === row.dataset.id);
     const chip = e.target.closest('.seg_chip');
     if (chip) playNoteSegment(segmentFrom(chip.dataset));

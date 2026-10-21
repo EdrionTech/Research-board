@@ -25,8 +25,40 @@ function renderAppearance() {
         return card;
     }));
 
+    renderPalettes(settings);
     if (document.activeElement !== $('#custom_css')) $('#custom_css').value = settings.customCss;
 }
+
+// the style's colour choices: a circle each, a set of colours in slices of one circle
+function renderPalettes(settings) {
+    const palette = Settings.PALETTES[settings.style];
+    $('#palette_setting').hidden = !palette;
+    if (!palette) return;
+    const chosen = settings.palettes?.[settings.style] || 'original';
+    $('#palette_hint').textContent = `Repaint ${Settings.STYLES[settings.style].label} in other colours${palette.families.length > 1 ? ' (each circle is a set)' : ''}. Light and dark follow.`;
+    $('#palette_circles').replaceChildren(...palette.choices.map(choice => {
+        const btn = el('button', 'palette_choice');
+        btn.type = 'button';
+        btn.setAttribute('role', 'radio');
+        btn.setAttribute('aria-checked', choice.id === chosen);
+        btn.dataset.palette = choice.id;
+        btn.title = choice.label;
+        const step = 100 / choice.colors.length;
+        const circle = el('span', 'palette_circle');
+        circle.style.background = choice.colors.length === 1 ? choice.colors[0]
+            : `conic-gradient(${choice.colors.map((c, i) => `${c} ${i * step}% ${(i + 1) * step}%`).join(', ')})`;
+        btn.append(circle, el('small', '', choice.label));
+        return btn;
+    }));
+}
+
+$('#palette_circles').addEventListener('click', e => {
+    const btn = e.target.closest('[data-palette]');
+    if (!btn) return;
+    const settings = Settings.read();
+    Settings.save({ palettes: { ...settings.palettes, [settings.style]: btn.dataset.palette } });
+    renderAppearance();
+});
 
 $('#theme_choice').addEventListener('click', e => {
     const btn = e.target.closest('[data-theme-choice]');
@@ -83,12 +115,18 @@ function setDataState(text) {
 async function renderStorage() {
     const projects = Store.getProjects().length;
     const items = Store.getProjects().reduce((n, p) => n + Store.getItems(p.id).length, 0);
+    const counts = `${projects} project${projects === 1 ? '' : 's'} and ${items} sources, notes and other items`;
+    if (Store.mode === 'server') {
+        $('#storage_where').textContent = 'Stored on this computer';
+        $('#storage_info').textContent = `${counts}, kept in the data folder by the Research Board server: ${window.RB_SERVER.dataDir}. Back it up by copying that folder, or with a backup file below.`;
+        return;
+    }
     let usage = '';
     try {
         const estimate = await navigator.storage?.estimate();
         if (estimate?.usage !== undefined) usage = ` About ${mb(estimate.usage)} used in this browser.`;
     } catch { /* not available */ }
-    $('#storage_info').textContent = `${projects} project${projects === 1 ? '' : 's'} and ${items} sources, notes and other items, kept in this browser only.${usage} Back them up to move to another computer or keep them safe.`;
+    $('#storage_info').textContent = `${counts}, kept in this browser only.${usage} Start the Research Board server (start.bat, or node server/server.js) to keep them in a folder on this computer instead, or back them up to keep them safe.`;
 }
 
 $('#backup').onclick = async () => {

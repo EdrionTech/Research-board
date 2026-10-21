@@ -36,6 +36,9 @@ const Reader = (() => {
             box-shadow: -6px 0 0 var(--note-color, rgba(255, 170, 0, .8)); }
         [data-anchor].selected { outline: 2px solid #3d5afe; outline-offset: 3px; }
         [data-anchor].flash { animation: flash 1.4s ease-out; }
+        [data-anchor].bookmarked { position: relative; }
+        [data-anchor].bookmarked::before { content: ''; position: absolute; left: -22px; top: 2px; width: 10px; height: 16px;
+            background: #e8590c; clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 72%, 0 100%); } /* a bookmark (material_places.js) */
         body[data-mode="image"], body[data-mode="image"] [data-anchor] { cursor: crosshair; -webkit-user-select: none; user-select: none; }
         body[data-mode="image"] figure, body[data-mode="image"] img.ltx_graphics { touch-action: none; }
         .region { position: absolute; z-index: 4; pointer-events: none; border: 2px solid var(--note-color, rgba(255, 170, 0, .95));

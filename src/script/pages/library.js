@@ -82,6 +82,8 @@ function render() {
         return section;
     }));
     if (mode === 'covers') Bookshelf.drawCovers($('#book_shelf'));
+    // continue reading: of each book, the copy you read last
+    Reading.renderRow($('#continue_row'), books.map(b => b.copies.map(c => c.source).filter(s => s.readingAt).sort((x, y) => y.readingAt.at - x.readingAt.at)[0]).filter(Boolean));
 }
 
 // a cover, with the projects it's in under it

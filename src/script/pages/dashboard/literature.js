@@ -5,6 +5,12 @@
 // Uses helpers from core/ui.js and sources/*, and items/project from dashboard.js.
 
 const materialUrl = id => 'material.html?id=' + encodeURIComponent(id);
+// the project's papers with their citation keys (what notes can cite: citepicker.js)
+const citeSources = () => {
+    const list = items.filter(i => i.type === 'source');
+    assignCitekeys(list);
+    return list;
+};
 const sourceItems = () => items.filter(i => i.type === 'source');
 const notesOf = source => items.filter(i => i.type === 'source_note' && i.sourceId === source.id);
 const firstAuthor = source => source.authors?.[0]?.lastName || source.title || '';
@@ -56,6 +62,7 @@ function renderLiterature() {
         : [el('li', 'none', all.length ? 'No sources match.' : 'No sources yet. Add one with + Source, a link is enough.')]));
     Bookshelf.whenVisible($$('#source_list .row_preview[data-source]'), (preview, url) => { preview.style.backgroundImage = `url("${url}")`; });
     $('#selection_info').textContent = `${shown.length} of ${all.length} shown`;
+    Reading.renderRow($('#continue_row'), all);
     renderColors();
     renderFigures();
 }
@@ -163,9 +170,10 @@ function showReview() {
         img.alt = 'The noted area';
         thumb.append(img);
     }
-    renderMarkdown($('#review_body'), note.body, 'No note written.');
+    const cited = citeSources();
+    renderMarkdown($('#review_body'), PaperLinks.withLinks(note.body, cited, project.citeStyle || 'apa'), 'No note written.');
     $('#review_answer').hidden = note.kind !== 'question';
-    if (note.kind === 'question') renderMarkdown($('#review_answer'), note.answer, 'No answer yet.');
+    if (note.kind === 'question') renderMarkdown($('#review_answer'), PaperLinks.withLinks(note.answer, cited, project.citeStyle || 'apa'), 'No answer yet.');
     // its colour, changeable here
     $('#review_colors').replaceChildren(...[{ id: '', label: 'None', hex: 'transparent' }, ...NoteColors.of(project)].map(c => {
         const btn = el('button', 'color_chip');
@@ -224,6 +232,7 @@ $('#review_edit_btn').onclick = () => {
 };
 reviewForm.addEventListener('submit', e => e.preventDefault());
 MdBar.attach($('#review_edit textarea'));
+CitePicker.attach($('#review_edit textarea'), citeSources);
 // ← / → step through the notes (not while typing)
 document.addEventListener('keydown', e => {
     if (reviewForm.hidden || $('#modals').hidden || e.target.matches('input, textarea, select')) return;
@@ -397,6 +406,8 @@ function sourceRow(source) {
     const notes = notesOf(source).length;
     if (notes) badges.append(el('small', '', `${notes} note${notes > 1 ? 's' : ''}`));
     if (source.unverified) badges.append(el('span', 'badge check', 'Check details'));
+    // where you are in it ("p. 5 · 38%"): it opens there
+    if (Reading.inProgress(source)) badges.append(el('small', 'reading_at', '📖 ' + Reading.placeLabel(source)));
     link.append(badges);
     // added from another paper's references
     const citer = (source.citedIn || []).map(id => items.find(i => i.id === id && i.type === 'source')).find(Boolean);

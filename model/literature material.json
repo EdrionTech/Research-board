@@ -12,6 +12,7 @@
     "doi": "",
     "pdfUrl": "https://example.com/bla-bla.pdf",
     "thumbnail": "",
+    "readingAt": { "view": "pdf", "page": 5, "y": 0.4, "label": "p. 5", "progress": 0.38, "at": 1792518713243 },
     "preview": { "from": "https://example.com/bla-bla.pdf", "image": "asset:a9" },
     "file": {
       "assetId": "a0",

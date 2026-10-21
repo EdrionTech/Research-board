@@ -4,10 +4,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/svg+xml" href="../assets/logo.svg">
     <title>Settings · Research Board</title>
     <link rel="stylesheet" href="../style/base.css">
     <link rel="stylesheet" href="../style/settings.css">
     <!-- theme + style, before the page draws -->
+    <!-- the data, when the local server is running (server/server.js); else the browser keeps it -->
+    <script src="/api/boot.js"></script>
     <script src="../script/core/settings.js"></script>
     <script src="../script/core/nav.js"></script>
 </head>
@@ -46,6 +49,15 @@
                 <div class="style_cards" id="style_cards" role="radiogroup" aria-label="Style"></div>
             </div>
 
+            <!-- the style's colours: one circle per choice; a set of colours shares one circle (core/settings.js) -->
+            <div class="setting stacked" id="palette_setting" hidden>
+                <div>
+                    <strong>Colours</strong>
+                    <p class="hint" id="palette_hint">Repaint the style in other colours.</p>
+                </div>
+                <div class="palette_circles" id="palette_circles" role="radiogroup" aria-label="Colours"></div>
+            </div>
+
             <div class="setting stacked">
                 <div>
                     <strong>Your own CSS</strong>
@@ -66,14 +78,14 @@
             </div>
         </section>
 
-        <!-- your data: it lives in this browser only -->
+        <!-- your data: in the data folder when the local server runs, else in this browser (settings.js) -->
         <section class="settings_section">
             <header>
                 <h3>Your data</h3>
             </header>
             <div class="setting">
                 <div>
-                    <strong>Stored in this browser</strong>
+                    <strong id="storage_where">Stored in this browser</strong>
                     <p class="hint" id="storage_info">Projects, sources, notes and files are kept in this browser
                         only. Back them up to move to another computer or keep them safe.</p>
                 </div>
@@ -99,7 +111,7 @@
             <div class="setting">
                 <div>
                     <strong>Delete everything</strong>
-                    <p class="hint">Removes all projects, sources, notes and files from this browser. Settings stay.</p>
+                    <p class="hint">Removes all projects, sources, notes and files. Settings stay.</p>
                 </div>
                 <button type="button" class="btn danger" id="delete_all">Delete everything</button>
             </div>

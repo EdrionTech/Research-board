@@ -333,3 +333,62 @@ form.modal .image_field label.image_field_upload { display: inline-flex; align-i
 .image_field_clear { color: var(--danger); }
 .image_field_clear[hidden], .image_field_note[hidden] { display: none; }
 .image_field_note { font-size: .78rem; overflow-wrap: anywhere; }
+
+/* the local server can't be reached: changes wait in this browser (store.js) */
+.save_notice {
+    position: fixed;
+    left: 50%;
+    bottom: 16px;
+    z-index: 1000;
+    transform: translateX(-50%);
+    width: min(560px, calc(100vw - 32px));
+    padding: 10px 14px;
+    border-radius: var(--radius);
+    background: var(--danger, #c92a2a);
+    color: #fff;
+    font-size: .88rem;
+    box-shadow: var(--shadow);
+}
+
+/* the "←" link names the page you came from (nav.js): a long paper title is cut short on a phone, so the bar
+   doesn't grow to three rows */
+@media (max-width: 600px) {
+    .bar .back { max-width: 46vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+}
+
+/* @ in a note box: the papers to cite (citepicker.js) */
+.composer.cite_picker { position: fixed; z-index: 2000; padding: 4px; max-height: 280px; overflow: auto; display: grid; gap: 2px; }
+.cite_picker[hidden] { display: none; }
+.cite_pick { display: grid; gap: 1px; padding: 6px 8px; border-radius: 6px; cursor: pointer; }
+.cite_pick strong { font-size: .85rem; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cite_pick small { color: var(--muted); font-size: .74rem; }
+.cite_pick.active, .cite_pick:hover { background: color-mix(in srgb, var(--accent) 14%, transparent); }
+/* a cited paper in a note: opens the paper */
+a.paper_ref { color: var(--accent); text-decoration: none; border-bottom: 1px dotted currentColor; }
+a.paper_ref:hover { border-bottom-style: solid; }
+
+/* "Continue reading": the materials you're in the middle of (reading.js) */
+.continue_row { display: grid; gap: 8px; }
+.continue_row[hidden] { display: none; }
+.continue_row h4 { margin: 0; font-size: .85rem; color: var(--muted); font-weight: 600; }
+.continue_list { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 8px; }
+.continue_card { display: grid; gap: 4px; padding: 10px 12px; border-radius: 8px; background: var(--bg); color: inherit; text-decoration: none; border: 1px solid var(--line); }
+.continue_card:hover, .continue_card:focus-visible { border-color: var(--accent); }
+.continue_card strong { font-size: .88rem; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.continue_card small { color: var(--muted); font-size: .76rem; }
+.continue_progress { height: 4px; border-radius: 2px; background: var(--line); overflow: hidden; }
+.continue_progress::after { content: ''; display: block; height: 100%; width: var(--progress, 0%); background: var(--accent); }
+
+/* Settings: a style's colour choices, as circles (a set of colours in slices of one circle) */
+.palette_circles { display: flex; flex-wrap: wrap; gap: 10px 14px; }
+.palette_choice { display: grid; justify-items: center; gap: 4px; width: 64px; padding: 4px 0; border: 0; background: none; color: var(--muted); font: inherit; cursor: pointer; }
+.palette_circle { width: 38px; height: 38px; border-radius: 50%; box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .18), 0 1px 3px rgba(0, 0, 0, .2); transition: transform .12s; }
+.palette_choice:hover .palette_circle { transform: scale(1.08); }
+.palette_choice[aria-checked="true"] .palette_circle { box-shadow: 0 0 0 2px var(--surface, #fff), 0 0 0 4px var(--accent); }
+.palette_choice[aria-checked="true"] small { color: var(--text); font-weight: 600; }
+.palette_choice small { font-size: .72rem; text-align: center; line-height: 1.2; }
+.palette_choice:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 8px; }
+
+/* the logo beside the app's name (home page) */
+.brand:has(.brand_logo) { display: inline-flex; align-items: center; gap: 10px; white-space: nowrap; }
+.brand_logo { width: 30px; height: 30px; flex: none; }

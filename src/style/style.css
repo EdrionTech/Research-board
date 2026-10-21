@@ -2,6 +2,8 @@
 
 .search {
     width: min(260px, 40vw);
+    min-width: 140px;
+    flex-shrink: 1; /* it gives way first, so the name beside the logo stays on one line */
 }
 
 /* shelf of project cards */

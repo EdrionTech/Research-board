@@ -51,8 +51,10 @@ const Library = (() => {
         const copy = { ...fields, projectId, status: 'to_read' };
         if (file) copy.file = file;
         else delete copy.file;
-        // an uploaded thumbnail is copied too (each copy can change or delete its own); the preview is remade
+        // an uploaded thumbnail is copied too (each copy can change or delete its own); the preview is remade;
+        // where you were reading stays with the copy you read
         delete copy.preview;
+        delete copy.readingAt;
         if (/^asset:/.test(copy.thumbnail || '')) {
             try {
                 const blob = await Store.getAsset(copy.thumbnail.slice(6));

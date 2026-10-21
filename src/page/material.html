@@ -4,10 +4,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/svg+xml" href="../assets/logo.svg">
     <title>Material</title>
     <link rel="stylesheet" href="../style/base.css">
     <link rel="stylesheet" href="../style/material.css">
     <!-- theme + style, before the page draws -->
+    <!-- the data, when the local server is running (server/server.js); else the browser keeps it -->
+    <script src="/api/boot.js"></script>
     <script src="../script/core/settings.js"></script>
     <script src="../script/core/nav.js"></script>
 </head>
@@ -76,9 +79,27 @@
                     <button type="button" data-view="pdf">PDF</button>
                     <button type="button" data-view="text">Text</button>
                 </div>
+                <!-- the contents: sections to jump to (material_toc.js) -->
+                <div class="toc_menu" id="toc_menu" hidden>
+                    <button type="button" class="btn small" id="toc_btn" aria-expanded="false" title="Table of contents">☰ Contents ▾</button>
+                    <div class="composer toc_drop" id="toc_drop" hidden>
+                        <div id="toc_drop_list"></div>
+                    </div>
+                </div>
                 <span class="reader_source" id="reader_source"></span>
                 <a class="btn small" id="open_original" target="_blank" rel="noopener" hidden>Open in new tab ↗</a>
                 <button type="button" class="btn small" id="full_btn" aria-pressed="false" title="Read full screen (Esc to leave)">⛶ Full screen</button>
+                <!-- places you mark, to come back to (material_places.js) -->
+                <div class="bookmarks_menu" id="bookmarks_menu">
+                    <button type="button" class="btn small" id="bookmarks_btn" aria-expanded="false" title="Bookmarks: mark a place to come back to (B)">🔖 Bookmarks <span class="count" id="bookmarks_count"></span> ▾</button>
+                    <div class="composer bookmark_list_box" id="bookmark_list_box" hidden>
+                        <button type="button" class="btn small primary" id="bookmark_here">+ Bookmark where I am</button>
+                        <ul class="bookmark_list" id="bookmark_list"></ul>
+                        <small class="hint">Press B to bookmark where you are.</small>
+                    </div>
+                </div>
+                <!-- the summary, written while reading -->
+                <button type="button" class="btn small" id="summary_btn" aria-pressed="false" title="Write the summary while you read">📝 Summary</button>
                 <button type="button" class="btn small" id="capture_btn" title="Drag a box over part of the page, a figure or the video to save it as an image">📷 Capture</button>
                 <label class="btn small" title="A PDF or a video file">Upload file
                     <input type="file" id="upload_pdf" accept="application/pdf,video/*" hidden>
@@ -264,6 +285,22 @@
         <div id="composer_slot"></div>
     </div>
 
+    <!-- 📝 the summary, written while reading (saved as you type; material_places.js) -->
+    <section class="composer summary_pad" id="summary_pad" hidden aria-label="Summary">
+        <header>
+            <strong>Summary</strong>
+            <small class="summary_pad_state" id="summary_pad_state" aria-live="polite"></small>
+            <span class="spacer"></span>
+            <button type="button" class="link" id="summary_pad_close" title="Close">✕</button>
+        </header>
+        <textarea id="summary_pad_text" rows="8" aria-label="Summary"
+            placeholder="What it's about, how, what it found, what it means for your work…"></textarea>
+        <div class="summary_pad_tools">
+            <button type="button" class="btn small" id="summary_pad_quote" title="The words you selected in the material, as a quote">❝ Selection</button>
+            <button type="button" class="btn small" id="summary_pad_place" title="Where you are, e.g. (p. 5)">📍 Where I am</button>
+        </div>
+    </section>
+
     <div class="modals" id="modals" hidden>
         <!-- source details form is added here by sources.js -->
 
@@ -359,18 +396,22 @@
     <script src="../script/writing/markdown.js"></script>
     <script src="../script/writing/mdimages.js"></script>
     <script src="../script/writing/mdbar.js"></script>
+    <script src="../script/writing/citepicker.js"></script>
     <script src="../script/reader/documents.js"></script>
     <script src="../script/sources/sources.js"></script>
     <script src="../script/sources/cite.js"></script>
     <script src="../script/sources/colors.js"></script>
     <script src="../script/sources/references.js"></script>
     <script src="../script/sources/links.js"></script>
+    <script src="../script/sources/reading.js"></script>
     <script src="../script/sources/library.js"></script>
     <script src="../script/reader/textrange.js"></script>
     <script src="../script/reader/zoom.js"></script>
     <script src="../script/reader/reader.js"></script>
     <script src="../script/reader/video.js"></script>
     <script src="../script/reader/capture.js"></script>
+    <script src="../script/pages/material_places.js"></script>
+    <script src="../script/pages/material_toc.js"></script>
     <script src="../script/pages/material.js"></script>
     <script src="../script/pages/material_refs.js"></script>
 </body>

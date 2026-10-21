@@ -22,6 +22,11 @@ function renderMarkdown(el, text, placeholder = '') {
         const prepared = text.replace(/\]\(asset:([a-z0-9]+)\)/gi, '](#asset-$1)');
         el.innerHTML = DOMPurify.sanitize(marked.parse(prepared));
         for (const a of el.querySelectorAll('a')) {
+            // a paper in the app (a citation in a note: PaperLinks.withLinks) opens here; the web in a new tab
+            if (/^material\.html\?id=/.test(a.getAttribute('href') || '')) {
+                a.classList.add('paper_ref');
+                continue;
+            }
             a.target = '_blank';
             a.rel = 'noopener';
         }

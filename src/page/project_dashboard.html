@@ -4,11 +4,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/svg+xml" href="../assets/logo.svg">
     <title>Dashboard</title>
     <link rel="stylesheet" href="../style/base.css">
     <link rel="stylesheet" href="../style/dashboard.css">
     <link rel="stylesheet" href="../style/literature.css">
     <!-- theme + style, before the page draws -->
+    <!-- the data, when the local server is running (server/server.js); else the browser keeps it -->
+    <script src="/api/boot.js"></script>
     <script src="../script/core/settings.js"></script>
     <script src="../script/core/nav.js"></script>
 </head>
@@ -63,6 +66,11 @@
                     </select>
                     <button type="button" class="btn" id="from_library" title="Materials in your library or your other projects">+ From library</button>
                     <button type="button" class="btn primary" id="add_source">+ Source</button>
+                </div>
+                <!-- the materials you're in the middle of: open one where you left off (reading.js) -->
+                <div class="continue_row" id="continue_row" hidden>
+                    <h4>Continue reading</h4>
+                    <div class="continue_list"></div>
                 </div>
                 <!-- your tags: click to filter (a source must have every tag picked) -->
                 <div class="tag_filter" id="tag_filter" hidden></div>
@@ -301,12 +309,14 @@
     <script src="../script/core/images.js"></script>
     <script src="../script/writing/markdown.js"></script>
     <script src="../script/writing/mdbar.js"></script>
+    <script src="../script/writing/citepicker.js"></script>
     <script src="../script/writing/mdimages.js"></script>
     <script src="../script/reader/documents.js"></script>
     <script src="../script/sources/sources.js"></script>
     <script src="../script/sources/cite.js"></script>
     <script src="../script/sources/colors.js"></script>
     <script src="../script/sources/links.js"></script>
+    <script src="../script/sources/reading.js"></script>
     <script src="../script/sources/library.js"></script>
     <script src="../script/sources/bookshelf.js"></script>
     <script src="../script/sources/picker.js"></script>
