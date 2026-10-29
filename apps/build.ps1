@@ -55,13 +55,19 @@ function Use-Node {
 }
 
 # Java 21 and the Android SDK, for Gradle
+# (JAVA_HOME may point at an older one: some Android Studio versions bundle Java 17, which Capacitor 8 refuses)
 function Use-Android {
-    if (-not $env:JAVA_HOME -or -not (Test-Path "$env:JAVA_HOME\bin\java.exe")) {
-        $java = @("$env:ProgramFiles\Android\Android Studio\jbr") + @(Get-ChildItem "$env:ProgramFiles\Eclipse Adoptium\jdk-21*" -Directory -ErrorAction SilentlyContinue | ForEach-Object FullName) |
-            Where-Object { Test-Path "$_\bin\java.exe" } | Select-Object -First 1
-        if (-not $java) { throw 'Needs Java 21 (Android Studio includes one): set JAVA_HOME' }
-        $env:JAVA_HOME = $java
+    $javaMajor = {
+        param($dir)
+        $release = Join-Path $dir 'release'
+        if (-not (Test-Path "$dir\bin\java.exe") -or -not (Test-Path $release)) { return 0 }
+        if ((Get-Content $release -Raw) -match 'JAVA_VERSION="(\d+)') { [int]$Matches[1] } else { 0 }
     }
+    $java = @($env:JAVA_HOME, "$env:ProgramFiles\Android\Android Studio\jbr") +
+        @(Get-ChildItem "$env:ProgramFiles\Eclipse Adoptium\jdk-*", "$env:ProgramFiles\Java\jdk-*", "$env:ProgramFiles\Microsoft\jdk-*" -Directory -ErrorAction SilentlyContinue | ForEach-Object FullName) |
+        Where-Object { $_ -and (& $javaMajor $_) -ge 21 } | Select-Object -First 1
+    if (-not $java) { throw 'Needs Java 21 or newer (https://adoptium.net): set JAVA_HOME to it' }
+    $env:JAVA_HOME = $java
     if (-not $env:ANDROID_HOME) { $env:ANDROID_HOME = "$env:LOCALAPPDATA\Android\Sdk" }
     if (-not (Test-Path $env:ANDROID_HOME)) { throw 'Needs the Android SDK (install Android Studio): set ANDROID_HOME' }
 }
