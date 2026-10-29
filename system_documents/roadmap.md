@@ -5,7 +5,7 @@ Everything still to do, by category. Details are in the linked plans. Done work 
 ## 1. Next session (planned)
 
 **Storage and clients** ([platforms/platforms.md](platforms/platforms.md), [apps/README.md](../apps/README.md)). Built: SQLite storage (the shared `place.js`), the boot loader that picks the client, the desktop app (Tauri) and the phone app (Capacitor, Android `.apk`), working offline, saving files and opening links in the apps, `build.bat` (builds into `builds/`, says which are out of date), the tests in `tests/`.
-- [ ] **Rebuild the `.apk` and reinstall it** (`build.bat apk`): the one on the phone was built before the contents list, note colour and icon fixes, so it still shows the old ones. Then check those three on the phone
+- [ ] **Install the new `.apk`** (`builds/ResearchBoard-0.1.0-debug.apk`, rebuilt 2026-10-29) and check the contents list, the note colour and the icons on the phone
 - [ ] Try the desktop installer and the `.apk` on real devices: the phone's storage, saving a backup (Documents/Research Board) and the status bar colour are untested on a phone; on the desktop, saving to Downloads and links opening in your browser
 - [ ] **arXiv papers offline:** the HTML version is fetched from arXiv each time it's opened. Keep a copy with the material (like an uploaded PDF) so it opens without the internet
 - [ ] Your own app icon when it's ready: `build.bat icons <logo>` (desktop, phone launcher and splash)
@@ -48,7 +48,7 @@ Everything still to do, by category. Details are in the linked plans. Done work 
 
 ## 5. Tidy-ups and known issues
 - [ ] `start.bat` opening the browser: the server side works (tested); confirm a tab opens
-- [ ] Branch `feature/sqlite-and-apps` isn't pushed or merged yet
+- [ ] Branch `feature/sqlite-and-apps` is pushed but not merged into `main` yet
 
 ## 6. Development workflow
 - [ ] Optional: a check that runs the tests (`tests/`) on GitHub before merging
