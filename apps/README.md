@@ -1,11 +1,22 @@
 # Research Board apps
 
-The desktop and phone apps are the same app as in the browser: each wraps `src/` unchanged. They keep their data on the device in SQLite, using the same storage code as the server ([src/script/core/place/place.js](../src/script/core/place/place.js)). `src/script/core/boot.js` notices which one it's running in and loads its adapter.
+Everything that builds or runs Research Board is here. Each one serves or wraps `src/` unchanged and keeps its data in SQLite with the same storage code ([src/script/core/place/place.js](../src/script/core/place/place.js)). `src/script/core/boot.js` notices which one it's running in and loads its adapter.
 
 | | Folder | Built with | Its storage adapter |
 | --- | --- | --- | --- |
+| Server (the browser version here; later private servers and the online service) | `server` | Node.js, no packages | `place-node.js` → `node:sqlite` |
 | Desktop (Windows, macOS, Linux) | `desktop/src-tauri` | Tauri (Rust shell) | `sql-tauri.js` → `src/main.rs` |
 | Phone (Android; iOS on a Mac) | `phone` | Capacitor | `sql-capacitor.js` → the SQLite and Filesystem plugins |
+
+## Building: `build.bat`
+
+`build.bat` in the project folder (double-click it for a menu) builds any of them into `builds/` (not in git): `build.bat apk`, `exe`, `host` or `all`. The work is done by [build.ps1](build.ps1), which finds Node 22+, Java and the Android SDK by itself.
+
+**`build.bat status`** (also shown at the top of the menu) says which builds are missing or **older than the code they're made from**. A build only has the code as it was when it was built: after changing `src/`, the browser shows the change straight away, but the phone and desktop apps only once they're rebuilt and reinstalled.
+
+`build.bat test` runs the tests in [../tests](../tests/README.md).
+
+The sections below are the manual steps, for when you need them.
 
 ## Desktop
 

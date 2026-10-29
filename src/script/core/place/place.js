@@ -1,4 +1,4 @@
-// A place's storage, written once for every platform: the server (server/place-node.js), the desktop app
+// A place's storage, written once for every platform: the server (apps/server/place-node.js), the desktop app
 // (Tauri) and the phone app (Capacitor) each give it two small adapters, and it does the rest.
 //
 //   sql:   { exec(sql), run(sql, params), get(sql, params), all(sql, params) }   each may return a promise
@@ -221,7 +221,7 @@ export async function createPlace(sql, blobs) {
         return OK;
     }
 
-    // ---- the API (server/README.md), answered the same by the server and inside the apps ----
+    // ---- the API (apps/server/README.md), answered the same by the server and inside the apps ----
 
     // path: 'items/<id>', 'files/<id>'…, without /api/. body: the JSON sent, or for a file { bytes, type, name }.
     // Returns { status, body } (JSON) or { status, file: { bytes, type, name } }.

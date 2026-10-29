@@ -23,12 +23,24 @@ Needs [Node.js](https://nodejs.org) 18 or newer; nothing else to install.
 Double-click `start.bat` (Windows) or run `./start.sh` (macOS, Linux): the app opens in your browser at <http://127.0.0.1:5500/>. Or run it yourself:
 
 ```sh
-node server/server.js
+node apps/server/server.js
 ```
 
 Your data (projects, materials, notes, uploaded PDFs and images) is kept in the `data/` folder next to this file. Back it up by copying that folder. The first time, the app offers to bring in anything an earlier version saved in your browser.
 
-Opening `src/index.html` directly, or with Live Server, still works, but then the data is kept only in that browser at that address. See [server/README.md](server/README.md) for options and the API.
+## Building the apps
+
+`build.bat` (double-click for a menu) builds the Android app, the Windows installer and the server version into `builds/`, says which builds are older than the code, and runs the tests. See [apps/README.md](apps/README.md).
+
+| Folder | |
+| --- | --- |
+| `src/` | The app itself, the same in the browser and in every app |
+| `apps/` | What builds or runs it: `server/`, `desktop/`, `phone/` and the build script |
+| `tests/` | The tests ([tests/README.md](tests/README.md)) |
+| `system_documents/` | Plans and the [roadmap](system_documents/roadmap.md) |
+| `data/`, `builds/` | Your data and finished builds (not in git) |
+
+Opening `src/index.html` directly, or with Live Server, still works, but then the data is kept only in that browser at that address. See [apps/server/README.md](apps/server/README.md) for options and the API.
 
 # Disclaimer
 

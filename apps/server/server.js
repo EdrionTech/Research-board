@@ -7,9 +7,9 @@
 // The storage itself is shared with the desktop and phone apps: src/script/core/place/place.js, given Node's
 // SQLite and the files folder by place-node.js. This file is only the requests.
 //
-// Node.js 22.13 or newer, no packages: `node server/server.js` (start.bat / start.sh add --open: the browser opens
-// on the app once the server is ready). Options (environment): PORT (5500), HOST (127.0.0.1: this computer only),
-// DATA (the data folder). The API below is all the app needs (see server/README.md).
+// Node.js 22.13 or newer, no packages: `node apps/server/server.js` (start.bat / start.sh add --open: the browser
+// opens on the app once the server is ready). Options (environment): PORT (5500), HOST (127.0.0.1: this computer
+// only), DATA (the data folder). The API below is all the app needs (see README.md here).
 //
 //   GET    /api/health             { ok: true } when the server is up
 //   GET    /api/boot               everything: { data: { projects, items, library, settings }, empty, dataDir }
@@ -33,12 +33,12 @@ const { spawn } = require('child_process');
 const fs = require('fs');
 const fsp = fs.promises;
 const path = require('path');
-const { openNodePlace } = require('./place-node');
+const { APP, openNodePlace } = require('./place-node');
 
 const PORT = Number(process.env.PORT) || 5500;
 const HOST = process.env.HOST || '127.0.0.1';
-const ROOT = path.resolve(__dirname, '..', 'src');
-const DATA = path.resolve(process.env.DATA || path.join(__dirname, '..', 'data'));
+const ROOT = path.join(APP, 'src');
+const DATA = path.resolve(process.env.DATA || path.join(APP, 'data'));
 
 const ID = /^[A-Za-z0-9_-]{1,64}$/;
 const TYPES = {

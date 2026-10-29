@@ -1,6 +1,6 @@
 # Platforms and storage
 
-Status: **SQLite storage built** (shared `place.js`, used by the local server; 2026-10-21). Next: the desktop app (Tauri). The local server in `server/` keeps data in `data/research-board.db`. Online places (our service, private servers), signing in, invite links, phase B and sharing on the local network are **on hold**, along with collaboration.
+Status: **SQLite storage built** (shared `place.js`, used by the local server; 2026-10-21). Next: the desktop app (Tauri). The local server in `apps/server/` keeps data in `data/research-board.db`. Online places (our service, private servers), signing in, invite links, phase B and sharing on the local network are **on hold**, along with collaboration.
 How Research Board runs on desktop, phone and in a browser; where its data lives; how one app reaches local and online data. Working on projects together is in [../collaboration/collaboration.md](../collaboration/collaboration.md).
 
 ## Decisions
@@ -41,7 +41,7 @@ Pages talk to `Store`. `Store` talks to a place through one set of actions:
 
 There are two implementations of those actions:
 
-- **Remote place:** the actions over the network, which is the server API in `server/README.md` plus sign-in.
+- **Remote place:** the actions over the network, which is the server API in `apps/server/README.md` plus sign-in.
 - **This device:** the same actions run directly on the app's own SQLite (Tauri's and Capacitor's SQLite plugins), with no network. This is `place.js` itself: the code the server runs, in the app.
 
 Because of this, pages never need to know where a project lives.
@@ -80,7 +80,7 @@ The tables are the same everywhere (device, our server, private servers):
 `src/script/core/place/place.js` holds the tables, their upgrades, and every action (boot, save, delete, files, changes since N, replace everything). It never touches SQLite or the disk itself: it's given two adapters.
 
 ```
-pages ─► Store ─┬─ browser: remote (HTTP) ─► server.js ─► place.js ─► sql/node + files  (server/place-node.js)
+pages ─► Store ─┬─ browser: remote (HTTP) ─► server.js ─► place.js ─► sql/node + files  (apps/server/place-node.js)
                 ├─ desktop: ──────────────────────────► place.js ─► sql/tauri + files     (later)
                 └─ phone:   ──────────────────────────► place.js ─► sql/capacitor + files (later)
 ```
@@ -131,7 +131,7 @@ Phase A is built so that B adds to it rather than replacing it: the same schema,
 
 ## Build order
 
-1. **SQLite in the server (done).** The shared `place.js` with the tables above, the `changes` feed and content-named files; `server/` runs it on `node:sqlite`. It converts the current data on first run. The API stayed the same for the app.
+1. **SQLite in the server (done).** The shared `place.js` with the tables above, the `changes` feed and content-named files; `apps/server/` runs it on `node:sqlite`. It converts the current data on first run. The API stayed the same for the app.
 2. **Places in `Store`.** One interface; the remote implementation (today's server code, plus sign-in); the place list in Settings.
 3. **Server sign-in.** Accounts, device tokens, invite links, the host's list of who has access. This one program serves both our online service and private servers.
 4. **Desktop app (Tauri)** with "This device" on its own SQLite (no built-in server): `place.js` with a Tauri adapter, picked by `Store`.

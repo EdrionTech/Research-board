@@ -6,7 +6,9 @@ const fsp = fs.promises;
 const path = require('path');
 const { pathToFileURL } = require('url');
 
-const PLACE = path.resolve(__dirname, '..', 'src', 'script', 'core', 'place', 'place.js');
+// the project folder (this file is in apps/server; a server build keeps the same layout)
+const APP = path.resolve(__dirname, '..', '..');
+const PLACE = path.join(APP, 'src', 'script', 'core', 'place', 'place.js');
 const HASH = /^[0-9a-f]{64}$/;
 
 function nodeSql(file) {
@@ -58,4 +60,4 @@ async function openNodePlace(dir) {
     return { ...place, close: sql.close };
 }
 
-module.exports = { openNodePlace, nodeSql, nodeBlobs };
+module.exports = { APP, openNodePlace, nodeSql, nodeBlobs };

@@ -372,7 +372,7 @@ const Store = (() => {
             bar.id = 'save_notice';
             bar.className = 'save_notice';
             bar.setAttribute('role', 'status');
-            bar.textContent = 'Not saved yet: the Research Board server isn\'t answering. Your changes are kept in this browser and will be saved when it\'s back (start.bat, or node server/server.js).';
+            bar.textContent = 'Not saved yet: the Research Board server isn\'t answering. Your changes are kept in this browser and will be saved when it\'s back (start.bat, or node apps/server/server.js).';
             document.body.append(bar);
         }
         // leaving with changes that are neither sent nor kept in the outbox: ask first

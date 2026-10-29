@@ -8,7 +8,7 @@
 | --- | --- |
 | Windows | Double-click `start.bat` in the project folder |
 | macOS, Linux | `./start.sh` in the project folder |
-| Anywhere | `node server/server.js` from the project folder (add `--open` to open the browser) |
+| Anywhere | `node apps/server/server.js` from the project folder (add `--open` to open the browser) |
 
 The app is at <http://127.0.0.1:5500/>. The starters open it in your browser once the server is ready. Stop the server with Ctrl + C or by closing its window: every change is already saved.
 
@@ -20,7 +20,7 @@ Set these as environment variables:
 | --- | --- | --- |
 | `PORT` | `5500` | Keep it the same between runs. Browsers keep anything they store per address, and a changing port is what made data "disappear" with Live Server. If the port is taken, the server stops instead of picking another one. |
 | `HOST` | `127.0.0.1` | This computer only. Don't open it to the network (`0.0.0.0`) until there are logins: anyone on the same Wi-Fi could read and change everything. |
-| `DATA` | `../data` | The data folder. |
+| `DATA` | `data` in the project folder | The data folder. |
 
 ## The data folder
 
@@ -31,7 +31,7 @@ Set these as environment variables:
 | `files/<hash>` | The bytes of uploaded PDFs, videos and images (in notes, figures, project and material thumbnails) and first-page previews, named by their content: the same file added twice (say, a material copied into a project) is kept once, and removed when nothing uses it. |
 | `before-sqlite/` | Left by the first run of this version: the old `research-board.json`, `journal.ndjson` and `files/`, after they were brought into `research-board.db`. Delete it once you're happy. |
 
-The storage itself isn't in the server: it's [src/script/core/place/place.js](../src/script/core/place/place.js), shared with the desktop and phone apps, with the tables described there. [place-node.js](place-node.js) gives it Node's SQLite and the files folder.
+The storage itself isn't in the server: it's [src/script/core/place/place.js](../../src/script/core/place/place.js), shared with the desktop and phone apps, with the tables described there. [place-node.js](place-node.js) gives it Node's SQLite and the files folder.
 
 **Backing up:** copy the whole `data` folder while the server is stopped. Or download a backup from Settings, with files. To move to another computer, copy the folder into the project there (or point `DATA` at it).
 

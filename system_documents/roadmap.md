@@ -4,10 +4,11 @@ Everything still to do, by category. Details are in the linked plans. Done work 
 
 ## 1. Next session (planned)
 
-**Storage and clients** ([platforms/platforms.md](platforms/platforms.md), [apps/README.md](../apps/README.md)). Built: SQLite storage (the shared `place.js`), the boot loader that picks the client, the desktop app (Tauri) and the phone app (Capacitor, Android `.apk`), working offline, saving files and opening links in the apps, `devbuild`.
+**Storage and clients** ([platforms/platforms.md](platforms/platforms.md), [apps/README.md](../apps/README.md)). Built: SQLite storage (the shared `place.js`), the boot loader that picks the client, the desktop app (Tauri) and the phone app (Capacitor, Android `.apk`), working offline, saving files and opening links in the apps, `build.bat` (builds into `builds/`, says which are out of date), the tests in `tests/`.
+- [ ] **Rebuild the `.apk` and reinstall it** (`build.bat apk`): the one on the phone was built before the contents list, note colour and icon fixes, so it still shows the old ones. Then check those three on the phone
 - [ ] Try the desktop installer and the `.apk` on real devices: the phone's storage, saving a backup (Documents/Research Board) and the status bar colour are untested on a phone; on the desktop, saving to Downloads and links opening in your browser
 - [ ] **arXiv papers offline:** the HTML version is fetched from arXiv each time it's opened. Keep a copy with the material (like an uploaded PDF) so it opens without the internet
-- [ ] Your own app icon when it's ready: `devbuild\build.ps1 icons <logo>` (desktop, phone launcher and splash)
+- [ ] Your own app icon when it's ready: `build.bat icons <logo>` (desktop, phone launcher and splash)
 
 
 **Citation style creator and editor** ([citation_styles/citation_styles.md](citation_styles/citation_styles.md))
@@ -42,13 +43,18 @@ Everything still to do, by category. Details are in the linked plans. Done work 
 - [ ] **Moving between materials without leaving the reader:** going from one paper to another (a cited reference, a related paper, the next in the project) without going back to the Literature tab. Leaning towards (still to discuss): **a dropdown search** in the reader to find and open any material, and **opening a cited reference beside the current paper**. Other options noted: tabs of open materials, a side list of the project's materials, back and forward through what you've read.
 - [ ] **A Milanote-like feature** (noted 2026-10-21; you'll define it better later). Milanote is a visual board where notes, images, links and files are laid out freely and grouped on a canvas. Exactly what it means for Research Board is still to be decided.
 
+- [ ] **The Research tab** ([research_tab/research_tab.md](research_tab/research_tab.md)): planning and tracking the study itself: a workflow of stages per project, tasks with dependencies, research assets (datasets, scripts, logs), data and analysis, and a change log of methodological decisions and what they affect. Connected to the Writing tab so findings can be cited without copying.
+- [ ] **Full screen for reading and writing**, with optional small focus tools: a clock in the corner that can be ignored, and a timer / alarm (e.g. for reading sessions). For the material reader and the editors (notes, review, writing). Still to describe: the second option (only the start was written down)
+
 ## 5. Tidy-ups and known issues
 - [ ] `start.bat` opening the browser: the server side works (tested); confirm a tab opens
 - [ ] Branch `feature/sqlite-and-apps` isn't pushed or merged yet
 
 ## 6. Development workflow
-- [ ] Move the test suites into the repo (e.g. `tests/`) so anyone can run them
-- [ ] Optional: a check that runs them on GitHub before merging
+- [ ] Optional: a check that runs the tests (`tests/`) on GitHub before merging
+- [ ] More tests as features change: the reader (notes, highlights, places), the library, backups from Settings
+- [ ] Builds kept per version: `builds/` holds the latest of each (named by version); keep or prune older ones once the version number starts changing
+- [ ] Optional: the server as a single file (Node's single executable applications) for private servers, built by `build.bat`
 - [ ] Set up the branch layout discussed (`develop`, feature branches, `colab` later), if still wanted
 
 ## 7. On hold (recorded, not to be built yet)

@@ -1,0 +1,12 @@
+{
+  "name": "research-board-tests",
+  "private": true,
+  "description": "Research Board's tests. Run them with build.bat test, or npm test here. playwright-core drives the Edge or Chrome already installed (it downloads no browser).",
+  "scripts": {
+    "test": "node run.js",
+    "shots": "node shots.js"
+  },
+  "devDependencies": {
+    "playwright-core": "1.48.2"
+  }
+}

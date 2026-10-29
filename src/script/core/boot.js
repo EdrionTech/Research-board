@@ -10,7 +10,7 @@
 //
 // window.RB_SERVER = { data: { projects, items, library, settings }, empty, dataDir, app,
 //                      request(method, path, body) → { status, body } | { status, file } }
-// `path` is the server API's (server/README.md) without /api/; a file is sent and received as a Blob.
+// `path` is the server API's (apps/server/README.md) without /api/; a file is sent and received as a Blob.
 
 (() => {
     const placeDir = new URL('place/', document.currentScript.src).href;

@@ -1,14 +1,17 @@
-# Research Board's builds, one at a time or all together. Run it with no task for a menu (or double-click build.bat).
+# Research Board's builds, one at a time or all together. Run build.bat (in the project folder) with no task for a
+# menu, which also says which builds are older than the code.
 #
-#   .\devbuild\build.ps1 apk          the Android app      -> devbuild\out\ResearchBoard-<version>-debug.apk
-#   .\devbuild\build.ps1 exe          the Windows app      -> devbuild\out\ResearchBoard-<version>-setup.exe (+ .msi)
-#   .\devbuild\build.ps1 host         the server version   -> devbuild\out\host\ and ResearchBoard-<version>-host.zip
-#   .\devbuild\build.ps1 all          all three
-#   .\devbuild\build.ps1 sync         copy src\ into the phone app without building (then Android Studio)
-#   .\devbuild\build.ps1 icons <file> new app icons from a square SVG or 1024 px PNG (desktop and phone)
-#   .\devbuild\build.ps1 serve        run the browser version here (start.bat)
-#   .\devbuild\build.ps1 desktop      run the desktop app from src\ without installing (cargo tauri dev)
-#   .\devbuild\build.ps1 clean        empty devbuild\out
+#   build.bat apk          the Android app      -> builds\ResearchBoard-<version>-debug.apk
+#   build.bat exe          the Windows app      -> builds\ResearchBoard-<version>-setup.exe (+ .msi)
+#   build.bat host         the server version   -> builds\host\ and ResearchBoard-<version>-host.zip
+#   build.bat all          all three
+#   build.bat status       which builds are missing or older than the code they're made from
+#   build.bat test         run the tests (tests\)
+#   build.bat sync         copy src\ into the phone app without building (then Android Studio)
+#   build.bat icons <file> new app icons from a square SVG or 1024 px PNG (desktop and phone)
+#   build.bat serve        run the browser version here (start.bat)
+#   build.bat desktop      run the desktop app from src\ without installing (cargo tauri dev)
+#   build.bat clean        empty builds\
 #
 # What each needs is in apps\README.md. The script finds Node 22+ (even when nvm's is older), Java and the Android SDK.
 
@@ -19,9 +22,10 @@ param(
 
 $ErrorActionPreference = 'Stop'
 $Root = Split-Path -Parent $PSScriptRoot
-$Out = Join-Path $PSScriptRoot 'out'
-$Desktop = Join-Path $Root 'apps\desktop\src-tauri'
-$Phone = Join-Path $Root 'apps\phone'
+$Out = Join-Path $Root 'builds'
+$Desktop = Join-Path $PSScriptRoot 'desktop\src-tauri'
+$Phone = Join-Path $PSScriptRoot 'phone'
+$Server = Join-Path $PSScriptRoot 'server'
 $Version = (Get-Content (Join-Path $Desktop 'tauri.conf.json') -Raw | ConvertFrom-Json).version
 
 function Say($text) { Write-Host "`n== $text" -ForegroundColor Cyan }
@@ -121,23 +125,25 @@ function Build-Host {
     $host_ = Join-Path $Out 'host'
     if (Test-Path $host_) { Remove-Item $host_ -Recurse -Force }
     New-Item -ItemType Directory -Force $host_ | Out-Null
+    # the project's own layout (src\, apps\server\, the starters), so the server and starters work unchanged
     Copy-Item (Join-Path $Root 'src') $host_ -Recurse
-    New-Item -ItemType Directory -Force (Join-Path $host_ 'server') | Out-Null
-    Copy-Item (Join-Path $Root 'server\*.js'), (Join-Path $Root 'server\README.md') (Join-Path $host_ 'server')
+    $hostServer = Join-Path $host_ 'apps\server'
+    New-Item -ItemType Directory -Force $hostServer | Out-Null
+    Copy-Item (Join-Path $Server '*.js'), (Join-Path $Server 'README.md') $hostServer
     Copy-Item (Join-Path $Root 'start.bat'), (Join-Path $Root 'start.sh') $host_
     Set-Content (Join-Path $host_ 'VERSION') $Version
     # quick check: it starts and answers, on a spare port with an empty data folder
     $check = Join-Path $env:TEMP "rb-host-check-$PID"
     $node = (Get-Command node).Source
     $env:PORT = '5593'; $env:DATA = $check
-    $server = Start-Process $node -ArgumentList "`"$(Join-Path $host_ 'server\server.js')`"" -PassThru -WindowStyle Hidden
+    $server = Start-Process $node -ArgumentList "`"$(Join-Path $hostServer 'server.js')`"" -PassThru -WindowStyle Hidden
     try {
         $ok = $false
         foreach ($i in 1..20) {
             Start-Sleep -Milliseconds 300
             try { $ok = (Invoke-RestMethod http://127.0.0.1:5593/api/health).ok; if ($ok) { break } } catch { }
         }
-        if (-not $ok) { throw 'The server version did not start (try: node server\server.js in devbuild\out\host)' }
+        if (-not $ok) { throw 'The server version did not start (try: node apps\server\server.js in builds\host)' }
     } finally {
         Stop-Process $server.Id -ErrorAction SilentlyContinue
         Remove-Item Env:PORT, Env:DATA
@@ -152,7 +158,7 @@ function Build-Host {
 }
 
 function Set-Icons($file) {
-    if (-not $file -or -not (Test-Path $file)) { throw 'Give the icon: .\devbuild\build.ps1 icons path\to\logo.svg (square SVG, or a 1024 x 1024 PNG)' }
+    if (-not $file -or -not (Test-Path $file)) { throw 'Give the icon: build.bat icons path\to\logo.svg (square SVG, or a 1024 x 1024 PNG)' }
     Use-Tauri
     Say 'Making the app icons'
     Run cargo @('tauri', 'icon', (Resolve-Path $file).Path, '-o', 'icons') $Desktop
@@ -162,20 +168,61 @@ function Set-Icons($file) {
     Done 'Desktop and phone icons updated: rebuild (exe, apk) to see them'
 }
 
+# Each build in builds\ against the code it's made from: a build older than its code doesn't have the latest changes
+# (an .apk built before a change to src\ shows the old app on the phone, though the browser shows the new one).
+function Show-Status {
+    $builds = [ordered]@{
+        apk  = @("ResearchBoard-$Version-debug.apk", @('src', 'apps\phone\capacitor.config.json', 'apps\phone\android\app\src\main\res', 'apps\phone\android\app\src\main\java', 'apps\phone\android\app\src\main\AndroidManifest.xml'))
+        exe  = @("ResearchBoard-$Version-setup.exe", @('src', 'apps\desktop\src-tauri\src', 'apps\desktop\src-tauri\icons', 'apps\desktop\src-tauri\tauri.conf.json', 'apps\desktop\src-tauri\Cargo.toml'))
+        host = @("ResearchBoard-$Version-host.zip", @('src', 'apps\server', 'start.bat', 'start.sh'))
+    }
+    foreach ($name in $builds.Keys) {
+        $file, $sources = $builds[$name]
+        # (folders searched, files taken as they are: -Recurse on a file would search the whole tree for its name)
+        $changed = $sources | ForEach-Object { Join-Path $Root $_ } | Where-Object { Test-Path $_ } |
+            ForEach-Object { if (Test-Path $_ -PathType Container) { Get-ChildItem $_ -Recurse -File } else { Get-Item $_ } } |
+            Sort-Object LastWriteTime | Select-Object -Last 1
+        $build = Get-Item (Join-Path $Out $file) -ErrorAction SilentlyContinue
+        if (-not $build) {
+            Write-Host ("  {0,-5} not built yet                    (build.bat {0})" -f $name) -ForegroundColor DarkGray
+        } elseif ($changed -and $changed.LastWriteTime -gt $build.LastWriteTime) {
+            $what = $changed.FullName.Substring($Root.Length + 1)
+            Write-Host ("  {0,-5} OUT OF DATE  built {1:yyyy-MM-dd HH:mm}, code changed {2:yyyy-MM-dd HH:mm} ({3}): build.bat {0}" -f $name, $build.LastWriteTime, $changed.LastWriteTime, $what) -ForegroundColor Yellow
+        } else {
+            Write-Host ("  {0,-5} up to date   built {1:yyyy-MM-dd HH:mm}  {2}" -f $name, $build.LastWriteTime, $build.Name) -ForegroundColor Green
+        }
+    }
+}
+
+# the tests in tests\ (playwright-core and Edge or Chrome for the page tests; see tests\README.md)
+function Invoke-Tests {
+    $node = Use-Node
+    $tests = Join-Path $Root 'tests'
+    if (-not (Test-Path (Join-Path $tests 'node_modules'))) {
+        Say 'Installing the test tools (once)'
+        Run (Join-Path (Split-Path $node) 'npm.cmd') @('install') $tests
+    }
+    Run $node @('run.js') $tests
+}
+
 $tasks = [ordered]@{
     apk     = 'Android app (.apk)'
     exe     = 'Windows app (installer .exe and .msi)'
     host    = 'Server version (folder and .zip)'
     all     = 'All three'
+    status  = 'Which builds are older than the code'
+    test    = 'Run the tests'
     sync    = 'Copy src\ into the phone app (for Android Studio)'
     icons   = 'New app icons from a logo file'
     serve   = 'Run the browser version here'
     desktop = 'Run the desktop app from src\ (development)'
-    clean   = 'Empty devbuild\out'
+    clean   = 'Empty builds\'
 }
 
 if (-not $Task) {
-    Write-Host "Research Board builds (version $Version)`n" -ForegroundColor Cyan
+    Write-Host "Research Board builds (version $Version), in builds\`n" -ForegroundColor Cyan
+    Show-Status
+    Write-Host ''
     $i = 0
     foreach ($name in $tasks.Keys) { $i++; Write-Host ("  {0}. {1,-8} {2}" -f $i, $name, $tasks[$name]) }
     $pick = Read-Host "`nWhich (number or name)"
@@ -189,11 +236,13 @@ switch ($Task) {
     'exe' { Build-Exe }
     'host' { Build-Host }
     'all' { Build-Host; Build-Exe; Build-Apk }
-    'sync' { Sync-Phone; Done 'Now: cd apps\phone; npx cap open android' }
+    'status' { Show-Status }
+    'test' { Invoke-Tests }
+    'sync' { Sync-Phone; Done 'Now: cd apps\phone; npx cap open android (an .apk built there is not in builds\)' }
     'icons' { Set-Icons $Arg }
-    'serve' { Use-Node | Out-Null; Run node @('server\server.js', '--open') }
+    'serve' { $node = Use-Node; Run $node @('apps\server\server.js', '--open') }
     'desktop' { Use-Tauri; Run cargo @('tauri', 'dev') $Desktop }
-    'clean' { if (Test-Path $Out) { Remove-Item $Out -Recurse -Force }; Done 'devbuild\out emptied' }
+    'clean' { if (Test-Path $Out) { Remove-Item $Out -Recurse -Force }; Done 'builds\ emptied' }
     default { throw "Unknown task '$Task'. Tasks: $($tasks.Keys -join ', ')" }
 }
 Done ("Finished in {0:mm\:ss}" -f ((Get-Date) - $started))
