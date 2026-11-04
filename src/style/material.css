@@ -648,6 +648,22 @@ body.reading_full { --bar-h: 0px; }
 body.reading_full .material { padding-top: 8px; max-width: none; }
 body.reading_full .reader_bar { top: var(--inset-top); }
 body.reading_full .reader_html { height: calc(100dvh - 120px); }
+/* full screen keeps the tools to two short rows: icons only (the words stay as tooltips and read out), the source
+   line, the attach hint and the abstract out of the way */
+body.reading_full .reader_bar { padding-top: 8px; padding-bottom: 8px; gap: 6px; margin-bottom: 8px; }
+body.reading_full .reader_bar .has_i { gap: 0; padding-left: 10px; padding-right: 10px; }
+body.reading_full .reader_bar .has_i .lbl {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+}
+body.reading_full .reader_bar .has_i .count:not(:empty) { margin-left: 4px; }
+body.reading_full .reader_source { display: none; }
+body.reading_full .attach_row { margin-bottom: 8px; }
+body.reading_full #attach_hint, body.reading_full .abstract { display: none; }
 #full_btn[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); }
 
 /* added from another paper's references */
