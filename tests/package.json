@@ -1,12 +1,12 @@
 {
   "name": "research-board-tests",
   "private": true,
-  "description": "Research Board's tests. Run them with build.bat test, or npm test here. playwright-core drives the Edge or Chrome already installed (it downloads no browser).",
+  "description": "Research Board's tests. Run them with build.bat test, or bun run test here. puppeteer-core drives the Edge or Chrome already installed (it downloads no browser).",
   "scripts": {
-    "test": "node run.js",
-    "shots": "node shots.js"
+    "test": "bun run.js",
+    "shots": "bun shots.js"
   },
   "devDependencies": {
-    "playwright-core": "1.48.2"
+    "puppeteer-core": "25.16.0"
   }
 }

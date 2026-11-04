@@ -17,6 +17,7 @@ const firstAuthor = source => source.authors?.[0]?.lastName || source.title || '
 const byAuthor = (a, b) => firstAuthor(a).localeCompare(firstAuthor(b)) || (a.published || '').localeCompare(b.published || '');
 
 const activeTags = new Set(); // tag filter (lowercase); a source must have all of them
+const authorFilter = AuthorFilter.create($('#author_filter'), () => renderLiterature()); // by author: any of those chosen
 const exportForm = $('#export_form');
 const digestForm = $('#digest_form');
 const exportPicker = createSourcePicker($('#export_picker'), { sources: sourceItems, shown: () => shownSources(), onChange: () => updateExport() });
@@ -26,12 +27,12 @@ for (const [value, label] of Object.entries(Cite.STYLES)) exportForm.elements.st
 for (const [value, label] of Object.entries(Cite.INLINE_STYLES)) $('#project_cite_style').append(new Option(label, value));
 $('#open_review').href = 'review.html?id=' + encodeURIComponent(project?.id || '');
 
-// sources that pass the search, status and tag filters
+// sources that pass the search, status, tag and author filters
 function shownSources() {
     const query = $('#source_search').value.trim().toLowerCase();
     const status = $('#source_filter').value;
     return sourceItems().filter(s => (!status || s.status === status)
-        && [...activeTags].every(tag => hasTag(s, tag))
+        && [...activeTags].every(tag => hasTag(s, tag)) && authorFilter.matches(s)
         && [s.title, (s.keywords || []).join(' '), tagsOf(s).join(' '), (s.authors || []).map(authorName).join(' ')]
             .join(' ').toLowerCase().includes(query));
 }
@@ -57,6 +58,7 @@ function renderLiterature() {
     renderReviewCard();
     const all = sourceItems();
     renderTagFilter();
+    authorFilter.render(all);
     const shown = shownSources();
     $('#source_list').replaceChildren(...(shown.length ? shown.map(sourceRow)
         : [el('li', 'none', all.length ? 'No sources match.' : 'No sources yet. Add one with + Source, a link is enough.')]));
@@ -373,16 +375,15 @@ function renderTagFilter() {
     }
     for (const tag of activeTags) if (!counts.has(tag)) activeTags.delete(tag);
 
-    const row = $('#tag_filter');
-    row.hidden = !counts.size;
-    const chips = [...counts].sort((a, b) => a[1].label.localeCompare(b[1].label)).map(([key, { label, n }]) => {
+    // most papers first (then A to Z)
+    const chips = [...counts].sort((a, b) => b[1].n - a[1].n || a[1].label.localeCompare(b[1].label)).map(([key, { label, n }]) => {
         const chip = el('button', 'tag_chip' + (activeTags.has(key) ? ' active' : ''), `${label} ${n}`);
         chip.type = 'button';
         chip.dataset.tag = key;
         chip.setAttribute('aria-pressed', activeTags.has(key));
         return chip;
     });
-    row.replaceChildren(el('span', '', 'Tags'), ...chips);
+    fillFilterRow($('#tag_filter'), 'Tags', chips);
 }
 
 function sourceRow(source) {

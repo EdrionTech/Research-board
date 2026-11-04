@@ -4,13 +4,13 @@ Everything that builds or runs Research Board is here. Each one serves or wraps 
 
 | | Folder | Built with | Its storage adapter |
 | --- | --- | --- | --- |
-| Server (the browser version here; later private servers and the online service) | `server` | Node.js, no packages | `place-node.js` → `node:sqlite` |
+| Server (the browser version here; later private servers and the online service) | `server` | Bun, no packages | `place-bun.js` → `bun:sqlite` |
 | Desktop (Windows, macOS, Linux) | `desktop/src-tauri` | Tauri (Rust shell) | `sql-tauri.js` → `src/main.rs` |
 | Phone (Android; iOS on a Mac) | `phone` | Capacitor | `sql-capacitor.js` → the SQLite and Filesystem plugins |
 
 ## Building: `build.bat`
 
-`build.bat` in the project folder (double-click it for a menu) builds any of them into `builds/` (not in git): `build.bat apk`, `exe`, `host` or `all`. The work is done by [build.ps1](build.ps1), which finds Node 22+, Java and the Android SDK by itself.
+`build.bat` in the project folder (double-click it for a menu) builds any of them into `builds/` (not in git): `build.bat apk`, `exe`, `host` or `all`. The work is done by [build.ps1](build.ps1), which finds Bun, Java and the Android SDK by itself.
 
 **`build.bat status`** (also shown at the top of the menu) says which builds are missing or **older than the code they're made from**. A build only has the code as it was when it was built: after changing `src/`, the browser shows the change straight away, but the phone and desktop apps only once they're rebuilt and reinstalled.
 
@@ -56,13 +56,13 @@ All in [desktop/src-tauri/tauri.conf.json](desktop/src-tauri/tauri.conf.json):
 
 ## Phone
 
-**Needs:** Node 22+ (only to build), Android Studio with its SDK, Java 21. iOS needs a Mac with Xcode.
+**Needs:** Bun (only to build), Android Studio with its SDK, Java 21. iOS needs a Mac with Xcode.
 
 ```powershell
 cd apps\phone
-npm install          # once: Capacitor and its plugins (only here; the app code has no npm packages)
-npm run apk          # copies src/ in and builds android/app/build/outputs/apk/debug/app-debug.apk
-npm run open         # or open it in Android Studio (run on a phone or emulator, build a release)
+bun install                 # once: Capacitor and its plugins (only here; the app code has no packages)
+bun --bun run apk           # copies src/ in and builds android/app/build/outputs/apk/debug/app-debug.apk
+bun --bun run open          # or open it in Android Studio (run on a phone or emulator, build a release)
 ```
 
 **If Android Studio offers to upgrade Gradle, say no.** Capacitor 8's Android build plugin needs Gradle 8.x; Gradle 9.6 and newer refuse it ("relies on a Gradle internal API that was removed"). If it happened: `git checkout -- apps/phone/android/gradle/wrapper/gradle-wrapper.properties`.

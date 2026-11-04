@@ -54,5 +54,5 @@ const MdImages = (() => {
         input.click();
     }
 
-    return { enable, pick };
+    return { enable, pick, insert };
 })();

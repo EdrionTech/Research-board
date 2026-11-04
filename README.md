@@ -18,12 +18,12 @@ n, by providing a simple interface to create and manage research notes and docum
 
 ## Running it
 
-Needs [Node.js](https://nodejs.org) 18 or newer; nothing else to install.
+Needs [Bun](https://bun.sh); nothing else to install.
 
 Double-click `start.bat` (Windows) or run `./start.sh` (macOS, Linux): the app opens in your browser at <http://127.0.0.1:5500/>. Or run it yourself:
 
 ```sh
-node apps/server/server.js
+bun apps/server/server.js
 ```
 
 Your data (projects, materials, notes, uploaded PDFs and images) is kept in the `data/` folder next to this file. Back it up by copying that folder. The first time, the app offers to bring in anything an earlier version saved in your browser.

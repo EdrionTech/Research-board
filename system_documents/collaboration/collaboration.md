@@ -13,7 +13,7 @@ Each project lives in one **place**: this device, our online service, or a priva
 | A private server | Accounts on that server, joined with an invite link from its host |
 | Our online service | Accounts; invite people to a project by link (email later) |
 
-One person can have projects in several places; the app reaches each. Collaboration needs an account on an online place, but using the app on its own never does.
+One person can have projects in several places at once: some only on their device, others on our service or on any number of private servers. The app reaches each. Collaboration needs an account on an online place, but using the app on its own never does.
 
 ## What is shared and what is per person
 
@@ -41,7 +41,27 @@ Every record keeps who made it and who last changed it, so shared notes and high
 | Long shared text (the literature review) | Live co-editing with Yjs, which merges everyone's typing |
 | Deletes | Kept as a "deleted" marker until every device has seen it, so an offline device can't bring a record back |
 
-Changes travel as "changes since point N" when a page opens or comes back online, plus live updates while it's open (WebSockets).
+Each app works on its own copy of the project and syncs with the server: "changes since point N" when it opens or comes back online, its outbox of offline edits sent up, plus live updates while it's open (WebSockets). See "The server as coordinator" below.
+
+## The server as coordinator
+
+The server does more than serve the app: for every project it holds, it coordinates everyone working on it. It's the same program on our service and on a self-hosted server.
+
+| Job | What the server does | Built? |
+| --- | --- | --- |
+| Source of truth | The project's SQLite and files; every device's copy syncs with it | Yes |
+| Order of changes | A number on every change it accepts, for "changes since N" | Yes (`GET /api/changes?since=N`) |
+| Who may do what | Accounts, device tokens, invite links, members and roles per project, checked on every change | No |
+| Sync | Takes each device's offline changes, checks them, numbers them, and sends them to the others | No |
+| Live updates | Pushes accepted changes to everyone with the project open (WebSockets) | No |
+| Conflicts | The newer edit wins per record, the overwritten version kept in its history; delete markers kept until every device has them | Data model ready |
+| Literature review | Relays and stores Yjs updates, which merge typing done offline as well as live | No |
+| Presence | Who's in the project and where (optional, cheap once live updates exist) | No |
+| Files | PDFs served only to members of their project | No |
+
+- **Devices' clocks aren't trusted** for order: the server numbers changes as they arrive. A device's edit time is kept for showing, and for "newer wins" between edits made offline.
+- **A change the server refuses** (the role doesn't allow it, or the person was removed) is undone in that device's copy, and the person is told why.
+- **Hosting differs only by settings, not code:** which sign-in methods are on (email link, ORCID, Google, or only invite links), whether it can send email, storage allowances (our service), and, if our service grows past one process, a shared channel between processes for live updates (kept behind a small "broadcast" interface so a single-process private server never needs it).
 
 ## Roles
 

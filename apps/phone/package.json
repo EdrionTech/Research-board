@@ -1,7 +1,7 @@
 {
   "name": "research-board-phone",
   "private": true,
-  "description": "Research Board's phone app (Capacitor): builds src/ into Android (and iOS, on a Mac). The app code itself has no npm packages; these are only the build tools and the native plugins.",
+  "description": "Research Board's phone app (Capacitor): builds src/ into Android (and iOS, on a Mac). The app code itself has no packages; these are only the build tools and the native plugins.",
   "scripts": {
     "sync": "cap sync android",
     "open": "cap open android",

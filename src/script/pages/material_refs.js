@@ -130,6 +130,24 @@ const ReferencesPanel = (() => {
             } else {
                 ref.sourceId = Store.saveItem({
                     projectId: project.id,
+                    ...sourceFields(ref, fields, found),
+                });
+                added++;
+                if (!found) toCheck++;
+            }
+            selected.delete(ref.n);
+            keep(list, source.referencesFrom);
+        }
+        busy = false;
+        setState(added
+            ? `Added ${added} to the project${toCheck ? ` (${toCheck} not found online: details from the reference, check them)` : ''}.`
+            : 'Already in the project.');
+        render();
+    }
+
+    // a source made from a reference and what was found about it
+    function sourceFields(ref, fields, found) {
+        return {
                     type: 'source',
                     title: fields.title || ref.text.slice(0, 120),
                     kind: fields.kind || 'article',
@@ -146,18 +164,22 @@ const ReferencesPanel = (() => {
                     citedIn: [source.id],          // the paper whose references it came from
                     reference: ref.text,           // as that paper cites it
                     ...(found ? {} : { unverified: true }), // details from the reference text only: worth a check
-                });
-                added++;
-                if (!found) toCheck++;
-            }
-            selected.delete(ref.n);
-            keep(list, source.referencesFrom);
-        }
-        busy = false;
-        setState(added
-            ? `Added ${added} to the project${toCheck ? ` (${toCheck} not found online: details from the reference, check them)` : ''}.`
-            : 'Already in the project.');
-        render();
+        };
+    }
+
+    // ---- into your Library (no project): from a reference's profile ----
+
+    const librarySources = () => Store.getItems(Store.LIBRARY_ID).filter(i => i.type === 'source');
+    // in the Library already: on its own there, or as the project source made from it
+    const inLibrary = ref => References.match(ref, librarySources()) || null;
+
+    async function addToLibrary(ref) {
+        if (inLibrary(ref)) return 'In your library already.';
+        const { fields, found } = await lookup(ref);
+        const same = fields.doi && librarySources().find(s => s.doi?.toLowerCase() === fields.doi.toLowerCase());
+        if (same) return 'In your library already.';
+        Store.saveItem({ projectId: Store.LIBRARY_ID, ...sourceFields(ref, fields, found) });
+        return found ? 'Added to your library.' : 'Added to your library (not found online: details from the reference, check them).';
     }
 
     function setState(text) {
@@ -200,9 +222,14 @@ const ReferencesPanel = (() => {
         links.append(externalLink(References.scholarUrl(ref), 'Google Scholar'));
         $('#ref_profile_abstract_box').hidden = !fields.abstract;
         if (fields.abstract) renderMarkdown($('#ref_profile_abstract'), fields.abstract);
+        foldLong($('#ref_profile_authors'), 2, { more: 'Show all authors', less: 'Fewer authors' });
+        foldLong($('#ref_profile_abstract'), 8);
         $('#ref_profile_cited').textContent = `[${ref.n}] ${ref.text}`;
         $('#ref_profile_add').hidden = !!existing;
         $('#ref_profile_add').disabled = busy;
+        const kept = inLibrary(ref);
+        $('#ref_profile_library').disabled = !!kept;
+        $('#ref_profile_library').textContent = kept ? 'In your library ✓' : '+ Add to library';
         $('#ref_profile_open').hidden = !existing;
         if (existing) $('#ref_profile_open').href = 'material.html?id=' + encodeURIComponent(existing.id);
     }
@@ -215,6 +242,15 @@ const ReferencesPanel = (() => {
         if (profileRef === ref) showProfile(profileFields, (await lookup(ref)).found);
         $('#ref_profile_state').textContent = 'Added to the project.';
     });
+    $('#ref_profile_library').addEventListener('click', async () => {
+        const ref = profileRef;
+        $('#ref_profile_library').disabled = true;
+        $('#ref_profile_state').textContent = 'Adding to your library…';
+        const said = await addToLibrary(ref);
+        if (profileRef !== ref) return;
+        showProfile(profileFields, (await lookup(ref)).found);
+        $('#ref_profile_state').textContent = said;
+    });
     $('#ref_profile_copy').addEventListener('click', async e => {
         const btn = e.currentTarget;
         const ok = await copyText(Cite.format({ ...profileFields, citekey: '' }, project.citeStyle || 'apa'));
@@ -222,6 +258,25 @@ const ReferencesPanel = (() => {
         setTimeout(() => { btn.textContent = 'Copy citation'; }, 1600);
     });
     $('#ref_profile').addEventListener('submit', e => e.preventDefault());
+    $('#ref_profile_list').addEventListener('click', () => showInList(profileRef.n));
+
+    // the reference in the References list on the notes side: opened, scrolled to and flashed
+    function showInList(n) {
+        closeModals();
+        if (document.body.classList.contains('side_collapsed')) setSideCollapsed(false);
+        const panel = $('#refs_panel');
+        panel.open = true;
+        if ($('#refs_search').value) {
+            $('#refs_search').value = '';
+            render();
+        }
+        const li = $(`#refs_list .ref[data-n="${CSS.escape(String(n))}"]`);
+        if (!li) return;
+        li.scrollIntoView({ block: 'center', behavior: 'smooth' });
+        li.classList.remove('flash');
+        void li.offsetWidth;
+        li.classList.add('flash');
+    }
 
     $('#refs_list').addEventListener('click', e => {
         const li = e.target.closest('.ref');
@@ -249,5 +304,5 @@ const ReferencesPanel = (() => {
     $('#refs_add').addEventListener('click', () => add([...selected]));
 
     if (source) render(); // a list read on an earlier visit shows straight away
-    return { fromHtml, fromPdf, render, add };
+    return { fromHtml, fromPdf, render, add, openProfile, showInList };
 })();

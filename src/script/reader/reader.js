@@ -30,6 +30,13 @@ const Reader = (() => {
         .ltx_authors { flex-wrap: wrap; row-gap: 12px; }
         .ltx_authors > .ltx_creator { flex: 1 1 9em; }
         @media (max-width: 600px) { body { padding: 8px 12px 32px; } }
+        /* a long author list folds to a few lines; the label below it unfolds it (no scripts in the paper: a checkbox) */
+        .rb_fold_box { display: none; }
+        .rb_fold_box:not(:checked) + .ltx_authors { max-height: 9.5em; overflow: hidden;
+            -webkit-mask-image: linear-gradient(#000 60%, transparent); mask-image: linear-gradient(#000 60%, transparent); }
+        .rb_fold_label { display: inline-block; margin: 2px 0 14px; color: #3d5afe; font: 600 14px/1.4 system-ui, sans-serif; cursor: pointer; }
+        .rb_fold_label::after { content: "Show all authors ▾"; }
+        .rb_fold_box:checked ~ .rb_fold_label::after { content: "Fewer authors ▴"; }
         .ltx_ERROR.undefined { display: none; } /* arXiv's marker for a macro it couldn't convert, e.g. \\dspfont */
         [data-anchor] { border-radius: 4px; transition: background .2s; }
         body[data-mode="block"] [data-anchor] { cursor: pointer; }
@@ -56,10 +63,29 @@ const Reader = (() => {
         .img_note_btn[data-act="save"] { background: #2e7d32; }
         @keyframes pulse { from { outline: 4px solid rgba(61, 90, 254, .8); } to { outline: 4px solid transparent; } }
         ::highlight(noted) { background-color: rgba(255, 200, 0, .45); }
+        ::highlight(under) { text-decoration: underline 2px #e0a800; }
+        [data-anchor].noted.mark_under { background: none; }
+        [data-anchor].noted.mark_under, [data-anchor].noted.mark_both {
+            text-decoration: underline 2px var(--note-color, #e0a800); text-underline-offset: 3px; }
         ::highlight(selected) { background-color: rgba(61, 90, 254, .3); }
         @keyframes flash { from { background: rgba(61, 90, 254, .35); } }`;
 
     const attr = value => String(value).replace(/&/g, '&amp;').replace(/"/g, '&quot;');
+
+    // Some papers list hundreds of authors (GPT-4: 281): a long list folds to a few lines, with a label to unfold it
+    function foldAuthors(article) {
+        const authors = article.querySelector('.ltx_authors');
+        if (!authors || (authors.querySelectorAll('.ltx_creator').length <= 12 && authors.textContent.length < 900)) return;
+        const box = article.ownerDocument.createElement('input');
+        box.type = 'checkbox';
+        box.id = 'rb_authors_more';
+        box.className = 'rb_fold_box';
+        const label = article.ownerDocument.createElement('label');
+        label.htmlFor = 'rb_authors_more';
+        label.className = 'rb_fold_label';
+        authors.before(box);
+        authors.after(label);
+    }
 
     // Resolves to { srcdoc, url }, or throws if arXiv has no HTML version.
     async function arxivHtml(id) {
@@ -74,6 +100,7 @@ const Reader = (() => {
         for (const node of article.querySelectorAll('*')) {
             for (const { name } of [...node.attributes]) if (name.startsWith('on')) node.removeAttribute(name);
         }
+        foldAuthors(article);
         const body = window.DOMPurify ? DOMPurify.sanitize(article.outerHTML) : article.outerHTML;
         const styles = [...doc.querySelectorAll('link[rel="stylesheet"]')]
             .map(link => new URL(link.getAttribute('href'), res.url).href);

@@ -257,6 +257,27 @@ form.modal .checks label { display: flex; align-items: center; gap: 6px; color: 
 /* a button's words stay on one line (a squeezed bar wraps whole buttons instead, never their words) */
 .bar .btn { white-space: nowrap; flex: none; }
 
+/* tag filter: chips that narrow a list to the materials with every chosen tag (Literature tab, Library) */
+.tag_filter { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: .8rem; color: var(--muted); }
+.tag_filter span { margin-right: 4px; }
+.tag_chip {
+    border: 1px solid var(--line);
+    background: none;
+    color: var(--text);
+    border-radius: 999px;
+    padding: 2px 10px;
+    font-size: .8rem;
+}
+.tag_chip.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+.tag_chip.other_authors:not(.active) { border-style: dashed; }
+/* folded (fillFilterRow, ui.js): only the chosen chips show */
+.filter_toggle { font-size: .8rem; font-weight: 600; color: var(--muted); margin-right: 4px; }
+.tag_filter:not(.filter_open) .tag_chip:not(.active) { display: none; }
+.author_filter .author_clear { font-size: .8rem; }
+
+/* a toolbar's dropdown while open (dropDown, ui.js): pinned under its button, scrolling inside if it's long */
+.floating { position: fixed !important; right: auto !important; z-index: 45 !important; overflow: auto; }
+
 /* ---- buttons with an icon (icons.css): icon and words; on phones the icon alone, the words still read out ---- */
 .has_i { display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
 .more_btn { display: none; } /* ⋯: phones only */
@@ -303,6 +324,32 @@ form.modal .checks label { display: flex; align-items: center; gap: 6px; color: 
 .md_bar { display: flex; gap: 4px; overflow-x: auto; scrollbar-width: none; margin-bottom: 4px; }
 .md_bar::-webkit-scrollbar { display: none; }
 .md_bar[hidden] { display: none; }
+
+/* Visual: writing on the formatted text (mdbar.js); the Markdown textarea stays underneath as what's saved */
+textarea.md_source_off { display: none; }
+.md_visual {
+    min-height: 6.5em; max-height: 60vh; overflow: auto; padding: 8px 10px;
+    border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--text);
+    cursor: text; outline: none; overflow-wrap: anywhere;
+}
+.md_visual[hidden] { display: none; }
+.md_visual:focus { border-color: var(--accent); box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 25%, transparent); }
+.md_visual:empty::before { content: attr(data-placeholder); color: var(--muted); pointer-events: none; }
+.md_visual > :first-child { margin-top: 0; }
+.md_visual > :last-child { margin-bottom: 0; }
+.md_visual img { max-width: 100%; }
+/* a citation in Visual: finished, edited as a whole (Backspace removes it) */
+.md_visual .cite { padding: 0 3px; border-radius: 4px; background: color-mix(in srgb, var(--accent) 16%, transparent); cursor: default; }
+.md_visual .cite:hover { outline: 1px solid var(--accent); }
+/* Link: its words and address */
+.composer.link_form { position: fixed; z-index: 2100; display: grid; gap: 8px; padding: 12px; }
+.composer.link_form[hidden] { display: none; }
+.link_form label { display: grid; gap: 4px; font-size: .8rem; color: var(--muted); }
+.link_form .actions { margin-top: 0; }
+.md_mode { display: inline-flex; flex: none; margin-left: auto; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.md_bar .md_mode button { border: none; border-radius: 0; background: none; color: var(--muted); padding: 2px 8px; font-size: .75rem; min-width: 0; }
+.md_bar .md_mode button[aria-pressed="true"] { background: var(--accent); color: #fff; }
+@media (min-width: 701px) { .md_bar { flex-wrap: wrap; } } /* one swipeable row on phones; wraps where there's room */
 .md_bar button {
     flex: none;
     min-width: 32px;
@@ -437,6 +484,51 @@ a.paper_ref:hover { border-bottom-style: solid; }
 .palette_choice small { font-size: .72rem; text-align: center; line-height: 1.2; }
 .palette_choice:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 8px; }
 
+/* the logo at the start of every page's bar: a way home (projects) */
+.home_logo { display: inline-flex; flex: none; align-items: center; border-radius: 8px; transition: transform .12s ease; }
+.home_logo img { width: 28px; height: 28px; display: block; }
+.home_logo:hover { transform: scale(1.08); }
+.home_logo:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+@media (max-width: 700px) { .home_logo img { width: 24px; height: 24px; } }
+
 /* the logo beside the app's name (home page) */
 .brand:has(.brand_logo) { display: inline-flex; align-items: center; gap: 10px; white-space: nowrap; }
 .brand_logo { width: 30px; height: 30px; flex: none; }
+
+/* ---- pen writing: the drawing pad (writing/sketch.js) ---- */
+.sketch { position: fixed; inset: 0; z-index: 3000; display: grid; place-items: center; padding: 12px; background: rgba(0, 0, 0, .45); }
+.sketch[hidden] { display: none; }
+body.sketching { overflow: hidden; }
+.sketch_panel {
+    display: grid; grid-template-rows: auto minmax(0, 1fr) auto; gap: 10px;
+    width: min(1100px, 100%); height: min(820px, 100%); padding: 12px;
+    background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: 0 16px 48px rgba(0, 0, 0, .35);
+}
+.sketch_bar { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; }
+.sketch_group { display: flex; gap: 4px; align-items: center; }
+.sketch_btn {
+    min-width: 36px; min-height: 36px; padding: 4px 10px; border: 1px solid var(--line); border-radius: 8px;
+    background: none; color: var(--text); font: inherit; font-size: .85rem; cursor: pointer;
+}
+.sketch_btn[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: #fff; }
+.sketch_btn:disabled { opacity: .4; cursor: default; }
+.sketch_btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+.sketch_color { padding: 0; width: 32px; min-width: 32px; border-radius: 999px; background: var(--c); border: 3px solid var(--surface); box-shadow: 0 0 0 1px var(--line); }
+.sketch_color[aria-pressed="true"] { background: var(--c); border-color: var(--surface); box-shadow: 0 0 0 3px var(--accent); }
+.sketch_stage { display: grid; place-items: center; min-height: 0; overflow: hidden; }
+.sketch_canvas { background: #fff; border-radius: 6px; box-shadow: 0 1px 6px rgba(0, 0, 0, .2); touch-action: none; cursor: crosshair; }
+.sketch_canvas[data-tool="eraser"] { cursor: cell; }
+.sketch_actions { display: flex; align-items: center; gap: 8px; }
+.sketch_actions .spacer { flex: 1; }
+.sketch_hint { color: var(--muted); }
+@media (max-width: 700px) {
+    .sketch { padding: 0; }
+    .sketch_panel { width: 100%; height: 100%; border-radius: 0; padding: 10px 8px calc(10px + env(safe-area-inset-bottom)); }
+    .sketch_hint { display: none; }
+}
+
+/* a long block folded to a few lines (foldLong, ui.js) */
+.fold:not(.open) { max-height: calc(var(--fold-lines, 6) * 1.6em); max-height: calc(var(--fold-lines, 6) * 1lh); overflow: hidden; }
+.fold.folded:not(.open) { -webkit-mask-image: linear-gradient(#000 55%, transparent); mask-image: linear-gradient(#000 55%, transparent); }
+.fold_toggle { justify-self: start; font-size: .85rem; margin-top: 2px; }
+.fold_toggle[hidden] { display: none; }

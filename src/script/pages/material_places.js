@@ -57,7 +57,7 @@ const Places = (() => {
             return { view: 'video', time: Math.floor(time), label: formatTime(time), progress: videoDuration ? round(time / videoDuration) : 0 };
         }
         if (currentView === 'pdf') {
-            const pages = $$('#reader_pdf .pdf_page');
+            const pages = pdfPages();
             if (!pages.length) return null;
             const y = readingLine();
             const page = pages.find(p => p.getBoundingClientRect().bottom > y) || pages.at(-1);
@@ -91,11 +91,11 @@ const Places = (() => {
     // a few words from the place, to name a bookmark
     function wordsAt(place) {
         if (place.view === 'pdf') {
-            const page = $(`#reader_pdf .pdf_page[data-page="${place.page}"]`);
-            const lines = page ? [...page.querySelectorAll('.line')] : [];
+            const page = pdfPage(place.page);
+            const lines = page ? [...page.querySelectorAll('.line, .read_para')] : [];
             const top = page?.getBoundingClientRect();
             const line = top && lines.find(l => (l.getBoundingClientRect().top - top.top) / top.height >= place.y - 0.01);
-            return line?.dataset.text || '';
+            return line?.dataset.text || line?.textContent || '';
         }
         if (place.view === 'text') return $(`#reader_text .line[data-line="${place.line}"]`)?.dataset.text || '';
         if (place.view === 'html') return paperDoc()?.getElementById(place.anchor)?.textContent || '';
@@ -117,7 +117,7 @@ const Places = (() => {
             return true;
         }
         if (place.view === 'pdf') {
-            const page = await waitFor(() => stopped() || $(`#reader_pdf .pdf_page[data-page="${place.page}"]`));
+            const page = await waitFor(() => stopped() || pdfPage(place.page));
             if (!page || stopped()) return false;
             await scrollPageTo(() => { const r = page.getBoundingClientRect(); return r.top + r.height * (place.y || 0); }, behavior, stopped);
             if (mark) flashAt(page, place.y || 0);
@@ -293,7 +293,7 @@ const Places = (() => {
 
     function openList(open = true) {
         $('#bookmark_list_box').hidden = !open;
-        sheetOnPhone($('#bookmark_list_box'), open);
+        dropDown($('#bookmark_list_box'), open);
         $('#bookmarks_btn').setAttribute('aria-expanded', open);
         if (open) current().then(place => { $('#bookmark_here').textContent = place ? `+ Bookmark where I am (${place.label})` : '+ Bookmark where I am'; });
     }
@@ -400,5 +400,5 @@ const Places = (() => {
         });
     }
 
-    return { setup, current, go, renderBookmarks, markBookmarks, keep };
+    return { setup, current, go, renderBookmarks, markBookmarks, keep, addBookmark };
 })();

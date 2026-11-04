@@ -11,7 +11,7 @@
 
 const Settings = (() => {
     const KEY = 'research_board_settings';
-    const DEFAULTS = { theme: 'system', style: 'default', customCss: '', palettes: {} };
+    const DEFAULTS = { theme: 'system', style: 'default', customCss: '', palettes: {}, savedPalettes: {}, customColors: {} };
 
     const STYLES = {
         default: {
@@ -110,6 +110,8 @@ const Settings = (() => {
     const PALETTES = {
         default: {
             families: ['accent'],
+            // what each colour paints, one word each (Settings: the boxes of your own colour sets)
+            roles: [['Spark', 'Links, buttons and the focus ring']],
             // the accent is links, buttons and focus: readable on the page (#f4f2ee light, #22201e dark)
             paint: ([c]) => ({ light: { '--accent': readable(fill(c), '#f4f2ee') }, dark: { '--accent': readable(c, '#22201e') } }),
             choices: [
@@ -125,6 +127,8 @@ const Settings = (() => {
         },
         nullsec: {
             families: ['red', 'cyan'],
+            // what each colour paints, one word each (Settings: the boxes of your own colour sets)
+            roles: [['Alarm', 'Frames, bars and the main buttons'], ['Signal', 'Notes, quotes, numbers and Save buttons']],
             paint: colors => {
                 const dark = {}, light = {};
                 ['red', 'cyan'].forEach((name, i) => {
@@ -152,6 +156,8 @@ const Settings = (() => {
         },
         astrolabe: {
             families: ['star', 'sun'],
+            // what each colour paints, one word each (Settings: the boxes of your own colour sets)
+            roles: [['Stars', 'Links, buttons and notes'], ['Sun', 'Downloads, questions and markers']],
             paint: colors => {
                 const dark = {}, light = {};
                 ['star', 'sun'].forEach((name, i) => {
@@ -176,6 +182,8 @@ const Settings = (() => {
         },
         gildmoor: {
             families: ['gold'],
+            // what each colour paints, one word each (Settings: the boxes of your own colour sets)
+            roles: [['Gilding', 'Frames, labels, titles and the stars']],
             paint: ([c]) => {
                 const bright = mix(c, '#ffffff', 0.45);
                 // Parchment: the metal deep enough to show on the paper; labels readable as text
@@ -195,6 +203,8 @@ const Settings = (() => {
         },
         reentry: {
             families: ['amber', 'blue'],
+            // what each colour paints, one word each (Settings: the boxes of your own colour sets)
+            roles: [['Phosphor', 'Main buttons, selected text and the screen glow'], ['Coolant', 'Downloads and questions']],
             paint: colors => {
                 const dark = {}, light = {};
                 ['amber', 'blue'].forEach((name, i) => {
@@ -218,6 +228,8 @@ const Settings = (() => {
         },
         skyglass: {
             families: ['blue', 'aqua', 'orange'],
+            // what each colour paints, one word each (Settings: the boxes of your own colour sets)
+            roles: [['Sky', 'Main buttons and links'], ['Lagoon', 'Ticks, chosen chips and “reading”'], ['Sunbeam', 'Downloads, badges and markers']],
             paint: colors => {
                 const dark = {}, light = {};
                 ['blue', 'aqua', 'orange'].forEach((name, i) => {
@@ -243,6 +255,8 @@ const Settings = (() => {
         },
         'pixel-pop': {
             families: ['teal', 'orange', 'pink', 'lavender', 'green'],
+            // what each colour paints, one word each (Settings: the boxes of your own colour sets)
+            roles: [['Bars', 'The top bar, the note box and chosen buttons'], ['Keys', 'Side buttons and section headings'], ['Tags', 'Tags and timeline markers'], ['Tabs', 'The open tab'], ['Go!', 'Main buttons, ticks and “done”']],
             paint: colors => {
                 const vars = {};
                 ['teal', 'orange', 'pink', 'lavender', 'green'].forEach((name, i) => {
@@ -262,11 +276,30 @@ const Settings = (() => {
         },
     };
 
+    // Your own colour sets (Settings: "+ New"), saved per style: settings.savedPalettes = { nullsec: [{ id, label,
+    // colors: one per family }] }, chosen as 'saved:<id>'. A colour missing or broken falls back to the style's own.
+    const fullColors = (style, picked = []) => PALETTES[style].families
+        .map((_, i) => (/^#[0-9a-f]{6}$/i.test(picked[i] || '') ? picked[i] : PALETTES[style].choices[0].colors[i]));
+    const savedOf = (settings, style) => (PALETTES[style] ? settings.savedPalettes?.[style] || [] : []);
+
+    // any choice by its id ('original', 'synthwave', 'saved:k3x9'…) as { id, label, colors, saved? }
+    function choiceOf(settings, style, id) {
+        const palette = PALETTES[style];
+        if (!palette) return null;
+        if (id?.startsWith('saved:')) {
+            const set = savedOf(settings, style).find(p => p.id === id.slice(6));
+            return set ? { id, label: set.label, colors: fullColors(style, set.colors), saved: set } : null;
+        }
+        // 'custom': the single "Your own" of an earlier version (Settings turns it into a saved set)
+        if (id === 'custom') return { id, label: 'My colours', colors: fullColors(style, settings.customColors?.[style]) };
+        return palette.choices.find(c => c.id === id) || null;
+    }
+
     // the CSS for a style's chosen colours ('' for its own)
     function paletteCss(settings) {
         const style = STYLES[settings.style] ? settings.style : 'default';
         const palette = PALETTES[style];
-        const choice = palette?.choices.find(c => c.id === settings.palettes?.[style]);
+        const choice = choiceOf(settings, style, settings.palettes?.[style]);
         if (!choice || choice.id === 'original') return '';
         const { dark, light } = palette.paint(choice.colors);
         const block = (theme, vars) => `html[data-style="${style}"][data-theme="${theme}"] { ${Object.entries(vars).map(([k, v]) => `${k}: ${v};`).join(' ')} }`;
@@ -398,5 +431,5 @@ const Settings = (() => {
 
     if (document.readyState === 'loading') writeInitial(read());
     else apply();
-    return { STYLES, PALETTES, DEFAULT_PHOTO, read, save, apply, defaultImage };
+    return { STYLES, PALETTES, DEFAULT_PHOTO, read, save, apply, defaultImage, choiceOf, savedOf, fullColors };
 })();

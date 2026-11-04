@@ -1,4 +1,4 @@
-// A place's storage, written once for every platform: the server (apps/server/place-node.js), the desktop app
+// A place's storage, written once for every platform: the server (apps/server/place-bun.js), the desktop app
 // (Tauri) and the phone app (Capacitor) each give it two small adapters, and it does the rest.
 //
 //   sql:   { exec(sql), run(sql, params), get(sql, params), all(sql, params) }   each may return a promise

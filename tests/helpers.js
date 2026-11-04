@@ -52,15 +52,32 @@ async function startServer(port, { empty = false } = {}) {
     };
 }
 
-// Edge or Chrome as installed (BROWSER=<path to the program> for another one); playwright-core downloads none
+// Edge or Chrome as installed (BROWSER=<path to the program> for another one); puppeteer-core downloads none.
+// (Puppeteer rather than Playwright: Playwright can't start a browser under Bun on Windows.)
+const BROWSERS = {
+    win32: [
+        [process.env['ProgramFiles(x86)'], 'Microsoft', 'Edge', 'Application', 'msedge.exe'],
+        [process.env.ProgramFiles, 'Microsoft', 'Edge', 'Application', 'msedge.exe'],
+        [process.env.ProgramFiles, 'Google', 'Chrome', 'Application', 'chrome.exe'],
+        [process.env.LOCALAPPDATA, 'Google', 'Chrome', 'Application', 'chrome.exe'],
+    ],
+    darwin: [
+        ['/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge'],
+        ['/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'],
+    ],
+    linux: [['/usr/bin/microsoft-edge'], ['/usr/bin/google-chrome'], ['/usr/bin/chromium'], ['/usr/bin/chromium-browser']],
+};
 async function launchBrowser() {
-    const { chromium } = require('playwright-core');
-    if (process.env.BROWSER) return chromium.launch({ executablePath: process.env.BROWSER });
-    for (const channel of ['msedge', 'chrome']) {
-        try { return await chromium.launch({ channel }); } catch { }
-    }
-    throw new Error('Needs Edge or Chrome (or BROWSER=<path to a Chromium browser>)');
+    const puppeteer = require('puppeteer-core');
+    const found = process.env.BROWSER || (BROWSERS[process.platform] || [])
+        .filter(parts => parts.every(Boolean)).map(parts => path.join(...parts)).find(file => fs.existsSync(file));
+    if (!found) throw new Error('Needs Edge or Chrome (or BROWSER=<path to a Chromium browser>)');
+    return puppeteer.launch({ executablePath: found, headless: true, defaultViewport: { width: 1280, height: 720 } });
 }
+
+// pauses, and an element's text (the few things Playwright had that Puppeteer leaves out)
+const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
+const text = (page, selector) => page.$eval(selector, element => element.textContent);
 
 // await t.test(name, fn): fn throws (or returns a message) when something's wrong; t.finish() at the end
 function tester() {
@@ -79,4 +96,4 @@ function tester() {
     };
 }
 
-module.exports = { REPO, SAMPLE, startServer, launchBrowser, tester };
+module.exports = { wait, text, REPO, SAMPLE, startServer, launchBrowser, tester };

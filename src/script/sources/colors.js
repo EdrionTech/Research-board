@@ -75,7 +75,8 @@ const NoteColors = (() => {
 
     // ::highlight() rules for the project's colours (word-level notes), for a page or the paper's frame
     function css(project) {
-        return of(project).map(c => `::highlight(noted-${c.id}) { background-color: color-mix(in srgb, ${c.hex} 55%, transparent); }`).join('\n');
+        return of(project).map(c => `::highlight(noted-${c.id}) { background-color: color-mix(in srgb, ${c.hex} 55%, transparent); }
+::highlight(under-${c.id}) { text-decoration: underline 2px ${c.hex}; }`).join('\n');
     }
 
     // Puts (or updates) those rules in a document

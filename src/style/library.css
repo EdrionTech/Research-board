@@ -39,7 +39,7 @@
 .book_meta { margin: 0; font-size: .8rem; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
 .book_authors { margin: 0; }
 .book_links { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: .85rem; }
-.book_abstract .md { max-height: 26vh; overflow: auto; font-size: .9rem; }
+.book_abstract .md { font-size: .9rem; }
 .book_projects ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
 .book_projects li { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; }
 .book_projects small { color: var(--muted); }

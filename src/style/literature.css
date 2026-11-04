@@ -97,19 +97,6 @@
 .figures_panel .hint { margin: 0; font-size: .8rem; color: var(--muted); }
 
 
-/* tag filter */
-.tag_filter { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: .8rem; color: var(--muted); }
-.tag_filter span { margin-right: 4px; }
-.tag_chip {
-    border: 1px solid var(--line);
-    background: none;
-    color: var(--text);
-    border-radius: 999px;
-    padding: 2px 10px;
-    font-size: .8rem;
-}
-.tag_chip.active { background: var(--accent); border-color: var(--accent); color: #fff; }
-
 .selection_bar { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; font-size: .85rem; color: var(--muted); }
 .selection_bar .spacer { flex: 1; }
 
@@ -278,3 +265,16 @@
 .library_result .btn { grid-row: 1 / span 2; grid-column: 2; }
 .library_results .none { color: var(--muted); font-style: italic; font-size: .9rem; padding: 6px 8px; }
 .from_library .actions small { color: var(--accent); font-size: .82rem; }
+
+/* Writing tab: your documents (writing.js) */
+.drafts { margin-bottom: 16px; padding: 14px 16px; background: var(--surface); border-radius: var(--radius); box-shadow: var(--shadow); border-left: 4px solid var(--accent); }
+.drafts > header { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+.drafts > header h3 { margin: 0; font-size: 1.05rem; }
+.drafts > header .hint { margin: 2px 0 0; font-size: .85rem; color: var(--muted); }
+.drafts .spacer { flex: 1; }
+.draft_list { list-style: none; margin: 12px 0 0; padding: 0; display: grid; gap: 6px; }
+.draft_row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; }
+.draft_text { display: grid; gap: 2px; min-width: 0; }
+.draft_text small { color: var(--muted); }
+.draft_form { width: min(440px, 100%); display: grid; gap: 12px; }
+.draft_form label { display: grid; gap: 4px; }

@@ -18,10 +18,12 @@
 
 <body>
     <div class="bar">
+        <!-- the logo: back to your projects, from any page -->
+        <a class="home_logo" href="../index.html" title="Research Board: your projects" aria-label="Research Board: your projects"><img src="../assets/logo.svg" alt=""></a>
         <a href="../index.html" class="back">← Projects</a>
         <h2 class="brand" id="project_title"></h2>
         <!-- quick text note: lands in the Overview inbox unless a section is picked -->
-        <a class="btn small settings_link" href="settings.html" title="Theme, style and your data">Settings</a>
+        <a class="btn small has_i settings_link" href="settings.html" title="Settings: theme, style and your data"><span class="i" data-i="settings" aria-hidden="true"></span><span class="lbl">Settings</span></a>
         <button type="button" class="btn primary" id="quick_note">+ Quick note</button>
     </div>
 
@@ -74,6 +76,8 @@
                 </div>
                 <!-- your tags: click to filter (a source must have every tag picked) -->
                 <div class="tag_filter" id="tag_filter" hidden></div>
+                <!-- only the sources by the chosen authors (sources/authorfilter.js) -->
+                <div class="tag_filter author_filter" id="author_filter" role="group" aria-label="Filter by author" hidden></div>
                 <!-- exports: you choose the sources inside each popup -->
                 <div class="selection_bar">
                     <span id="selection_info"></span>
@@ -119,6 +123,22 @@
         <section class="research_ws" data-panel="research" hidden>
             <!-- methodology, implementation, data management and analysis -->
             <div class="sections" data-sections="research"></div>
+        </section>
+
+        <section class="writing_ws" data-panel="writing" hidden>
+            <!-- what you write from the project: the literature review, papers, chapters, reports (writing.js) -->
+            <div class="drafts">
+                <header>
+                    <div>
+                        <h3>Your documents</h3>
+                        <p class="hint">Written in the same editor as the literature review: cite your sources with @, insert the project's figures, export as .md or .html.</p>
+                    </div>
+                    <span class="spacer"></span>
+                    <button type="button" class="btn primary" id="new_draft">+ New document</button>
+                </header>
+                <ul class="draft_list" id="draft_list"></ul>
+            </div>
+            <div class="sections" data-sections="writing"></div>
         </section>
     </main>
 
@@ -238,6 +258,18 @@
             </div>
         </form>
 
+        <!-- + New document on the Writing tab (writing.js) -->
+        <form class="draft_form modal" id="draft_form" hidden>
+            <h2>New document</h2>
+            <label>Name <input name="title" placeholder="e.g. Conference paper, Chapter 3" autocomplete="off"></label>
+            <label>Start from <select name="template"></select></label>
+            <div class="actions">
+                <span class="spacer"></span>
+                <button type="button" class="btn" data-close>Cancel</button>
+                <button type="submit" class="btn primary">Create and open</button>
+            </div>
+        </form>
+
         <!-- + From library: materials on their own in the library, or in your other projects -->
         <form class="from_library modal" id="from_library_form" hidden>
             <h2>Add from your library</h2>
@@ -304,15 +336,18 @@
 
     <script data-src="../vendor/marked.min.js"></script>
     <script data-src="../vendor/purify.min.js"></script>
+    <script data-src="../vendor/turndown.js"></script>
     <script data-src="../script/core/ui.js"></script>
     <script data-src="../script/core/store.js"></script>
     <script data-src="../script/core/images.js"></script>
     <script data-src="../script/writing/markdown.js"></script>
+    <script data-src="../script/writing/sketch.js"></script>
     <script data-src="../script/writing/mdbar.js"></script>
     <script data-src="../script/writing/citepicker.js"></script>
     <script data-src="../script/writing/mdimages.js"></script>
     <script data-src="../script/reader/documents.js"></script>
     <script data-src="../script/sources/sources.js"></script>
+    <script data-src="../script/sources/authorfilter.js"></script>
     <script data-src="../script/sources/cite.js"></script>
     <script data-src="../script/sources/colors.js"></script>
     <script data-src="../script/sources/links.js"></script>
@@ -323,6 +358,7 @@
     <script data-src="../script/sources/figures.js"></script>
     <script data-src="../script/pages/dashboard/dashboard.js"></script>
     <script data-src="../script/pages/dashboard/literature.js"></script>
+    <script data-src="../script/pages/dashboard/writing.js"></script>
 </body>
 
 </html>

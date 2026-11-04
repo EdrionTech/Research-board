@@ -20,10 +20,12 @@
 <body>
 
     <div class="bar">
+        <!-- the logo: back to your projects, from any page -->
+        <a class="home_logo" href="../index.html" title="Research Board: your projects" aria-label="Research Board: your projects"><img src="../assets/logo.svg" alt=""></a>
         <a href="../index.html" class="back">← Projects</a>
         <h2 class="brand">Library</h2>
         <input type="search" class="search" id="search" placeholder="Search the library…" aria-label="Search the library">
-        <a class="btn small settings_link" href="settings.html" title="Theme, style and your data">Settings</a>
+        <a class="btn small has_i settings_link" href="settings.html" title="Settings: theme, style and your data"><span class="i" data-i="settings" aria-hidden="true"></span><span class="lbl">Settings</span></a>
         <button type="button" class="btn small primary" id="new_material">+ New material</button>
     </div>
 
@@ -52,6 +54,10 @@
             <span class="spacer"></span>
             <small id="shelf_count"></small>
         </div>
+        <!-- only the materials with every chosen tag (library.js) -->
+        <div class="tag_filter" id="tag_filter" role="group" aria-label="Filter by tag" hidden></div>
+        <!-- only the materials by the chosen authors (sources/authorfilter.js) -->
+        <div class="tag_filter author_filter" id="author_filter" role="group" aria-label="Filter by author" hidden></div>
 
         <!-- the materials you're in the middle of, across your projects (reading.js) -->
         <section class="continue_row" id="continue_row" hidden>
@@ -105,6 +111,7 @@
     <script data-src="../script/writing/markdown.js"></script>
     <script data-src="../script/reader/documents.js"></script>
     <script data-src="../script/sources/sources.js"></script>
+    <script data-src="../script/sources/authorfilter.js"></script>
     <script data-src="../script/sources/cite.js"></script>
     <script data-src="../script/sources/library.js"></script>
     <script data-src="../script/sources/reading.js"></script>

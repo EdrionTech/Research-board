@@ -1,4 +1,4 @@
-// Project dashboard: Overview / Literature / Research tabs over one list of items.
+// Project dashboard: Overview / Literature / Research / Writing tabs over one list of items.
 // Opened as project_dashboard.html?id=<projectId>. Data comes from store.js;
 // the Literature tab's source library lives in literature.js.
 
@@ -15,8 +15,10 @@ const SECTIONS = {
     observation: { tab: 'research',   label: 'Observations',     hint: 'What you noticed while working' },
     data:        { tab: 'research',   label: 'Data',             hint: 'Datasets and where they live' },
     finding:     { tab: 'research',   label: 'Findings',         hint: 'Analysis and results' },
+    outline:     { tab: 'writing',    label: 'Outline',          hint: 'The shape of what you\'ll write: sections, key points, the argument' },
+    draft_note:  { tab: 'writing',    label: 'Notes for writing', hint: 'Phrases, reminders and things to check before you submit' },
 };
-const TABS = ['overview', 'literature', 'research'];
+const TABS = ['overview', 'literature', 'research', 'writing'];
 
 const project = Store.getProject(new URLSearchParams(location.search).get('id'));
 const form = $('#item_form');
@@ -98,6 +100,7 @@ function render() {
 
     renderStats();
     renderLiterature();
+    renderWriting();
 }
 
 function itemRow(item) {

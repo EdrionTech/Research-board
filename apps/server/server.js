@@ -4,10 +4,10 @@
 //   data/research-board.db     projects, materials, notes, settings… (SQLite: each change is saved whole or not at all)
 //   data/files/<hash>          the bytes of uploaded PDFs, images, videos, named by their content (kept once)
 //
-// The storage itself is shared with the desktop and phone apps: src/script/core/place/place.js, given Node's
-// SQLite and the files folder by place-node.js. This file is only the requests.
+// The storage itself is shared with the desktop and phone apps: src/script/core/place/place.js, given Bun's
+// SQLite and the files folder by place-bun.js. This file is only the requests.
 //
-// Node.js 22.13 or newer, no packages: `node apps/server/server.js` (start.bat / start.sh add --open: the browser
+// Bun (https://bun.sh), no packages: `bun apps/server/server.js` (start.bat / start.sh add --open: the browser
 // opens on the app once the server is ready). Options (environment): PORT (5500), HOST (127.0.0.1: this computer
 // only), DATA (the data folder). The API below is all the app needs (see README.md here).
 //
@@ -22,9 +22,8 @@
 //   POST   /api/restore            replace everything with a backup (Settings' backup format, files included)
 //   POST   /api/clear              delete everything
 
-const [major, minor] = process.versions.node.split('.').map(Number);
-if (major < 22 || (major === 22 && minor < 13)) {
-    console.error(`Research Board's server needs Node.js 22.13 or newer (this is ${process.versions.node}): https://nodejs.org`);
+if (!process.versions.bun) {
+    console.error("Research Board's server runs on Bun, not Node.js: bun apps/server/server.js (install Bun from https://bun.sh)");
     process.exit(1);
 }
 
@@ -33,7 +32,7 @@ const { spawn } = require('child_process');
 const fs = require('fs');
 const fsp = fs.promises;
 const path = require('path');
-const { APP, openNodePlace } = require('./place-node');
+const { APP, openServerPlace } = require('./place-bun');
 
 const PORT = Number(process.env.PORT) || 5500;
 const HOST = process.env.HOST || '127.0.0.1';
@@ -147,7 +146,7 @@ async function serveStatic(req, res, pathname) {
 
 async function start() {
     fs.mkdirSync(DATA, { recursive: true });
-    const place = await openNodePlace(DATA);
+    const place = await openServerPlace(DATA);
     await convertOldData(place);
 
     const server = http.createServer(async (req, res) => {

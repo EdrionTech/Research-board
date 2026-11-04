@@ -94,7 +94,23 @@ const TextRange = (() => {
         if (!quote) return null;
         if (m.text.slice(start, end) === quote) return { start, end };
         const i = m.text.indexOf(quote);
-        return i >= 0 ? { start: i, end: i + quote.length } : null;
+        if (i >= 0) return { start: i, end: i + quote.length };
+        return looseLocate(m.text, quote);
+    }
+
+    // the quote with its spaces and line breaks ignored (the same words laid out differently: PDF read mode)
+    function looseLocate(text, quote) {
+        const want = quote.replace(/\s+/g, '');
+        if (want.length < 3) return null;
+        const at = []; // index in `text` of each non-space character
+        let squeezed = '';
+        for (let i = 0; i < text.length; i++) {
+            if (/\s/.test(text[i])) continue;
+            at.push(i);
+            squeezed += text[i];
+        }
+        const i = squeezed.indexOf(want);
+        return i >= 0 ? { start: at[i], end: at[i + want.length - 1] + 1 } : null;
     }
 
     return { map, offsetOf, rangeOf, caretAt, segmentAt, trim, locate };

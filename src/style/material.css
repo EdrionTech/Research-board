@@ -67,7 +67,84 @@
     border-radius: var(--radius) var(--radius) 0 0;
 }
 .reader_bar label.btn { cursor: pointer; }
-.reader_source { margin-right: auto; font-size: .85rem; color: var(--muted); }
+
+/* the tools by what they're for, in this order: the paper's versions | contents, bookmarks | notes ... view, File ▾
+   (#reader_tools and its sections only group them in the page: on wide screens their buttons sit in the row) */
+.reader_tools, .tools_sec { display: contents; }
+.tools_head { display: none; }
+.reader_bar > .view_toggle { order: 10; }
+#pdf_mode { order: 11; }
+.reader_bar > .tool_sep:nth-of-type(1) { order: 20; }
+.toc_menu { order: 30; }
+.bookmarks_menu { order: 31; }
+.reader_bar > .tool_sep:nth-of-type(2) { order: 40; }
+.attach_menu { order: 50; }
+#capture_btn { order: 51; }
+#summary_btn { order: 52; }
+#zoom_ctl { order: 60; margin-left: auto; }
+#jump_to { order: 61; }
+#full_btn { order: 62; }
+.file_menu { order: 63; }
+#zoom_ctl[hidden] ~ #jump_to, #zoom_ctl[hidden] ~ #jump_to[hidden] ~ #full_btn { margin-left: auto; }
+.tool_sep { align-self: stretch; width: 1px; margin: 4px 2px; background: var(--line); }
+.view_toggle[hidden] + .tool_sep { display: none; }
+.more_btn { order: 99; }
+
+/* File ▾: where the paper comes from, open it elsewhere, bring your own copy; Remove last, set apart */
+.file_menu { position: relative; display: block; }
+.file_btn .caret { width: .9em; height: .9em; margin-left: 2px; opacity: .7; }
+.composer.file_drop { position: absolute; top: calc(100% + 6px); right: 0; z-index: 20; width: 260px; display: grid; gap: 4px; }
+.file_drop[hidden] { display: none; }
+.file_drop .btn { justify-content: flex-start; border-color: transparent; background: none; text-align: left; }
+.file_drop .btn:hover { background: var(--bg); }
+.file_drop .btn.danger:hover { background: color-mix(in srgb, var(--danger) 12%, transparent); }
+.file_drop hr { width: 100%; margin: 4px 0; border: none; border-top: 1px solid var(--line); }
+.file_drop hr:has(+ #remove_material[hidden]) { display: none; }
+.reader_source { padding: 2px 8px 6px; font-size: .78rem; color: var(--muted); }
+/* words beside the icons only while the row fits on one line (fitReaderBar, material.js); icons alone otherwise */
+.reader_bar.icons .has_i { gap: 0; padding-left: 10px; padding-right: 10px; }
+.reader_bar.icons .has_i .lbl { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.reader_bar.icons .has_i .count:not(:empty) { margin-left: 4px; }
+/* (the File menu's items always keep their words, in full screen too) */
+.reader_bar .file_drop .has_i { gap: 8px; padding-left: 10px; padding-right: 10px; }
+.reader_bar .file_drop .has_i .lbl { position: static; width: auto; height: auto; overflow: visible; clip-path: none; }
+.reader_source:empty { display: none; }
+/* PDF read mode: the text reflowed, sized with the zoom control */
+.reader_read {
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: calc(1.08rem * var(--zoom, 1));
+    line-height: 1.7;
+    max-width: 42em;
+    margin: 0 auto;
+    padding: 4px 8px 40px;
+    touch-action: pan-x pan-y;
+}
+.reader_read .read_page { position: relative; padding-top: 1.6em; }
+.reader_read .read_page::before {
+    content: "p. " attr(data-page);
+    position: absolute; top: 0; left: 0; right: 0;
+    border-top: 1px dashed var(--line);
+    padding-top: 2px;
+    font: .72rem system-ui, sans-serif; color: var(--muted); text-align: right;
+}
+.reader_read .read_page:first-child::before { border-top: none; }
+.reader_read .read_para { margin: 0 0 .9em; padding: 2px 6px; border-radius: 4px; }
+.reader_read h2.read_para { font-size: 1.35em; line-height: 1.3; margin: .6em 0 .5em; }
+.reader_read h3.read_para { font-size: 1.12em; line-height: 1.35; margin: .5em 0 .4em; }
+body[data-mode="block"] .reader_read .read_para { cursor: pointer; }
+body[data-mode="block"] .reader_read .read_para:hover { background: var(--bg); }
+.reader_read .read_para.noted { background: color-mix(in srgb, var(--note-color, #ffc800) 26%, transparent); }
+.reader_read .read_para.noted.mark_under { background: none; }
+.reader_read .read_para.noted.mark_under, .reader_read .read_para.noted.mark_both {
+    text-decoration: underline 2px var(--note-color, #e0a800); text-underline-offset: 4px;
+}
+.reader_read .read_para.selected { outline: 2px solid var(--accent); outline-offset: 1px; }
+.reader_read .read_para.flash { animation: flash 1.4s ease-out; }
+.reader_read .read_empty { padding: 24px 8px; }
+.jump_to { display: flex; align-items: center; gap: 4px; font-size: .85rem; color: var(--muted); }
+.jump_to[hidden] { display: none; }
+.jump_to label { display: flex; align-items: center; gap: 4px; }
+.jump_to input { width: 4.2em; padding: 4px 6px; font-size: .85rem; text-align: center; }
 
 .view_toggle { display: flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
 .view_toggle button { border: none; background: none; color: var(--muted); padding: 6px 12px; font-size: .85rem; }
@@ -304,6 +381,9 @@ textarea.dropping { outline: 2px dashed var(--accent); outline-offset: 2px; }
 
 /* exact words of sentence/phrase/word notes (CSS Highlight API) */
 ::highlight(noted) { background-color: rgba(255, 200, 0, .45); }
+::highlight(under) { text-decoration: underline 2px #e0a800; }
+/* a citation the paper's reference list has: click it to see the reference */
+::highlight(citation) { text-decoration: underline dotted 1.5px #3d5afe; }
 ::highlight(selected) { background-color: rgba(61, 90, 254, .3); }
 .pdf_page .line:hover { background: rgba(61, 90, 254, .12); }
 .pdf_page .line.noted { background: color-mix(in srgb, var(--note-color, #ffc800) 38%, transparent); }
@@ -346,6 +426,10 @@ textarea.dropping { outline: 2px dashed var(--accent); outline-offset: 2px; }
 }
 .reader_text .line.noted { background: color-mix(in srgb, var(--note-color, #ffc800) 30%, transparent); }
 .reader_text .line.noted .num { color: var(--accent); font-weight: 700; }
+/* a line or paragraph shown underlined (or both): a line under it in the note's colour */
+.reader_text .line.noted.mark_under, .pdf_page .line.noted.mark_under { background: none; }
+.reader_text .line.noted.mark_under, .reader_text .line.noted.mark_both,
+.pdf_page .line.noted.mark_under, .pdf_page .line.noted.mark_both { box-shadow: inset 0 -2px 0 var(--note-color, #e0a800); }
 .reader_text .line.selected { outline: 2px solid var(--accent); outline-offset: -2px; }
 .reader_text .line.flash { animation: flash 1.4s ease-out; }
 
@@ -410,26 +494,80 @@ body.side_collapsed .side { display: none; }
 .composer_head strong { flex: 1; font-size: .9rem; }
 .composer_head .link { font-size: 1rem; }
 .composer .note_form { margin: 0; }
+/* small until needed: what's attached, the colours and one line to write; More ▾ (or writing) shows the rest */
+.composer.compact .note_form { gap: 6px; }
+.composer.compact .note_form_row, .composer.compact #note_images, .composer.compact textarea[name="answer"],
+.composer.compact .note_form .actions, .composer.compact .md_bar { display: none; }
+.composer.compact textarea[name="body"] { height: 2.4em; min-height: 0; resize: none; overflow: hidden; }
+.composer.compact .md_visual { min-height: 2.4em; max-height: 4.8em; }
+.composer.compact .quote_preview blockquote { display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.composer.compact #quote_thumb img { max-height: 64px; }
+#composer_size { font-size: .8rem; }
+.here_notes { display: flex; align-items: center; gap: 6px; font-size: .8rem; color: var(--muted); }
+.here_notes[hidden] { display: none; }
+.here_notes .spacer { flex: 1; }
+.here_notes #here_prev, .here_notes #here_next { font-size: 1.1rem; line-height: 1; padding: 0 4px; }
+
+/* the app's right-click menu in the reader (material_menu.js) */
+.reader_menu {
+    position: fixed; z-index: 40; width: 250px; max-height: calc(100vh - 16px); overflow: auto;
+    padding: 6px; display: grid; gap: 1px;
+    background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: 0 10px 32px rgba(0, 0, 0, .28);
+}
+.reader_menu[hidden] { display: none; }
+.reader_menu .menu_item {
+    display: flex; justify-content: space-between; align-items: center; gap: 12px;
+    width: 100%; padding: 6px 10px; border: none; border-radius: 6px;
+    background: none; color: var(--text); font: inherit; font-size: .88rem; text-align: left; cursor: pointer;
+}
+.reader_menu .menu_item:hover, .reader_menu .menu_item:focus-visible { background: color-mix(in srgb, var(--accent) 14%, transparent); outline: none; }
+.reader_menu .menu_item small { color: var(--muted); font-size: .75rem; }
+.reader_menu .menu_head { margin: 2px 10px 4px; font-size: .78rem; color: var(--muted); font-style: italic; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.reader_menu .menu_foot { margin: 4px 10px 2px; font-size: .7rem; color: var(--muted); }
+.reader_menu hr { width: 100%; margin: 4px 0; border: none; border-top: 1px solid var(--line); }
+.reader_menu .menu_colors { display: flex; flex-wrap: wrap; gap: 2px; padding: 2px 6px 4px; }
+.reader_menu .menu_color { display: grid; place-items: center; width: 26px; height: 26px; border: 2px solid transparent; border-radius: 999px; background: none; cursor: pointer; padding: 0; }
+.reader_menu .menu_color[aria-checked="true"] { border-color: var(--accent); }
 .shortcut { color: var(--muted); font-size: .72rem; align-self: center; }
 .hint { margin: 0; font-size: .8rem; color: var(--muted); }
 
 .note_form { display: grid; gap: 8px; margin: 10px 0 14px; }
 
-.attach_row { display: grid; gap: 4px; margin-bottom: 12px; }
-.attach_mode { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; font-size: .8rem; color: var(--muted); }
-.attach_mode span { margin-right: 4px; }
+/* the attach menu in the reader bar (what a click picks) */
+.attach_menu { position: relative; }
+.attach_menu[hidden] { display: none; }
+.attach_btn .caret { width: .9em; height: .9em; margin-left: 2px; opacity: .7; }
+.attach_btn .attach_word { color: var(--muted); font-weight: 400; }
+.composer.attach_drop { position: absolute; top: calc(100% + 6px); left: 0; z-index: 20; width: min(330px, calc(100vw - 24px)); display: grid; gap: 6px; }
+.composer.attach_drop[hidden] { display: none; }
+.attach_title { margin: 0 4px; font-size: .78rem; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+.attach_mode { display: grid; gap: 2px; }
+.attach_mode button { display: grid; grid-template-columns: 1fr auto; text-align: left; gap: 0 10px; }
+.attach_mode button small { grid-column: 1; color: var(--muted); font-size: .75rem; }
+.attach_mode button kbd { grid-column: 2; grid-row: 1 / span 2; align-self: center; font: .72rem ui-monospace, monospace; color: var(--muted); border: 1px solid var(--line); border-radius: 4px; padding: 1px 6px; }
+.attach_mode button[aria-pressed="true"] small, .attach_mode button[aria-pressed="true"] kbd { color: inherit; border-color: currentColor; }
+.attach_drop .hint { margin: 2px 4px 0; }
 .attach_mode button {
-    border: 1px solid var(--line);
+    border: 1px solid transparent;
     background: none;
     color: var(--text);
-    border-radius: 999px;
-    padding: 3px 10px;
-    font-size: .8rem;
+    border-radius: 8px;
+    padding: 6px 10px;
+    font-size: .88rem;
+    cursor: pointer;
 }
+.attach_mode button:hover { background: var(--bg); }
 .attach_mode button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: #fff; }
 .note_form_row { display: flex; gap: 6px; }
-.note_form_row select { flex: 1; }
-.note_form_row input { width: 70px; }
+.note_form_row > * { min-width: 0; }
+.note_form_row select { flex: 1 1 6em; }
+.note_form_row input { width: 60px; flex: none; }
+.mark_quick { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; font-size: .8rem; color: var(--muted); }
+.mark_quick[hidden] { display: none; }
+.mark_quick span { margin-right: 4px; }
+.mark_quick button { border: 1px solid var(--line); background: none; color: var(--text); border-radius: 999px; padding: 3px 10px; font-size: .8rem; }
+.mark_quick button:hover { border-color: var(--accent); }
+.mark_quick [data-mark="underline"], .mark_quick [data-mark="both"] { text-decoration: underline 2px var(--accent); text-underline-offset: 3px; }
 .note_form textarea { width: 100%; }
 .note_form textarea[hidden], .quote_preview[hidden] { display: none; }
 
@@ -497,8 +635,7 @@ body.side_collapsed .side { display: none; }
     .reader_html { height: calc(100dvh - var(--bar-h, 0px) - 120px); min-height: 420px; }
 }
 
-/* phones: less padding; the reader's toolbar is one row of icons (the rest behind ⋯), the attach switch a
-   swipeable row */
+/* phones: less padding; the reader's toolbar is one row of icons (the rest behind ⋯, as a sheet) */
 @media (max-width: 700px) {
     .material_head, .material { padding-left: 12px; padding-right: 12px; }
     .material_head { grid-template-columns: 1fr; padding-top: 12px; gap: 8px; }
@@ -516,18 +653,34 @@ body.side_collapsed .side { display: none; }
     .reader_bar > * { flex: none; }
     .reader_bar { gap: 6px; }
     .reader_bar .has_i { padding-left: 10px; padding-right: 10px; }
-    .reader_bar .more_item { display: none; }
     .reader_bar .more_btn { margin-left: auto; }
-    /* ⋯ open: everything, on as many rows as it takes */
-    .reader_bar.more_open { flex-wrap: wrap; overflow: visible; }
-    .reader_bar.more_open .more_item:not([hidden]) { display: inline-flex; }
-    .reader_bar.more_open .more_btn { order: 1; }
-    .attach_mode { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
-    .attach_mode > * { flex: none; }
+    .reader_bar .tool_sep { display: none; }
+    /* the rest wait behind ⋯: a sheet with a heading per group, words beside the icons */
+    .reader_tools:not(.sheet) { display: none; }
+    .reader_tools.sheet { display: grid; gap: 14px; padding: 14px 14px 18px; max-height: 85dvh !important; }
+    .reader_tools.sheet .tools_sec { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+    .reader_tools.sheet .tools_sec > *, #reader_tools.sheet #zoom_ctl, #reader_tools.sheet #jump_to, #reader_tools.sheet #full_btn { margin-left: 0; }
+    .reader_tools.sheet .tools_head, .reader_tools.sheet .file_drop { flex-basis: 100%; }
+    .reader_tools.sheet .tools_head { display: block; margin: 0; font-size: .75rem; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: var(--muted); }
+    .reader_tools.sheet .has_i { gap: 8px; padding: 10px 14px; }
+    .reader_tools.sheet .has_i .lbl { position: static; width: auto; height: auto; overflow: visible; clip-path: none; }
+    .reader_tools.sheet .file_btn { display: none; }
+    .reader_tools.sheet .file_drop {
+        position: static; display: flex; flex-wrap: wrap; gap: 8px; width: auto; max-height: none; overflow: visible;
+        padding: 0; border: none; background: none; box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none;
+    }
+    .reader_tools.sheet .file_drop .reader_source, .reader_tools.sheet .file_drop hr { flex-basis: 100%; }
+    .reader_tools.sheet .reader_source { padding: 0 0 2px; }
+    /* a group with nothing to show (no zoom or pages for a video) keeps no heading */
+    .reader_tools.sheet .tools_sec[data-sec="view"]:not(:has(> :not(.tools_head):not([hidden]))) { display: none; }
+    /* the note's kind, page, line and mark: two rows rather than squeezed into one */
+    .note_form_row { flex-wrap: wrap; }
+    .note_form_row select { flex: 1 1 40%; }
+    .note_form_row input { flex: 1 1 20%; width: auto; }
     .video_bar .hint { flex-basis: 100%; }
 
     /* the note box sits at the bottom of the screen instead of next to what you tapped */
-    .composer {
+    .composer:not(.selection_bar) {
         left: 0 !important;
         right: 0;
         top: auto !important;
@@ -579,21 +732,16 @@ body.side_collapsed .side { display: none; }
     box-shadow: 0 6px 20px rgba(0, 0, 0, .3);
 }
 
-/* Phrase mode on touch screens: there is no mouse-up after you adjust the selection handles */
-.selection_btn {
-    position: fixed;
-    left: 50%;
-    bottom: calc(18px + env(safe-area-inset-bottom));
-    z-index: 36;
-    transform: translateX(-50%);
-    padding: 12px 20px;
-    border: none;
-    border-radius: 999px;
-    background: var(--accent);
-    color: #fff;
-    font-weight: 600;
-    box-shadow: 0 6px 20px rgba(0, 0, 0, .3);
+/* the selected words: note / highlight / underline, beside them (at the bottom of the screen with a finger).
+   It's a .composer with .btn buttons, so each style draws it like its other floating panels and buttons */
+.composer.selection_bar {
+    position: fixed; z-index: 36; display: flex; align-items: center; gap: 6px; width: auto; max-height: none; overflow: visible; padding: 6px;
 }
+.selection_bar[hidden] { display: none; }
+.selection_bar .btn { white-space: nowrap; cursor: pointer; }
+.selection_bar [data-act="underline"] { text-decoration: underline 2px; text-underline-offset: 3px; }
+.selection_bar.bottom { left: 50% !important; top: auto !important; bottom: calc(18px + env(safe-area-inset-bottom)); transform: translateX(-50%); }
+.selection_bar.bottom .btn { padding: 10px 16px; font-size: .95rem; }
 
 /* ---- zoom control: − 100% + (the percentage goes back to fit the width) ---- */
 .zoom_ctl { display: flex; align-items: center; gap: 2px; flex: none; }
@@ -623,6 +771,7 @@ body.side_collapsed .side { display: none; }
     .bar :is(.back, .brand) { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .bar .brand { flex: 1; }
     .bar .has_i { flex: none; }
+    .material_head:not(.head_open) .source_authors + .fold_toggle { display: none; }
     .material_head:not(.head_open) :is(.source_authors, .source_links, .cited_in, .keywords, .tag_row, .status, .cite_box) { display: none; }
     .material_head:not(.head_open) .source_title {
         display: -webkit-box;
@@ -662,8 +811,7 @@ body.reading_full .reader_bar .has_i .lbl {
 }
 body.reading_full .reader_bar .has_i .count:not(:empty) { margin-left: 4px; }
 body.reading_full .reader_source { display: none; }
-body.reading_full .attach_row { margin-bottom: 8px; }
-body.reading_full #attach_hint, body.reading_full .abstract { display: none; }
+body.reading_full .abstract { display: none; }
 #full_btn[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); }
 
 /* added from another paper's references */
@@ -685,6 +833,7 @@ body.reading_full #attach_hint, body.reading_full .abstract { display: none; }
 .refs_list { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; max-height: 60vh; overflow: auto; }
 .ref { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 2px 8px; padding: 6px 8px; border-radius: 6px; font-size: .82rem; line-height: 1.45; }
 .ref:hover { background: var(--bg); }
+.ref.flash { animation: flash 1.4s ease-out; }
 .ref .ref_pick { margin-top: 3px; accent-color: var(--accent); }
 .ref_text { overflow-wrap: anywhere; }
 .ref_n { color: var(--muted); font-variant-numeric: tabular-nums; }
@@ -711,7 +860,7 @@ body.reading_full #attach_hint, body.reading_full .abstract { display: none; }
 .ref_profile_authors { margin: 0; }
 .ref_profile_meta { margin: 0; font-size: .88rem; color: var(--muted); }
 .ref_profile_links { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: .85rem; }
-.ref_profile_abstract .md { max-height: 30vh; overflow: auto; font-size: .9rem; }
+.ref_profile_abstract .md { font-size: .9rem; }
 .ref_profile_cited blockquote { margin: 0; padding: 6px 10px; border-left: 3px solid var(--line); color: var(--muted); font-size: .85rem; }
 
 /* ---- "Get the paper": no copy the app can read ---- */
@@ -832,3 +981,4 @@ body.reading_full #attach_hint, body.reading_full .abstract { display: none; }
 .toc_menu[hidden] { display: none; }
 .composer.toc_drop { position: absolute; top: calc(100% + 6px); left: 0; z-index: 20; width: min(380px, calc(100vw - 24px)); max-height: 60vh; overflow: auto; }
 .toc_drop[hidden] { display: none; }
+@media (pointer: coarse) { .attach_mode button kbd { display: none; } } /* no keys on a phone */

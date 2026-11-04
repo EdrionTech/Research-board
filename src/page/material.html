@@ -18,10 +18,13 @@
 
 <body>
     <div class="bar">
+        <!-- the logo: back to your projects, from any page -->
+        <a class="home_logo" href="../index.html" title="Research Board: your projects" aria-label="Research Board: your projects"><img src="../assets/logo.svg" alt=""></a>
         <a href="../index.html" class="back" id="back_link">← Project</a>
         <h2 class="brand" id="bar_title"></h2>
         <button type="button" class="btn small has_i" id="edit_source" title="Edit details"><span class="i" data-i="pencil" aria-hidden="true"></span><span class="lbl">Edit details</span></button>
         <button type="button" class="btn small danger has_i" id="delete_source" title="Delete"><span class="i" data-i="trash-2" aria-hidden="true"></span><span class="lbl">Delete</span></button>
+        <a class="btn small has_i settings_link" href="settings.html" title="Settings: theme, style and your data"><span class="i" data-i="settings" aria-hidden="true"></span><span class="lbl">Settings</span></a>
     </div>
 
     <!-- what the material is: details from the source record -->
@@ -67,19 +70,18 @@
     <main class="material">
         <!-- reading the material itself -->
         <section class="reader panel">
+            <!-- the reader's tools, by what they're for (material.css: their order and the dividers on wide screens).
+                 Phones keep the first groups in the row; ⋯ opens the rest (#reader_tools) as a sheet with headings. -->
             <div class="reader_bar">
-                <!-- zoom: also pinch with two fingers, or Ctrl + wheel / trackpad pinch (zoom.js) -->
-                <div class="zoom_ctl more_item" id="zoom_ctl" role="group" aria-label="Zoom" hidden>
-                    <button type="button" data-zoom="out" aria-label="Zoom out">−</button>
-                    <button type="button" data-zoom="fit" id="zoom_level" aria-label="Fit to the width">100%</button>
-                    <button type="button" data-zoom="in" aria-label="Zoom in">+</button>
-                </div>
+                <!-- what you're looking at: the paper's versions -->
                 <div class="view_toggle" hidden>
                     <button type="button" data-view="video">Video</button>
                     <button type="button" data-view="html">HTML</button>
                     <button type="button" data-view="pdf">PDF</button>
                     <button type="button" data-view="text">Text</button>
                 </div>
+                <span class="tool_sep" aria-hidden="true"></span>
+                <!-- finding your way -->
                 <!-- the contents: sections to jump to (material_toc.js) -->
                 <div class="toc_menu" id="toc_menu" hidden>
                     <button type="button" class="btn small has_i" id="toc_btn" aria-expanded="false" title="Table of contents"><span class="i" data-i="list-tree" aria-hidden="true"></span><span class="lbl">Contents</span></button>
@@ -87,9 +89,6 @@
                         <div id="toc_drop_list"></div>
                     </div>
                 </div>
-                <span class="reader_source more_item" id="reader_source"></span>
-                <a class="btn small has_i more_item" id="open_original" target="_blank" rel="noopener" title="Open in a new tab" hidden><span class="i" data-i="external-link" aria-hidden="true"></span><span class="lbl">Open in new tab</span></a>
-                <button type="button" class="btn small has_i more_item" id="full_btn" aria-pressed="false" title="Read full screen (Esc to leave)"><span class="i" data-i="maximize" aria-hidden="true"></span><span class="lbl">Full screen</span></button>
                 <!-- places you mark, to come back to (material_places.js) -->
                 <div class="bookmarks_menu" id="bookmarks_menu">
                     <button type="button" class="btn small has_i" id="bookmarks_btn" aria-expanded="false" title="Bookmarks: mark a place to come back to (B)"><span class="i" data-i="bookmark" aria-hidden="true"></span><span class="lbl">Bookmarks</span> <span class="count" id="bookmarks_count"></span></button>
@@ -99,30 +98,72 @@
                         <small class="hint">Press B to bookmark where you are.</small>
                     </div>
                 </div>
-                <!-- the summary, written while reading -->
-                <button type="button" class="btn small has_i" id="summary_btn" aria-pressed="false" title="Write the summary while you read"><span class="i" data-i="notebook-pen" aria-hidden="true"></span><span class="lbl">Summary</span></button>
-                <button type="button" class="btn small has_i" id="capture_btn" title="Drag a box over part of the page, a figure or the video to save it as an image"><span class="i" data-i="camera" aria-hidden="true"></span><span class="lbl">Capture</span></button>
-                <label class="btn small has_i more_item" title="Upload a PDF or a video file"><span class="i" data-i="upload" aria-hidden="true"></span><span class="lbl">Upload file</span>
-                    <input type="file" id="upload_pdf" accept="application/pdf,video/*" hidden>
-                </label>
-                <button type="button" class="btn small has_i more_item" id="paste_text" title="Paste the text"><span class="i" data-i="clipboard-paste" aria-hidden="true"></span><span class="lbl">Paste text</span></button>
-                <button type="button" class="btn small danger has_i more_item" id="remove_material" title="Remove the material" hidden><span class="i" data-i="x" aria-hidden="true"></span><span class="lbl">Remove</span></button>
-                <!-- phones: the less used tools above wait behind ⋯ (the toolbar stays one row) -->
+                <span class="tool_sep" aria-hidden="true"></span>
+                <!-- taking notes -->
+                <!-- what a click in the paper picks for a note (keys 1–5); selecting words works in every mode -->
+                <div class="attach_menu" id="attach_menu">
+                    <button type="button" class="btn small has_i attach_btn" id="attach_btn" aria-expanded="false" aria-haspopup="true" title="What a click in the paper picks for a note (keys 1–5)"><span class="i" id="attach_icon" data-i="pilcrow" aria-hidden="true"></span><span class="lbl"><span class="attach_word">Click: </span><span id="attach_label">Paragraph</span></span><span class="i caret" data-i="chevron-down" aria-hidden="true"></span></button>
+                    <div class="composer attach_drop" id="attach_drop" hidden>
+                        <p class="attach_title">A click in the paper picks</p>
+                        <div class="attach_mode" id="attach_mode" role="group" aria-label="A click in the paper picks">
+                            <button type="button" data-mode="block" data-icon="pilcrow"><strong>Paragraph</strong><small>a paragraph, figure or PDF line</small><kbd>1</kbd></button>
+                            <button type="button" data-mode="sentence" data-icon="text"><strong>Sentence</strong><small>the sentence you click in</small><kbd>2</kbd></button>
+                            <button type="button" data-mode="phrase" data-icon="highlighter"><strong>Selection only</strong><small>clicks do nothing; select words to note them</small><kbd>3</kbd></button>
+                            <button type="button" data-mode="word" data-icon="whole-word"><strong>Word</strong><small>the word you click</small><kbd>4</kbd></button>
+                            <button type="button" data-mode="image" data-icon="file"><strong>Image area</strong><small>drag a box over an image or a PDF page</small><kbd>5</kbd></button>
+                        </div>
+                        <p class="hint" id="attach_hint">Selecting words with the mouse works in every mode: a bar beside them adds a note, a highlight or an underline.</p>
+                    </div>
+                </div>
+
+                <!-- the rest: in the row on wide screens, behind ⋯ on phones -->
+                <div class="reader_tools" id="reader_tools" role="group" aria-label="More tools">
+                    <section class="tools_sec" data-sec="notes">
+                        <h4 class="tools_head">Notes</h4>
+                        <button type="button" class="btn small has_i" id="capture_btn" title="Drag a box over part of the page, a figure or the video to save it as an image"><span class="i" data-i="camera" aria-hidden="true"></span><span class="lbl">Capture</span></button>
+                        <button type="button" class="btn small has_i" id="summary_btn" aria-pressed="false" title="Write the summary while you read"><span class="i" data-i="notebook-pen" aria-hidden="true"></span><span class="lbl">Summary</span></button>
+                    </section>
+                    <section class="tools_sec" data-sec="view">
+                        <h4 class="tools_head">View</h4>
+                        <!-- PDF: the printed pages, or its text reflowed to read (pdfread.js) -->
+                        <div class="view_toggle pdf_mode" id="pdf_mode" role="group" aria-label="Show the PDF as" hidden>
+                            <button type="button" data-pdfmode="pages" title="The pages as printed">Pages</button>
+                            <button type="button" data-pdfmode="read" title="Read mode: the text reflowed, at any size">Read</button>
+                        </div>
+                        <!-- zoom: also pinch with two fingers, or Ctrl + wheel / trackpad pinch (zoom.js) -->
+                        <div class="zoom_ctl" id="zoom_ctl" role="group" aria-label="Zoom" hidden>
+                            <button type="button" data-zoom="out" aria-label="Zoom out">−</button>
+                            <button type="button" data-zoom="fit" id="zoom_level" aria-label="Fit to the width">100%</button>
+                            <button type="button" data-zoom="in" aria-label="Zoom in">+</button>
+                        </div>
+                        <!-- go straight to a page (a line in pasted text); G puts the cursor here -->
+                        <form class="jump_to" id="jump_to" hidden>
+                            <label title="Go to a page (G)"><span id="jump_unit">p.</span>
+                                <input id="jump_input" inputmode="numeric" pattern="[0-9]*" autocomplete="off" aria-label="Go to page">
+                            </label>
+                            <small id="jump_total"></small>
+                        </form>
+                        <button type="button" class="btn small has_i" id="full_btn" aria-pressed="false" title="Read full screen (Esc to leave)"><span class="i" data-i="maximize" aria-hidden="true"></span><span class="lbl">Full screen</span></button>
+                    </section>
+                    <!-- the paper's own file: where it comes from, and the rarely used (and destructive) actions -->
+                    <section class="tools_sec file_menu" data-sec="file" id="file_menu">
+                        <h4 class="tools_head">This paper's file</h4>
+                        <button type="button" class="btn small has_i file_btn" id="file_btn" aria-expanded="false" aria-haspopup="true" title="This paper's file: open it in a new tab, upload, paste or remove"><span class="i" data-i="file" aria-hidden="true"></span><span class="lbl">File</span><span class="i caret" data-i="chevron-down" aria-hidden="true"></span></button>
+                        <div class="composer file_drop" id="file_drop" hidden>
+                            <span class="reader_source" id="reader_source"></span>
+                            <a class="btn small has_i" id="open_original" target="_blank" rel="noopener" title="Open in a new tab" hidden><span class="i" data-i="external-link" aria-hidden="true"></span><span class="lbl">Open in new tab</span></a>
+                            <label class="btn small has_i" title="Upload a PDF or a video file"><span class="i" data-i="upload" aria-hidden="true"></span><span class="lbl">Upload file</span>
+                                <input type="file" id="upload_pdf" accept="application/pdf,video/*" hidden>
+                            </label>
+                            <button type="button" class="btn small has_i" id="paste_text" title="Paste the text"><span class="i" data-i="clipboard-paste" aria-hidden="true"></span><span class="lbl">Paste text</span></button>
+                            <hr>
+                            <button type="button" class="btn small danger has_i" id="remove_material" title="Remove your uploaded file or pasted text (your notes stay)" hidden><span class="i" data-i="file-x" aria-hidden="true"></span><span class="lbl">Remove file</span></button>
+                        </div>
+                    </section>
+                </div>
                 <button type="button" class="btn small has_i more_btn" id="more_btn" aria-expanded="false" title="More tools"><span class="i" data-i="ellipsis" aria-hidden="true"></span><span class="lbl">More</span></button>
             </div>
 
-            <!-- what a click in the paper attaches a note to (stays visible when the notes side is hidden) -->
-            <div class="attach_row">
-                <div class="attach_mode" id="attach_mode" role="group" aria-label="Attach notes to">
-                    <span>Attach notes to</span>
-                    <button type="button" data-mode="block" title="A paragraph, figure or PDF line">Paragraph</button>
-                    <button type="button" data-mode="sentence">Sentence</button>
-                    <button type="button" data-mode="phrase">Phrase</button>
-                    <button type="button" data-mode="word">Word</button>
-                    <button type="button" data-mode="image" title="An image, part of an image, or an area of a PDF page">Image</button>
-                </div>
-                <p class="hint" id="attach_hint"></p>
-            </div>
 
             <details class="abstract" id="abstract">
                 <summary>Abstract</summary>
@@ -165,6 +206,8 @@
             <iframe class="reader_html" id="reader_html" title="Paper" hidden></iframe>
             <!-- PDF pages as printed: click a line to attach a note -->
             <div class="reader_pdf" id="reader_pdf" hidden></div>
+            <!-- PDF read mode: its text as headings and paragraphs (pdfread.js) -->
+            <div class="reader_read" id="reader_read" hidden></div>
             <!-- pasted text as numbered lines -->
             <div class="reader_text" id="reader_text" hidden></div>
         </section>
@@ -182,6 +225,14 @@
                 <!-- the note form sits here, or in the floating note box (#composer) while that is open -->
                 <div id="note_slot">
                 <form class="note_form" id="note_form">
+                    <!-- the words picked already have notes: which one this is, the others, or a new one -->
+                    <div class="here_notes" id="here_notes" hidden>
+                        <span id="here_count"></span>
+                        <button type="button" class="link" id="here_prev" title="The note before" aria-label="The note before">‹</button>
+                        <button type="button" class="link" id="here_next" title="The next note" aria-label="The next note">›</button>
+                        <span class="spacer"></span>
+                        <button type="button" class="link" id="here_new">+ New note here</button>
+                    </div>
                     <div class="quote_preview" id="quote_preview" hidden>
                         <div>
                             <small id="quote_where"></small>
@@ -199,11 +250,24 @@
                         </select>
                         <input name="page" placeholder="Page" aria-label="Page">
                         <input name="line" placeholder="Line" aria-label="Line">
+                        <!-- how the note shows in the paper -->
+                        <select name="mark" aria-label="Shown in the paper as" title="Shown in the paper as">
+                            <option value="highlight">Highlight</option>
+                            <option value="underline">Underline</option>
+                            <option value="both">Both</option>
+                        </select>
                     </div>
                     <!-- the note's colour; what each colour means is set for the project (Literature tab) -->
                     <div class="color_pick" id="color_pick" role="radiogroup" aria-label="Highlight colour"></div>
                     <input type="hidden" name="color">
-                    <textarea name="body" rows="4" required
+                    <!-- mark the words straight away, with nothing to write (can become a note later: Edit) -->
+                    <div class="mark_quick" id="mark_quick" role="group" aria-label="Mark without a note" hidden>
+                        <span>Mark only</span>
+                        <button type="button" data-mark="highlight" title="Highlight it in the chosen colour, no note">Highlight</button>
+                        <button type="button" data-mark="underline" title="Underline it in the chosen colour, no note">Underline</button>
+                        <button type="button" data-mark="both" title="Highlight and underline it, no note">Both</button>
+                    </div>
+                    <textarea name="body" rows="4"
                         placeholder="Markdown works: **bold**, - bullets, [link](https://...). Paste or drop images here."></textarea>
                     <!-- previews of images you added to this note -->
                     <div class="note_images" id="note_images"></div>
@@ -283,6 +347,8 @@
     <div class="composer" id="composer" role="dialog" aria-label="Write a note" hidden>
         <div class="composer_head" id="composer_head">
             <strong>New note</strong>
+            <!-- it opens small (what's attached, the colours, one line to write); this shows the whole form, or folds it again -->
+            <button type="button" class="link" id="composer_size" aria-expanded="false" title="Show the whole note form">More ▾</button>
             <button type="button" class="link" id="composer_close" title="Close (Esc)">✕</button>
         </div>
         <div id="composer_slot"></div>
@@ -337,8 +403,10 @@
             </section>
             <div class="actions">
                 <button type="button" class="btn" id="ref_profile_copy">Copy citation</button>
+                <button type="button" class="btn" id="ref_profile_list" title="Show it in this paper's list of references">In the list</button>
                 <span class="spacer"></span>
                 <button type="button" class="btn" data-close>Close</button>
+                <button type="button" class="btn" id="ref_profile_library" title="Keep it in your Library, in no project yet">+ Add to library</button>
                 <button type="button" class="btn primary" id="ref_profile_add">+ Add to project</button>
                 <a class="btn primary" id="ref_profile_open" hidden>Open in project ↗</a>
             </div>
@@ -392,12 +460,14 @@
 
     <script data-src="../vendor/marked.min.js"></script>
     <script data-src="../vendor/purify.min.js"></script>
+    <script data-src="../vendor/turndown.js"></script>
     <script data-src="../vendor/pdfjs/pdf.min.js"></script>
     <script data-src="../script/core/ui.js"></script>
     <script data-src="../script/core/store.js"></script>
     <script data-src="../script/core/images.js"></script>
     <script data-src="../script/writing/markdown.js"></script>
     <script data-src="../script/writing/mdimages.js"></script>
+    <script data-src="../script/writing/sketch.js"></script>
     <script data-src="../script/writing/mdbar.js"></script>
     <script data-src="../script/writing/citepicker.js"></script>
     <script data-src="../script/reader/documents.js"></script>
@@ -409,12 +479,15 @@
     <script data-src="../script/sources/reading.js"></script>
     <script data-src="../script/sources/library.js"></script>
     <script data-src="../script/reader/textrange.js"></script>
+    <script data-src="../script/reader/citations.js"></script>
+    <script data-src="../script/reader/pdfread.js"></script>
     <script data-src="../script/reader/zoom.js"></script>
     <script data-src="../script/reader/reader.js"></script>
     <script data-src="../script/reader/video.js"></script>
     <script data-src="../script/reader/capture.js"></script>
     <script data-src="../script/pages/material_places.js"></script>
     <script data-src="../script/pages/material_toc.js"></script>
+    <script data-src="../script/pages/material_menu.js"></script>
     <script data-src="../script/pages/material.js"></script>
     <script data-src="../script/pages/material_refs.js"></script>
 </body>

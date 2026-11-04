@@ -6,7 +6,7 @@
 
 const ReaderZoom = (() => {
     const KEY = 'research_board_zoom';
-    const LIMITS = { pdf: [0.5, 4], html: [0.7, 2.5], text: [0.7, 2.5] };
+    const LIMITS = { pdf: [0.5, 4], html: [0.7, 2.5], text: [0.7, 2.5], read: [0.7, 2.5] };
     const STEPS = [0.5, 0.67, 0.8, 0.9, 1, 1.1, 1.25, 1.5, 1.75, 2, 2.5, 3, 4];
 
     const clamp = (view, z) => Math.min(LIMITS[view][1], Math.max(LIMITS[view][0], Math.round(z * 100) / 100));

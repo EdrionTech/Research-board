@@ -90,6 +90,57 @@ function sheetOnPhone(drop, open) {
     }
 }
 
+// A toolbar's dropdown: a sheet along the bottom on phones; elsewhere lifted out into the page and pinned under its
+// button, inside the screen. (Left in the toolbar, the toolbar's own glass shows through it, and it can be cut off.)
+// Its button is the first one in the dropdown's home (the element it sits in until it opens).
+function dropDown(drop, open) {
+    if (phoneScreen.matches || drop.classList.contains('sheet')) return sheetOnPhone(drop, open);
+    drop.rbHome ??= drop.parentElement;
+    if (!open) {
+        if (!drop.classList.contains('floating')) return;
+        drop.classList.remove('floating');
+        for (const prop of ['top', 'left', 'maxHeight']) drop.style[prop] = '';
+        drop.rbHome.append(drop);
+        return;
+    }
+    const button = drop.rbHome.querySelector('button, .btn').getBoundingClientRect();
+    document.body.append(drop);
+    drop.classList.add('floating');
+    const top = button.bottom + 6;
+    drop.style.top = top + 'px';
+    drop.style.maxHeight = Math.max(160, innerHeight - top - 8) + 'px';
+    // lined up with the button's left edge, or with its right edge when that would leave the screen
+    const width = drop.getBoundingClientRect().width;
+    const left = button.left + width > innerWidth - 8 ? button.right - width : button.left;
+    drop.style.left = Math.max(8, left) + 'px';
+}
+
+// A filter row (tags, authors): its name and how many chips it has, on a button that folds the chips away so they
+// don't crowd the list. Folded, only the chips you've chosen show. Open or folded is remembered per row (this device).
+//   fillFilterRow(row, 'Tags', chips, [clearButton])
+function fillFilterRow(row, label, chips, extra = []) {
+    const key = 'research_board_filter_open:' + row.id;
+    let open = false;
+    try { open = localStorage.getItem(key) === '1'; } catch { }
+    const chosen = chips.filter(chip => chip.classList.contains('active')).length;
+    const toggle = el('button', 'link filter_toggle');
+    toggle.type = 'button';
+    const show = () => {
+        row.classList.toggle('filter_open', open);
+        toggle.setAttribute('aria-expanded', open);
+        toggle.textContent = `${label} (${chips.length}${chosen ? `, ${chosen} chosen` : ''}) ${open ? '▴' : '▾'}`;
+        toggle.title = open ? 'Fold these away' : `Show all ${chips.length}`;
+    };
+    toggle.onclick = () => {
+        open = !open;
+        try { localStorage.setItem(key, open ? '1' : ''); } catch { }
+        show();
+    };
+    show();
+    row.hidden = !chips.length;
+    row.replaceChildren(toggle, ...chips, ...extra);
+}
+
 // ---- popups: every .modal sits inside #modals and one shows at a time ----
 
 function openModal(modal) {
@@ -111,3 +162,38 @@ document.addEventListener('keydown', e => {
     const modals = $('#modals');
     if (e.key === 'Escape' && modals && !modals.hidden) closeModals();
 });
+
+// Folds a long block (a long author list, an abstract) to about `lines` lines, faded at the bottom, with a button
+// under it to show it all and fold it again. Nothing extra shows when it fits. Call it after filling the block;
+// it measures on the next frame, so it can be called just before its popup opens.
+function foldLong(box, lines, { more = 'Show more', less = 'Show less' } = {}) {
+    box.classList.add('fold');
+    box.classList.remove('open', 'folded');
+    box.style.setProperty('--fold-lines', lines);
+    let btn = box.nextElementSibling?.classList.contains('fold_toggle') ? box.nextElementSibling : null;
+    if (!btn) {
+        btn = el('button', 'link fold_toggle');
+        btn.type = 'button';
+        box.after(btn);
+    }
+    btn.onclick = () => {
+        const open = box.classList.toggle('open');
+        btn.textContent = open ? less : more;
+        btn.setAttribute('aria-expanded', open);
+    };
+    btn.textContent = more;
+    btn.setAttribute('aria-expanded', 'false');
+    btn.hidden = true;
+    // measured once it's on screen, and again when its width changes (a box shown later, e.g. behind Details ▾ on
+    // phones, is measured when it appears)
+    const measure = () => {
+        if (box.classList.contains('open') || !box.clientHeight) return;
+        const fits = box.scrollHeight <= box.clientHeight + 2;
+        box.classList.toggle('folded', !fits);
+        btn.hidden = fits;
+    };
+    box.rbFold?.disconnect();
+    box.rbFold = new ResizeObserver(measure);
+    box.rbFold.observe(box);
+    requestAnimationFrame(measure);
+}

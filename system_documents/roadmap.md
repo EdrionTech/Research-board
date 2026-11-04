@@ -20,27 +20,23 @@ Everything still to do, by category. Details are in the linked plans. Done work 
 - [ ] Styles kept with your data, per user, selectable for any project
 
 ## 2. Setup and decisions
-- [ ] Confirm npm only for building the phone app (used in `apps/phone` since 2026-10-21; the app code stays build-free)
+- [ ] Confirm Bun only for building the phone app (`apps/phone`, the app code stays build-free)
 - [ ] iOS: needs a Mac with Xcode (or a cloud build), plus an Apple developer account for real phones
 
 ## 3. Smaller features
 - [ ] **Icons across the app** (the reader has them now: `src/style/icons.css`): the other pages' toolbars, the note toolbar, the dashboard
 - [ ] **The reader on desktop:** what feels off there (still to be described)
 - [ ] **Colour choices that change the style's whole mood** (Settings → Colours). Today a palette mostly recolours accents. It should reshape the style: for example, a Sunset palette in Skyglass should make the page look like a sunset (sky gradient, glass tint, glow), not just swap blue and green. How much each style gives depends on the style: some are fine as they are, some need a little influence, others need a lot. Decide per style which parts a palette drives (background, surfaces, bars, glows, illustrations).
-- [ ] **The attach switch on phones** ("Attach notes to: Paragraph, Sentence…") is still a wide swipeable row
-- [ ] **Library: tag filter** for materials
-- [ ] **The note popup, small until needed.** When a selection in the material opens the pop-up note box, it opens **collapsed**: just what's attached (the words or place) and a few quick buttons, so it covers little of the page. It expands to the full note form when you click it or start typing, and can be collapsed again.
-- [ ] **Marking without a note: underline, highlight, or both.** Mark a selection straight away, with no note to write, as an underline, a highlight or both, in a chosen colour (and its meaning, from the project's highlight colours). Marks are saved and shown like highlights, appear in the paper's notes list and "Highlights across papers", and can be turned into a note later.
-- [ ] **The app's own right-click menu**, in the browser too: in the material reader (and elsewhere where it helps), right-click gives the app's actions (note, highlight, underline, bookmark, copy with citation, capture…) instead of the browser's menu. The browser's own menu stays reachable (e.g. Shift + right-click).
-- [ ] **Citations in a paper link to its reference:** clicking an in-text citation in the material ("[12]", "(Smith et al., 2020)") jumps to that entry in its reference list, or opens its profile (the references panel). The HTML version partly does this already; the PDF needs its citations recognised.
-- [ ] **Jump to page:** type a page number in the reader bar to go straight there (a line number in pasted text).
-- [ ] **Read mode for PDFs:** the PDF's text reflowed as a clean, readable page (headings, paragraphs, figures where possible) with adjustable text size, instead of the printed pages; notes and highlights carry across.
-- [ ] **Pen writing:** write or draw with a pen or finger (tablets, phones, touchscreens, drawing pads) in notes and other places you write: a handwriting or sketch area inside a note, kept as a drawing (and as an image when exported). Later: handwriting turned into text, and writing straight on the material's pages.
-- [ ] **Dashboard "Writing" tab:** the tab exists but has no content yet
-- [ ] Optional: a free colour picker in Settings → Colours, alongside the preset circles
+
+- [ ] **Follow-ups from the 2026-11-04 batch** (tag filter, compact note box, marks, right-click menu, citation links, jump to page, PDF read mode, pen writing, Writing tab, your own colours: all built)
+  - Right-click menu beyond the reader (dashboard lists, notes, the editors), if wanted
+  - PDF read mode: show figures (cropped from the page) between the paragraphs; for now they stay on the printed pages
+  - Pen writing: handwriting turned into text; writing straight on a material's pages
+  - Citations: author–year matching is by first surname and year; check it on real papers (and the arXiv HTML side, untested offline)
 
 ## 4. Larger features (to discuss)
 - [ ] **Moving between materials without leaving the reader:** going from one paper to another (a cited reference, a related paper, the next in the project) without going back to the Literature tab. Leaning towards (still to discuss): **a dropdown search** in the reader to find and open any material, and **opening a cited reference beside the current paper**. Other options noted: tabs of open materials, a side list of the project's materials, back and forward through what you've read.
+- [ ] **Authors you can follow up** (noted 2026-11-04): pick an author (in a material's author list, the Library, a reference) and find their papers: filtered in your Library and in the project, or searched online (arXiv, OpenAlex, Semantic Scholar…) to add new ones. Built: the author filter in the Library and the Literature tab (`sources/authorfilter.js`: a chip for anyone with 2+ papers or on a paper with under 10 authors, the rest under "Other authors"), search by any author's name, long author lists folded. Still to do: names you can click (opening that filter), and the online search.
 - [ ] **A Milanote-like feature** (noted 2026-10-21; you'll define it better later). Milanote is a visual board where notes, images, links and files are laid out freely and grouped on a canvas. Exactly what it means for Research Board is still to be decided.
 
 - [ ] **The Research tab** ([research_tab/research_tab.md](research_tab/research_tab.md)): planning and tracking the study itself: a workflow of stages per project, tasks with dependencies, research assets (datasets, scripts, logs), data and analysis, and a change log of methodological decisions and what they affect. Connected to the Writing tab so findings can be cited without copying.
@@ -50,11 +46,14 @@ Everything still to do, by category. Details are in the linked plans. Done work 
 - [ ] `start.bat` opening the browser: the server side works (tested); confirm a tab opens
 - [ ] Branch `feature/sqlite-and-apps` is pushed but not merged into `main` yet
 
+- [ ] PDF.js logs "the `--scale-factor` CSS-variable must be set" when a PDF's pages are first added (harmless; the text layer renders before the page size is set)
+- [ ] The PDF reference list needs 3+ "[n]" lines to split by number: a short list like "[1] … [2] …" becomes one reference
+
 ## 6. Development workflow
 - [ ] Optional: a check that runs the tests (`tests/`) on GitHub before merging
 - [ ] More tests as features change: the reader (notes, highlights, places), the library, backups from Settings
 - [ ] Builds kept per version: `builds/` holds the latest of each (named by version); keep or prune older ones once the version number starts changing
-- [ ] Optional: the server as a single file (Node's single executable applications) for private servers, built by `build.bat`
+- [ ] The server as a single file (`bun build --compile`, one per OS) for private servers, built by `build.bat host`: needs `src/` embedded or shipped beside it
 - [ ] Set up the branch layout discussed (`develop`, feature branches, `colab` later), if still wanted
 
 ## 7. On hold (recorded, not to be built yet)
@@ -62,8 +61,8 @@ Everything still to do, by category. Details are in the linked plans. Done work 
 **Online places** ([platforms/platforms.md](platforms/platforms.md))
 - [ ] Places in Settings: our online service and private servers, reachable from every client
 - [ ] Server sign-in: accounts, device tokens, invite links the host can revoke
-- [ ] Phase B: synced offline copies of online places
-- [ ] Desktop sharing on the local network (needs the server language chosen: Rust or Node)
+- [ ] Sync: each app keeps its own copy of server projects and syncs with the server when online (local-first; replaces desktop sharing on the local network, dropped 2026-11-04)
+- [ ] The server as coordinator: checking roles on each change, numbering and fanning out changes, Yjs relay ([collaboration/collaboration.md](collaboration/collaboration.md))
 - [ ] Online service: hosting, storage allowance per account, sign-in methods (proposal written)
 
 **Collaboration** ([collaboration/collaboration.md](collaboration/collaboration.md))

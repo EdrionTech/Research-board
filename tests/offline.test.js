@@ -19,25 +19,26 @@ trailer<</Root 1 0 R>>
     const server = await startServer(5594);
     const { base } = server;
     const browser = await launchBrowser();
-    const context = await browser.newContext({ viewport: { width: 1300, height: 900 } });
+    const page = await browser.newPage();
+    await page.setViewport({ width: 1300, height: 900 });
     const blocked = new Set();
-    await context.route('**/*', route => {
-        const url = route.request().url();
-        if (url.startsWith(base) || url.startsWith('blob:') || url.startsWith('data:')) return route.continue();
+    await page.setRequestInterception(true);
+    page.on('request', request => {
+        const url = request.url();
+        if (url.startsWith(base) || url.startsWith('blob:') || url.startsWith('data:')) return request.continue();
         blocked.add(new URL(url).host);
-        return route.abort();
+        return request.abort();
     });
-    const page = await context.newPage();
     const errors = [];
     page.on('pageerror', e => errors.push(e.message));
 
     await t.test('libraries load offline (marked, DOMPurify, Turndown)', async () => {
-        await page.goto(base + 'page/review.html?id=' + SAMPLE.projects[0].id, { waitUntil: 'networkidle' });
+        await page.goto(base + 'page/review.html?id=' + SAMPLE.projects[0].id, { waitUntil: 'networkidle0' });
         const ok = await page.evaluate(() => typeof marked === 'object' && typeof DOMPurify === 'function' && typeof TurndownService === 'function');
         if (!ok) return 'not loaded';
     });
     await t.test('PDF.js reads a PDF offline (its worker from src/vendor)', async () => {
-        await page.goto(base + 'page/material.html?id=' + SAMPLE.items[0].id, { waitUntil: 'networkidle' });
+        await page.goto(base + 'page/material.html?id=' + SAMPLE.items[0].id, { waitUntil: 'networkidle0' });
         const read = await page.evaluate(async src => {
             const doc = await pdfjsLib.getDocument({ data: new TextEncoder().encode(src) }).promise;
             const content = await (await doc.getPage(1)).getTextContent();
@@ -52,7 +53,7 @@ trailer<</Root 1 0 R>>
     for (const [style, family] of [['pixel-pop', 'Pixelify Sans'], ['skyglass', 'Source Sans 3']]) {
         await t.test(`${style}: its font (${family}) loads offline`, async () => {
             await server.api('PUT', 'kv/settings', { style, theme: 'light' });
-            await page.goto(base, { waitUntil: 'networkidle' });
+            await page.goto(base, { waitUntil: 'networkidle0' });
             const ok = await page.evaluate(async family => {
                 await document.fonts.load(`600 16px "${family}"`);
                 return [...document.fonts].some(f => f.family.replace(/"/g, '') === family && f.status === 'loaded');

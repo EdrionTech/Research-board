@@ -1,7 +1,7 @@
 // Every page through the server: it starts with no errors, shows the data and saves a change. Also the no-server
 // (file://) mode, which only says how to start Research Board.
 const path = require('path');
-const { REPO, SAMPLE, startServer, launchBrowser, tester } = require('./helpers');
+const { REPO, SAMPLE, startServer, launchBrowser, tester, wait, text } = require('./helpers');
 
 (async () => {
     const t = tester();
@@ -18,8 +18,8 @@ const { REPO, SAMPLE, startServer, launchBrowser, tester } = require('./helpers'
         tab.on('pageerror', e => errors.push('pageerror: ' + e.message));
         tab.on('console', m => { if (m.type() === 'error' && !/favicon|ERR_NAME|net::|youtube|pexels|arxiv/i.test(m.text())) errors.push('console: ' + m.text()); });
         try {
-            await tab.goto(url, { waitUntil: 'networkidle' });
-            await tab.waitForTimeout(500);
+            await tab.goto(url, { waitUntil: 'networkidle0' });
+            await wait(500);
             const problem = await verify(tab);
             if (problem) errors.push(problem);
         } finally { await tab.close(); }
@@ -30,22 +30,22 @@ const { REPO, SAMPLE, startServer, launchBrowser, tester } = require('./helpers'
     await page('home', base, async tab => {
         if (await pending(tab)) return 'scripts not run';
         if (await tab.evaluate(() => Store.mode) !== 'server') return 'mode';
-        if (!(await tab.textContent('body')).includes(project.title)) return 'project not shown';
+        if (!(await text(tab, 'body')).includes(project.title)) return 'project not shown';
     });
     await page('library', base + 'page/library.html', async tab => (await pending(tab)) ? 'scripts not run' : null);
     await page('dashboard lists the material', base + 'page/project_dashboard.html?id=' + project.id, async tab => {
-        if (!(await tab.textContent('body')).includes(source.title)) return 'material not listed';
+        if (!(await text(tab, 'body')).includes(source.title)) return 'material not listed';
     });
     await page('material shows its text', base + 'page/material.html?id=' + source.id, async tab => {
-        if ((await tab.textContent('#source_title')).trim() !== source.title) return 'title';
-        if (!(await tab.textContent('body')).includes('Tests keep a project honest.')) return 'text not shown';
+        if ((await text(tab, '#source_title')).trim() !== source.title) return 'title';
+        if (!(await text(tab, 'body')).includes('Tests keep a project honest.')) return 'text not shown';
     });
     await page('review', base + 'page/review.html?id=' + project.id, async tab => (await pending(tab)) ? 'scripts not run' : null);
     await page('settings, and a change saved through the page', base + 'page/settings.html', async tab => {
-        const info = await tab.textContent('#storage_info');
+        const info = await text(tab, '#storage_info');
         if (!info.includes('data folder')) return 'storage info: ' + info;
         await tab.evaluate(() => Store.saveItem({ projectId: 'p1', type: 'source_note', text: 'from the page' }));
-        await tab.waitForTimeout(800);
+        await wait(800);
         const after = await (await server.api('GET', 'boot')).json();
         if (!after.data.items.some(i => i.text === 'from the page')) return 'change not saved to the server';
         const back = await tab.evaluate(async () => {
@@ -55,14 +55,38 @@ const { REPO, SAMPLE, startServer, launchBrowser, tester } = require('./helpers'
         });
         if (back.join('|') !== 'hello pdf|a.pdf|application/pdf') return 'file round trip: ' + back;
     });
+    await page('a note written on the formatted text (Visual) is saved as Markdown', base + 'page/material.html?id=' + source.id, async tab => {
+        const box = '#note_form .md_visual';
+        if (await tab.$eval(box, e => e.hidden)) return 'the Visual box is not shown';
+        await tab.click(box);
+        await tab.keyboard.type('Plain then ');
+        await tab.keyboard.down('Control'); await tab.keyboard.press('b'); await tab.keyboard.up('Control');
+        await tab.keyboard.type('bold');
+        await tab.keyboard.down('Control'); await tab.keyboard.press('b'); await tab.keyboard.up('Control');
+        await tab.keyboard.type(' [@key2024].');
+        await tab.click('#note_form button[type="submit"]');
+        await wait(800);
+        const saved = (await (await server.api('GET', 'boot')).json()).data.items.find(i => i.type === 'source_note' && /Plain then/.test(i.body || ''));
+        if (saved?.body !== 'Plain then **bold** [@key2024].') return 'saved as: ' + JSON.stringify(saved?.body);
+    });
+    await page('@ cites a paper while writing on the formatted text (Visual)', base + 'page/material.html?id=' + source.id, async tab => {
+        await tab.click('#note_form .md_visual');
+        await tab.keyboard.type('See @lovel');
+        await wait(400);
+        if (await tab.$eval('.cite_picker', e => e.hidden)) return 'the list of papers did not open';
+        await tab.keyboard.press('Enter');
+        await wait(400);
+        const text = await tab.$eval('#note_form textarea[name="body"]', e => e.value);
+        if (!/^See \[@lovelace\d{4}\w*\]$/.test(text)) return 'the text became: ' + JSON.stringify(text);
+    });
     await page('settings from the data are applied', base, async tab => {
         await server.api('PUT', 'kv/settings', { theme: 'dark', style: 'pixel-pop' });
-        await tab.reload({ waitUntil: 'networkidle' });
-        const { style, theme } = await tab.evaluate(() => document.documentElement.dataset);
+        await tab.reload({ waitUntil: 'networkidle0' });
+        const { style, theme } = await tab.evaluate(() => ({ ...document.documentElement.dataset })); // (a plain object: Puppeteer sends a DOMStringMap as {})
         if (style !== 'pixel-pop' || theme !== 'dark') return `style ${style} theme ${theme}`;
     });
     await page('no server (file://): says how to start it, runs nothing', 'file:///' + path.join(REPO, 'src', 'index.html').replace(/\\/g, '/'), async tab => {
-        if (!(await tab.textContent('body')).includes('Start Research Board first')) return 'no message';
+        if (!(await text(tab, 'body')).includes('Start Research Board first')) return 'no message';
         if (await tab.evaluate(() => typeof Store !== 'undefined')) return 'the page scripts ran';
     });
 

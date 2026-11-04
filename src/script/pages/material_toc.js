@@ -187,7 +187,7 @@ const Toc = (() => {
 
     function openDrop(open) {
         $('#toc_drop').hidden = !open;
-        sheetOnPhone($('#toc_drop'), open);
+        dropDown($('#toc_drop'), open);
         $('#toc_btn').setAttribute('aria-expanded', open);
         if (open) markCurrent();
     }

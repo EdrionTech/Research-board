@@ -7,7 +7,7 @@
 
 const PaperLinks = (() => {
     // item types that are your own general notes (not sources, notes on a source, the review, figures, bookmarks)
-    const OWN = new Set(['source', 'source_note', 'lit_review', 'figure', 'bookmark']);
+    const OWN = new Set(['source', 'source_note', 'lit_review', 'draft', 'figure', 'bookmark']);
     const isGeneralNote = item => !OWN.has(item.type);
 
     // the citation keys a text uses

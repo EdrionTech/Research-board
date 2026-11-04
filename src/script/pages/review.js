@@ -1,5 +1,7 @@
-// Literature review editor: the project's review, stored as Markdown.
-// Opened as review.html?id=<projectId>. The review is one item of type 'lit_review'.
+// Writing editor: the project's literature review, or another document written from the project (a paper, a
+// chapter, a report: made on the dashboard's Writing tab), stored as Markdown.
+// review.html?id=<projectId>: the review, one item of type 'lit_review'.
+// review.html?id=<projectId>&doc=<itemId>: that document, an item of type 'draft' { title, body }.
 //
 // Citations use each source's key (assignCitekeys in sources/sources.js):
 //   [@key]  [@key, p. 4]  [@a; @b, 12:34]   in-text, in brackets         -> (Vaswani et al., 2017, p. 4)
@@ -13,6 +15,9 @@
 //              Changes are turned back into Markdown with Turndown.
 
 const project = Store.getProject(new URLSearchParams(location.search).get('id'));
+const draftId = new URLSearchParams(location.search).get('doc');
+const draft = draftId ? Store.getItem(draftId) : null; // null: the literature review
+const docTitle = () => (draft ? Store.getItem(draft.id)?.title || draft.title || 'Untitled' : 'Literature review');
 const editor = $('#review_text');    // Markdown (always kept up to date)
 const visual = $('#visual_editor');  // Visual mode
 const KEY = '[\\w:.\\-]*\\w';
@@ -31,18 +36,21 @@ let savedRange = null;   // where the caret was in the Visual editor
 let suggestions = [];
 
 const styleOf = () => project.citeStyle || 'apa';
-const fileName = () => (project.title.replace(/[^\w\- ]+/g, '').trim().replace(/\s+/g, '_') || 'project') + '_literature_review';
+const fileName = () => (project.title.replace(/[^\w\- ]+/g, '').trim().replace(/\s+/g, '_') || 'project') + '_'
+    + (draft ? docTitle().replace(/[^\w\- ]+/g, '').trim().replace(/\s+/g, '_').toLowerCase() || 'document' : 'literature_review');
 const escapeHtml = text => String(text).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
 function init() {
-    document.title = project.title + ' · Literature review';
-    Nav.backLink($('#back_link'), 'project_dashboard.html?id=' + encodeURIComponent(project.id) + '#literature', project.title);
+    document.title = project.title + ' · ' + docTitle();
+    $('.bar .brand').textContent = docTitle();
+    for (const box of [editor, visual]) box.setAttribute('aria-label', docTitle() + (box === editor ? ' (Markdown)' : ''));
+    Nav.backLink($('#back_link'), 'project_dashboard.html?id=' + encodeURIComponent(project.id) + (draft ? '#writing' : '#literature'), project.title);
 
     for (const [value, label] of Object.entries(Cite.INLINE_STYLES)) $('#cite_style').append(new Option(label, value));
     $('#cite_style').value = styleOf();
 
     loadSources();
-    doc = Store.getItems(project.id).find(i => i.type === 'lit_review') || null;
+    doc = draft || Store.getItems(project.id).find(i => i.type === 'lit_review') || null;
     editor.value = doc?.body ?? TEMPLATE;
     $('#save_state').textContent = doc ? 'Saved' : '';
     MdImages.enable(editor);
@@ -169,7 +177,9 @@ function markReferences(container) {
 function saveNow() {
     clearTimeout(saveTimer);
     saveTimer = null;
-    const id = Store.saveItem({ id: doc?.id, projectId: project.id, type: 'lit_review', title: 'Literature review', body: editor.value });
+    const id = Store.saveItem(draft
+        ? { id: draft.id, projectId: project.id, type: 'draft', body: editor.value }
+        : { id: doc?.id, projectId: project.id, type: 'lit_review', title: 'Literature review', body: editor.value });
     doc = Store.getItem(id);
     $('#save_state').textContent = 'Saved';
 }
@@ -666,7 +676,7 @@ async function toHtml(markdown) {
 
 function standaloneHtml(body) {
     return `<!DOCTYPE html>
-<html lang="en"><head><meta charset="utf-8"><title>${escapeHtml(project.title)} · Literature review</title>
+<html lang="en"><head><meta charset="utf-8"><title>${escapeHtml(project.title)} · ${escapeHtml(docTitle())}</title>
 <style>
 body { font-family: "Times New Roman", Georgia, serif; font-size: 12pt; line-height: 1.6; max-width: 760px; margin: 40px auto; padding: 0 16px; color: #111; }
 img { max-width: 100%; }
@@ -691,12 +701,8 @@ editor.addEventListener('input', () => {
 });
 editor.addEventListener('click', suggestCitations);
 editor.addEventListener('keydown', e => {
-    if ((e.ctrlKey || e.metaKey) && (e.key === 'b' || e.key === 'i')) {
-        e.preventDefault();
-        ACTIONS[e.key === 'b' ? 'bold' : 'italic']();
-    } else {
-        writingKeys(e);
-    }
+    MdBar.keys(editor, e); // Ctrl + B, I, K, Shift + 7 / 8 / 9… (writing/mdbar.js)
+    if (!e.defaultPrevented) writingKeys(e);
 });
 
 // Visual mode

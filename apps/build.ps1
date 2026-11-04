@@ -13,7 +13,7 @@
 #   build.bat desktop      run the desktop app from src\ without installing (cargo tauri dev)
 #   build.bat clean        empty builds\
 #
-# What each needs is in apps\README.md. The script finds Node 22+ (even when nvm's is older), Java and the Android SDK.
+# What each needs is in apps\README.md. The script finds Bun, Java and the Android SDK.
 
 param(
     [Parameter(Position = 0)] [string] $Task,
@@ -40,18 +40,16 @@ function Run($exe, [string[]] $arguments, $where = $Root) {
     } finally { Pop-Location }
 }
 
-# Node 22.13+: the one on PATH if it's new enough, else the installed one (nvm may hold an older one)
-function Use-Node {
-    $candidates = @((Get-Command node -ErrorAction SilentlyContinue).Source, "$env:ProgramFiles\nodejs\node.exe")
-    foreach ($node in $candidates) {
-        if (-not $node -or -not (Test-Path $node)) { continue }
-        $v = (& $node -p 'process.versions.node').Split('.')
-        if ([int]$v[0] -gt 22 -or ([int]$v[0] -eq 22 -and [int]$v[1] -ge 13)) {
-            $env:Path = (Split-Path $node) + ';' + $env:Path
-            return $node
+# Bun: the one on PATH, else where Bun's installer puts it. It runs the server, the tests and the phone's build tools
+function Use-Bun {
+    $candidates = @((Get-Command bun -ErrorAction SilentlyContinue).Source, "$env:USERPROFILE\.bun\bin\bun.exe")
+    foreach ($bun in $candidates) {
+        if ($bun -and (Test-Path $bun)) {
+            $env:Path = (Split-Path $bun) + ';' + $env:Path
+            return $bun
         }
     }
-    throw 'Needs Node.js 22.13 or newer: https://nodejs.org (or winget install OpenJS.NodeJS.LTS)'
+    throw 'Needs Bun: https://bun.sh (in PowerShell: irm bun.sh/install.ps1 | iex)'
 }
 
 # Java 21 and the Android SDK, for Gradle
@@ -88,13 +86,14 @@ function New-Out { New-Item -ItemType Directory -Force $Out | Out-Null }
 # ---- the tasks ----
 
 function Sync-Phone {
-    $node = Use-Node
+    $bun = Use-Bun
     if (-not (Test-Path (Join-Path $Phone 'node_modules'))) {
         Say 'Installing the phone build tools (once)'
-        Run (Join-Path (Split-Path $node) 'npm.cmd') @('install') $Phone
+        Run $bun @('install') $Phone
     }
     Say 'Copying src\ into the phone app'
-    Run (Join-Path (Split-Path $node) 'npx.cmd') @('cap', 'sync', 'android') $Phone
+    # --bun: Capacitor's tool on Bun itself (else it looks for Node)
+    Run $bun @('--bun', 'x', 'cap', 'sync', 'android') $Phone
 }
 
 function Build-Apk {
@@ -126,7 +125,7 @@ function Build-Exe {
 # The server version, ready to copy to another computer or a server: the app, the server and its starters.
 # Not the data (that stays in each place's own data folder).
 function Build-Host {
-    Use-Node | Out-Null
+    $bun = Use-Bun
     Say 'Preparing the server version'
     $host_ = Join-Path $Out 'host'
     if (Test-Path $host_) { Remove-Item $host_ -Recurse -Force }
@@ -140,16 +139,15 @@ function Build-Host {
     Set-Content (Join-Path $host_ 'VERSION') $Version
     # quick check: it starts and answers, on a spare port with an empty data folder
     $check = Join-Path $env:TEMP "rb-host-check-$PID"
-    $node = (Get-Command node).Source
     $env:PORT = '5593'; $env:DATA = $check
-    $server = Start-Process $node -ArgumentList "`"$(Join-Path $hostServer 'server.js')`"" -PassThru -WindowStyle Hidden
+    $server = Start-Process $bun -ArgumentList "`"$(Join-Path $hostServer 'server.js')`"" -PassThru -WindowStyle Hidden
     try {
         $ok = $false
         foreach ($i in 1..20) {
             Start-Sleep -Milliseconds 300
             try { $ok = (Invoke-RestMethod http://127.0.0.1:5593/api/health).ok; if ($ok) { break } } catch { }
         }
-        if (-not $ok) { throw 'The server version did not start (try: node apps\server\server.js in builds\host)' }
+        if (-not $ok) { throw 'The server version did not start (try: bun apps\server\server.js in builds\host)' }
     } finally {
         Stop-Process $server.Id -ErrorAction SilentlyContinue
         Remove-Item Env:PORT, Env:DATA
@@ -159,7 +157,7 @@ function Build-Host {
     $zip = Join-Path $Out "ResearchBoard-$Version-host.zip"
     Compress-Archive -Path "$host_\*" -DestinationPath $zip -Force
     Done "Server version: $host_ (and $zip); it started and answered"
-    Write-Host '   Run it with start.bat / start.sh (Node 22.13+). It has no sign-in yet: keep HOST=127.0.0.1 (this computer only)' -ForegroundColor Yellow
+    Write-Host '   Run it with start.bat / start.sh (needs Bun). It has no sign-in yet: keep HOST=127.0.0.1 (this computer only)' -ForegroundColor Yellow
     Write-Host '   until accounts exist; anyone who can reach it can read and change everything.' -ForegroundColor Yellow
 }
 
@@ -202,13 +200,13 @@ function Show-Status {
 
 # the tests in tests\ (playwright-core and Edge or Chrome for the page tests; see tests\README.md)
 function Invoke-Tests {
-    $node = Use-Node
+    $bun = Use-Bun
     $tests = Join-Path $Root 'tests'
     if (-not (Test-Path (Join-Path $tests 'node_modules'))) {
         Say 'Installing the test tools (once)'
-        Run (Join-Path (Split-Path $node) 'npm.cmd') @('install') $tests
+        Run $bun @('install') $tests
     }
-    Run $node @('run.js') $tests
+    Run $bun @('run.js') $tests
 }
 
 $tasks = [ordered]@{
@@ -244,9 +242,9 @@ switch ($Task) {
     'all' { Build-Host; Build-Exe; Build-Apk }
     'status' { Show-Status }
     'test' { Invoke-Tests }
-    'sync' { Sync-Phone; Done 'Now: cd apps\phone; npx cap open android (an .apk built there is not in builds\)' }
+    'sync' { Sync-Phone; Done 'Now: cd apps\phone; bun --bun x cap open android (an .apk built there is not in builds\)' }
     'icons' { Set-Icons $Arg }
-    'serve' { $node = Use-Node; Run $node @('apps\server\server.js', '--open') }
+    'serve' { $bun = Use-Bun; Run $bun @('apps\server\server.js', '--open') }
     'desktop' { Use-Tauri; Run cargo @('tauri', 'dev') $Desktop }
     'clean' { if (Test-Path $Out) { Remove-Item $Out -Recurse -Force }; Done 'builds\ emptied' }
     default { throw "Unknown task '$Task'. Tasks: $($tasks.Keys -join ', ')" }

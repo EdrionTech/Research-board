@@ -10,6 +10,8 @@ const SORT_KEY = 'research_board_library_sort';
 
 let books = [];
 let projects = [];
+const activeTags = new Set(); // the tag filter (lowercase): a book must have all of them
+const authorFilter = AuthorFilter.create($('#author_filter'), () => render()); // by author: any of those chosen
 
 const pref = (key, fallback) => { try { return localStorage.getItem(key) || fallback; } catch { return fallback; } };
 const keep = (key, value) => { try { localStorage.setItem(key, value); } catch { } };
@@ -24,11 +26,20 @@ function load() {
 
 const homeName = project => (project.library ? 'Library only' : project.title);
 
+// a book's tags: those of every copy (each project tags its own copy), each spelling once, ignoring case
+function bookTags(book) {
+    const tags = new Map();
+    for (const { source } of book.copies) for (const tag of tagsOf(source)) if (!tags.has(tag.toLowerCase())) tags.set(tag.toLowerCase(), tag);
+    return [...tags.values()];
+}
+const bookHasTag = (book, tag) => bookTags(book).some(t => t.toLowerCase() === tag);
+
 function shownBooks() {
     const query = $('#search').value.trim().toLowerCase();
     const sort = $('#shelf_sort').value;
-    const list = books.filter(b => !query || [b.source.title, authorsLine(b.source), b.source.venue, yearOf(b.source), ...(b.source.tags || []), ...b.copies.map(c => c.project.title)]
-        .join(' ').toLowerCase().includes(query));
+    const list = books.filter(b => [...activeTags].every(tag => bookHasTag(b, tag)) && authorFilter.matches(b.source)
+        && (!query || [b.source.title, authorsLine(b.source), b.source.venue, yearOf(b.source), ...bookTags(b), ...b.copies.map(c => c.project.title)]
+            .join(' ').toLowerCase().includes(query)));
     const by = {
         recent: (a, b) => b.added - a.added,
         title: (a, b) => a.source.title.localeCompare(b.source.title),
@@ -55,13 +66,43 @@ function shelves(list) {
 
 // ---- drawing ----
 
+// the tag chips: every tag in the library with how many books have it, most first; the chip shows the most used spelling
+function renderTagFilter() {
+    const counts = new Map(); // lowercase tag -> { n, spellings }
+    for (const book of books) {
+        for (const tag of bookTags(book)) {
+            const entry = counts.get(tag.toLowerCase()) || { n: 0, spellings: new Map() };
+            entry.n++;
+            entry.spellings.set(tag, (entry.spellings.get(tag) || 0) + 1);
+            counts.set(tag.toLowerCase(), entry);
+        }
+    }
+    for (const tag of activeTags) if (!counts.has(tag)) activeTags.delete(tag);
+    const label = entry => [...entry.spellings].sort((a, b) => b[1] - a[1])[0][0];
+    // most papers first (then A to Z)
+    const chips = [...counts].map(([key, entry]) => [key, label(entry), entry.n]).sort((a, b) => b[2] - a[2] || a[1].localeCompare(b[1])).map(([key, text, n]) => {
+        const chip = el('button', 'tag_chip' + (activeTags.has(key) ? ' active' : ''), `${text} ${n}`);
+        chip.type = 'button';
+        chip.dataset.tag = key;
+        chip.setAttribute('aria-pressed', activeTags.has(key));
+        return chip;
+    });
+    const clear = el('button', 'link', 'Clear');
+    clear.type = 'button';
+    clear.id = 'tag_clear';
+    clear.hidden = !activeTags.size;
+    fillFilterRow($('#tag_filter'), 'Tags', chips, [clear]);
+}
+
 function render() {
     const mode = $('#shelf_mode [aria-checked="true"]').dataset.mode;
+    renderTagFilter();
+    authorFilter.render(books.map(b => b.source));
     const list = shownBooks();
     $('#shelf_count').textContent = `${list.length} of ${books.length} material${books.length === 1 ? '' : 's'}`;
     $('#shelf_empty').hidden = list.length > 0;
     $('#shelf_empty').textContent = books.length
-        ? 'Nothing on the shelves matches your search.'
+        ? `Nothing on the shelves matches ${activeTags.size && !$('#search').value.trim() ? 'the chosen tags' : 'your search'}.`
         : 'Your library is empty. Add papers, books or videos to a project (or here with + New material), and they show up on these shelves.';
     $('#book_shelf').className = 'book_shelf ' + mode;
     $('#book_shelf').replaceChildren(...shelves(list).map(shelf => {
@@ -111,6 +152,9 @@ function openProfile(key) {
     if (s.pdfUrl) links.append(externalLink(s.pdfUrl, 'PDF'));
     $('#book_abstract_box').hidden = !s.abstract;
     if (s.abstract) renderMarkdown($('#book_abstract'), s.abstract);
+    // long author lists and abstracts fold, a good part still showing
+    foldLong($('#book_authors'), 2, { more: 'Show all authors', less: 'Fewer authors' });
+    foldLong($('#book_abstract'), 8);
 
     // its cover, large
     const box = $('#book_cover');
@@ -174,6 +218,16 @@ $('#shelf_mode').addEventListener('click', e => {
 $('#shelf_group').onchange = () => { keep(GROUP_KEY, $('#shelf_group').value); render(); };
 $('#shelf_sort').onchange = () => { keep(SORT_KEY, $('#shelf_sort').value); render(); };
 $('#search').oninput = render;
+$('#tag_filter').addEventListener('click', e => {
+    if (e.target.id === 'tag_clear') activeTags.clear();
+    else {
+        const chip = e.target.closest('.tag_chip');
+        if (!chip) return;
+        if (activeTags.has(chip.dataset.tag)) activeTags.delete(chip.dataset.tag);
+        else activeTags.add(chip.dataset.tag);
+    }
+    render();
+});
 $('#book_shelf').addEventListener('click', e => {
     const book = e.target.closest('.book');
     if (book) openProfile(book.dataset.key);

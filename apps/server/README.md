@@ -1,6 +1,6 @@
 # Research Board local server
 
-`server.js` serves the app (`src/`) and keeps its data in files on this computer, so nothing depends on the browser's storage (which is kept per address, and can be cleared or evicted). It needs only Node.js 22.13 or newer (for its built-in SQLite), no packages.
+`server.js` serves the app (`src/`) and keeps its data in files on this computer, so nothing depends on the browser's storage (which is kept per address, and can be cleared or evicted). It needs only [Bun](https://bun.sh) (for its built-in SQLite), no packages.
 
 ## Starting it
 
@@ -8,7 +8,7 @@
 | --- | --- |
 | Windows | Double-click `start.bat` in the project folder |
 | macOS, Linux | `./start.sh` in the project folder |
-| Anywhere | `node apps/server/server.js` from the project folder (add `--open` to open the browser) |
+| Anywhere | `bun apps/server/server.js` from the project folder (add `--open` to open the browser) |
 
 The app is at <http://127.0.0.1:5500/>. The starters open it in your browser once the server is ready. Stop the server with Ctrl + C or by closing its window: every change is already saved.
 
@@ -31,7 +31,7 @@ Set these as environment variables:
 | `files/<hash>` | The bytes of uploaded PDFs, videos and images (in notes, figures, project and material thumbnails) and first-page previews, named by their content: the same file added twice (say, a material copied into a project) is kept once, and removed when nothing uses it. |
 | `before-sqlite/` | Left by the first run of this version: the old `research-board.json`, `journal.ndjson` and `files/`, after they were brought into `research-board.db`. Delete it once you're happy. |
 
-The storage itself isn't in the server: it's [src/script/core/place/place.js](../../src/script/core/place/place.js), shared with the desktop and phone apps, with the tables described there. [place-node.js](place-node.js) gives it Node's SQLite and the files folder.
+The storage itself isn't in the server: it's [src/script/core/place/place.js](../../src/script/core/place/place.js), shared with the desktop and phone apps, with the tables described there. [place-bun.js](place-bun.js) gives it Bun's SQLite and the files folder.
 
 **Backing up:** copy the whole `data` folder while the server is stopped. Or download a backup from Settings, with files. To move to another computer, copy the folder into the project there (or point `DATA` at it).
 
