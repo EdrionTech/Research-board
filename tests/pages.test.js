@@ -79,6 +79,23 @@ const { REPO, SAMPLE, startServer, launchBrowser, tester, wait, text } = require
         const text = await tab.$eval('#note_form textarea[name="body"]', e => e.value);
         if (!/^See \[@lovelace\d{4}\w*\]$/.test(text)) return 'the text became: ' + JSON.stringify(text);
     });
+    await page('the summary saves from Visual, with a citation chip, even typing right after it', base + 'page/material.html?id=' + source.id, async tab => {
+        const field = '[data-field="summary"]';
+        await tab.click(`${field} .edit_md`);
+        await tab.click(`${field} .md_visual`);
+        await tab.keyboard.type('Summary citing @lovel');
+        await wait(400);
+        await tab.keyboard.press('Enter');
+        if (!(await tab.$(`${field} .md_visual .cite`))) return 'no citation chip';
+        // the cursor put on the chip goes after it: what's typed there is kept
+        const chip = await (await tab.$(`${field} .md_visual .cite`)).boundingBox();
+        await tab.mouse.click(chip.x + chip.width / 2, chip.y + chip.height / 2);
+        await tab.keyboard.type('done.');
+        await tab.click(`${field} .save_md`);
+        await wait(800);
+        const saved = (await (await server.api('GET', 'boot')).json()).data.items.find(i => i.id === source.id)?.summary || '';
+        if (!/^Summary citing \[@lovelace\d{4}\w*\]\s?done\.$/.test(saved)) return 'saved as: ' + JSON.stringify(saved);
+    });
     await page('settings from the data are applied', base, async tab => {
         await server.api('PUT', 'kv/settings', { theme: 'dark', style: 'pixel-pop' });
         await tab.reload({ waitUntil: 'networkidle0' });

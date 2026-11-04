@@ -313,6 +313,7 @@ const Places = (() => {
 
     function savePad() {
         clearTimeout(padTimer);
+        MdBar.flush($('#summary_pad_text')); // (what was just typed on the formatted text)
         const text = $('#summary_pad_text').value.trim();
         if (text === summaryOf(source).trim()) return;
         Store.saveItem({ id: source.id, summary: text });

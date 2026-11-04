@@ -2781,6 +2781,7 @@ for (const field of $$('.md_field')) {
         if (e.target.closest('.edit_md')) setMdEditing(field, true);
         else if (e.target.closest('.cancel_md')) setMdEditing(field, false);
         else if (e.target.closest('.save_md')) {
+            MdBar.flush($('textarea', field)); // (what was just typed on the formatted text)
             Store.saveItem({ id: source.id, [field.dataset.field]: $('textarea', field).value.trim() });
             refresh();
         }

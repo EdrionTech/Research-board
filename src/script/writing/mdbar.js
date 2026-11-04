@@ -65,12 +65,33 @@ const MdBar = (() => {
 
     // ---- Link: a small form for the link's words and its address ----
     let linkBox = null;
+
+    // words for a link from its address alone: "example.org › docs › getting started"
+    function linkWords(url) {
+        try {
+            const u = new URL(url);
+            const parts = u.pathname.split('/').filter(Boolean).slice(-2)
+                .map(part => decodeURIComponent(part).replace(/\.(html?|php|aspx?)$/i, '').replace(/[-_+]+/g, ' ').trim()).filter(Boolean);
+            return [u.hostname.replace(/^www\./, ''), ...parts].join(' › ');
+        } catch { return ''; }
+    }
+    // the page's own title, when the site lets the app read it (many don't from a browser: then null)
+    async function pageTitle(url) {
+        try {
+            const res = await fetch(url, { signal: AbortSignal.timeout(4000) });
+            if (!res.ok || !(res.headers.get('content-type') || '').includes('html')) return null;
+            const title = new DOMParser().parseFromString(await res.text(), 'text/html').querySelector('title')?.textContent;
+            return title?.replace(/\s+/g, ' ').trim() || null;
+        } catch { return null; }
+    }
+    const looksLikeUrl = text => /^https?:\/\/\S+$/i.test(text.trim());
+
     function linkForm(anchor, { text = '', url = '' }) {
         if (!linkBox) {
             linkBox = document.createElement('form');
             linkBox.className = 'composer link_form';
-            linkBox.innerHTML = `<label>Text <input name="text" autocomplete="off"></label>
-                <label>Address <input name="url" type="url" placeholder="https://" autocomplete="off"></label>
+            linkBox.innerHTML = `<label>Address <input name="url" inputmode="url" placeholder="Paste or type the address: https://…" autocomplete="off" spellcheck="false"></label>
+                <label>Text <input name="text" placeholder="Filled in from the address, or your own words" autocomplete="off"></label>
                 <div class="actions"><span class="spacer"></span><button type="button" class="btn small" data-act="cancel">Cancel</button>
                 <button type="submit" class="btn small primary">Add link</button></div>`;
             linkBox.hidden = true;
@@ -78,7 +99,21 @@ const MdBar = (() => {
         }
         const form = linkBox;
         form.elements.text.value = text;
-        form.elements.url.value = url || 'https://';
+        form.elements.url.value = url;
+        // with no words of your own, they follow the address: readable at once, the page's title if it can be read
+        let auto = !text;
+        let asked = '';
+        form.elements.text.oninput = () => { auto = !form.elements.text.value; };
+        form.elements.url.oninput = () => {
+            const address = form.elements.url.value.trim();
+            if (!auto) return;
+            form.elements.text.value = looksLikeUrl(address) ? linkWords(address) : '';
+            if (!looksLikeUrl(address) || address === asked) return;
+            asked = address;
+            pageTitle(address).then(title => {
+                if (title && auto && form.elements.url.value.trim() === address) form.elements.text.value = title;
+            });
+        };
         form.querySelector('[type="submit"]').textContent = url ? 'Save link' : 'Add link';
         form.hidden = false;
         // under the formatting bar, inside the screen
@@ -87,8 +122,8 @@ const MdBar = (() => {
         form.style.width = width + 'px';
         form.style.left = Math.max(8, Math.min(r.left, innerWidth - width - 8)) + 'px';
         form.style.top = Math.min(r.bottom + 6, innerHeight - form.offsetHeight - 8) + 'px';
-        (text ? form.elements.url : form.elements.text).focus();
-        if (text) form.elements.url.select();
+        form.elements.url.focus();
+        form.elements.url.select();
         return new Promise(resolve => {
             const done = value => {
                 form.hidden = true;
@@ -98,8 +133,9 @@ const MdBar = (() => {
             };
             form.onsubmit = e => {
                 e.preventDefault();
-                const url = form.elements.url.value.trim();
-                if (!url || url === 'https://') return form.elements.url.focus();
+                let url = form.elements.url.value.trim();
+                if (!url) return form.elements.url.focus();
+                if (!/^[a-z][\w+.-]*:/i.test(url)) url = 'https://' + url; // "example.org" -> https://example.org
                 done({ text: form.elements.text.value.trim() || url, url });
             };
             form.querySelector('[data-act="cancel"]').onclick = () => done(null);
@@ -319,6 +355,25 @@ const MdBar = (() => {
             timer = setTimeout(sync, 250);
         });
         box.addEventListener('blur', () => area.rbFlush());
+        // a citation chip is one piece: the cursor never stays inside it (what you'd type there would be lost),
+        // it goes just after it
+        // (as you click and before each key too, not only when the browser reports it a moment later)
+        const outOfChip = () => {
+            const sel = getSelection();
+            if (!sel.rangeCount || !box.contains(sel.anchorNode)) return;
+            const node = sel.anchorNode.nodeType === 1 ? sel.anchorNode : sel.anchorNode.parentElement;
+            const chip = node?.closest('.cite');
+            if (!chip || !box.contains(chip)) return;
+            if (!chip.nextSibling || chip.nextSibling.nodeType !== Node.TEXT_NODE) chip.after(document.createTextNode('\u00a0'));
+            const range = document.createRange();
+            range.setStart(chip.nextSibling, chip.nextSibling.data.startsWith('\u00a0') || chip.nextSibling.data.startsWith(' ') ? 1 : 0);
+            range.collapse(true);
+            sel.removeAllRanges();
+            sel.addRange(range);
+        };
+        document.addEventListener('selectionchange', outOfChip);
+        box.addEventListener('mouseup', outOfChip);
+        box.addEventListener('keydown', outOfChip, true);
         // keys with Ctrl / ⌘ (save with Ctrl + Enter…): the textarea is brought up to date first, then they go on
         // to the form as usual; Ctrl + B, I, lists… format here
         box.addEventListener('keydown', e => {
@@ -342,7 +397,28 @@ const MdBar = (() => {
                 MdImages.insert(area, files);
                 return;
             }
-            document.execCommand('insertText', false, e.clipboardData?.getData('text/plain') || '');
+            const pasted = e.clipboardData?.getData('text/plain') || '';
+            // a web address on its own: a link, its words from the address (the page's title once it's read)
+            if (looksLikeUrl(pasted) && getSelection().rangeCount) {
+                const url = pasted.trim();
+                const range = getSelection().getRangeAt(0);
+                const a = document.createElement('a');
+                a.href = url;
+                a.textContent = range.toString() || linkWords(url) || url;
+                const own = !!range.toString();
+                range.deleteContents();
+                range.insertNode(a);
+                range.setStartAfter(a);
+                range.collapse(true);
+                getSelection().removeAllRanges();
+                getSelection().addRange(range);
+                box.dispatchEvent(new Event('input', { bubbles: true }));
+                if (!own) pageTitle(url).then(title => {
+                    if (title && a.isConnected) { a.textContent = title; box.dispatchEvent(new Event('input', { bubbles: true })); }
+                });
+                return;
+            }
+            document.execCommand('insertText', false, pasted);
         });
         new MutationObserver(() => { box.dataset.placeholder = area.placeholder; })
             .observe(area, { attributes: true, attributeFilter: ['placeholder'] });
