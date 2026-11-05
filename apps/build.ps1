@@ -3,7 +3,7 @@
 #
 #   build.bat apk          the Android app      -> builds\ResearchBoard-<version>-debug.apk
 #   build.bat exe          the Windows app      -> builds\ResearchBoard-<version>-setup.exe (+ .msi)
-#   build.bat host         the server version   -> builds\host\ and ResearchBoard-<version>-host.zip
+#   build.bat host         the server version   -> builds\host\ and ResearchBoard-<version>-host.zip (serve.bat / serve.sh run it)
 #   build.bat all          all three
 #   build.bat status       which builds are missing or older than the code they're made from
 #   build.bat test         run the tests (tests\)
@@ -134,8 +134,8 @@ function Build-Host {
     Copy-Item (Join-Path $Root 'src') $host_ -Recurse
     $hostServer = Join-Path $host_ 'apps\server'
     New-Item -ItemType Directory -Force $hostServer | Out-Null
-    Copy-Item (Join-Path $Server '*.js'), (Join-Path $Server 'README.md') $hostServer
-    Copy-Item (Join-Path $Root 'start.bat'), (Join-Path $Root 'start.sh') $host_
+    Copy-Item (Join-Path $Server '*.js'), (Join-Path $Server '*.sh'), (Join-Path $Server 'README.md') $hostServer
+    Copy-Item (Join-Path $Root 'start.bat'), (Join-Path $Root 'start.sh'), (Join-Path $Root 'serve.bat'), (Join-Path $Root 'serve.sh') $host_
     Set-Content (Join-Path $host_ 'VERSION') $Version
     # quick check: it starts and answers, on a spare port with an empty data folder
     $check = Join-Path $env:TEMP "rb-host-check-$PID"
@@ -155,10 +155,20 @@ function Build-Host {
         Remove-Item $check -Recurse -Force -ErrorAction SilentlyContinue
     }
     $zip = Join-Path $Out "ResearchBoard-$Version-host.zip"
-    Compress-Archive -Path "$host_\*" -DestinationPath $zip -Force
+    # with / between folders (Windows PowerShell's Compress-Archive writes \, which Linux unzips as file names)
+    Add-Type -AssemblyName System.IO.Compression, System.IO.Compression.FileSystem
+    if (Test-Path $zip) { Remove-Item $zip -Force }
+    $archive = [System.IO.Compression.ZipFile]::Open($zip, 'Create')
+    try {
+        foreach ($file in Get-ChildItem $host_ -Recurse -File) {
+            $entry = $file.FullName.Substring($host_.Length + 1).Replace('\', '/')
+            [System.IO.Compression.ZipFileExtensions]::CreateEntryFromFile($archive, $file.FullName, $entry, 'Optimal') | Out-Null
+        }
+    } finally { $archive.Dispose() }
     Done "Server version: $host_ (and $zip); it started and answered"
-    Write-Host '   Run it with start.bat / start.sh (needs Bun). It has no sign-in yet: keep HOST=127.0.0.1 (this computer only)' -ForegroundColor Yellow
-    Write-Host '   until accounts exist; anyone who can reach it can read and change everything.' -ForegroundColor Yellow
+    Write-Host '   On the server: unzip it and run serve.bat (Windows) or ./serve.sh (macOS, Linux): Bun is installed if needed,' -ForegroundColor Yellow
+    Write-Host '   and it prints the addresses and access key for other devices. Add --autostart to start it with the machine.' -ForegroundColor Yellow
+    Write-Host '   serve --public: a temporary https address from any network (testing). A VPS: apps/server/vps-setup.sh.' -ForegroundColor Yellow
 }
 
 function Set-Icons($file) {
@@ -178,7 +188,7 @@ function Show-Status {
     $builds = [ordered]@{
         apk  = @("ResearchBoard-$Version-debug.apk", @('src', 'apps\phone\capacitor.config.json', 'apps\phone\android\app\src\main\res', 'apps\phone\android\app\src\main\java', 'apps\phone\android\app\src\main\AndroidManifest.xml'))
         exe  = @("ResearchBoard-$Version-setup.exe", @('src', 'apps\desktop\src-tauri\src', 'apps\desktop\src-tauri\icons', 'apps\desktop\src-tauri\tauri.conf.json', 'apps\desktop\src-tauri\Cargo.toml'))
-        host = @("ResearchBoard-$Version-host.zip", @('src', 'apps\server', 'start.bat', 'start.sh'))
+        host = @("ResearchBoard-$Version-host.zip", @('src', 'apps\server', 'start.bat', 'start.sh', 'serve.bat', 'serve.sh'))
     }
     foreach ($name in $builds.Keys) {
         $file, $sources = $builds[$name]

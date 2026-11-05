@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <link rel="icon" type="image/svg+xml" href="../assets/logo.svg">
+    <title>Server · Research Board</title>
+    <link rel="stylesheet" href="../style/base.css">
+    <link rel="stylesheet" href="../style/icons.css">
+    <link rel="stylesheet" href="../style/settings.css">
+    <!-- the theme and style, as in the app: this server's own appearance settings (server_control.js applies them) -->
+    <script src="../script/core/settings.js"></script>
+</head>
+
+<body>
+    <div class="bar">
+        <a class="home_logo" href="../index.html" title="Research Board" aria-label="Research Board"><img src="../assets/logo.svg" alt=""></a>
+        <h2 class="brand">Server <span class="server_name" id="server_name"></span></h2>
+        <span class="server_live" id="server_live"></span>
+    </div>
+
+    <!-- asked for when the page was opened without the main key -->
+    <main class="settings" id="sign_in" hidden>
+        <section class="settings_section">
+            <header><h3>The server's main key</h3></header>
+            <form class="setting stacked" id="sign_in_form">
+                <p class="hint">This page manages the server, so it needs the main key (in <code>server-key.txt</code>
+                    in the server's data folder). Opened from the server's window (a + Enter), it has it already.</p>
+                <div class="sync_server">
+                    <input type="password" id="main_key" placeholder="Main key" aria-label="Main key" autocomplete="off" required>
+                    <button type="submit" class="btn primary">Open</button>
+                </div>
+            </form>
+        </section>
+    </main>
+
+    <div id="control" hidden>
+        <nav class="tabs" id="tabs" role="tablist">
+            <button type="button" role="tab" data-tab="overview" aria-selected="true">Overview</button>
+            <button type="button" role="tab" data-tab="devices">Devices<span class="tab_badge" id="devices_count"></span></button>
+            <button type="button" role="tab" data-tab="people">People</button>
+            <button type="button" role="tab" data-tab="appearance">Appearance</button>
+            <button type="button" role="tab" data-tab="server">Server</button>
+        </nav>
+        <p class="data_state page_state" id="state" aria-live="polite"></p>
+
+        <!-- Overview: is it up, where, what's on it; adding a device in one step -->
+        <main class="settings" data-panel="overview">
+            <section class="settings_section">
+                <header><h3>Status</h3></header>
+                <div class="setting stacked">
+                    <div class="status_line"><span class="status_dot" id="status_dot"></span><strong id="status_text">Running</strong></div>
+                    <ul class="sync_list" id="addresses"></ul>
+                    <p class="hint" id="running_detail"></p>
+                </div>
+            </section>
+            <section class="settings_section">
+                <header><h3>Add a device</h3></header>
+                <div class="setting stacked">
+                    <p class="hint">On the device: Research Board › Settings › Sync with a server › <b>Scan QR code</b>,
+                        or paste the link there. This one adds one device within 20 minutes; more choices under Devices.</p>
+                    <div class="actions start"><button type="button" class="btn primary" id="quick_invite">Show a QR code</button></div>
+                    <div class="sync_invite" id="quick_invite_box" hidden>
+                        <div class="sync_invite_qr" id="quick_invite_qr"></div>
+                        <div class="sync_invite_text">
+                            <p class="hint" id="quick_invite_note"></p>
+                            <input type="text" id="quick_invite_link" readonly aria-label="Invite link">
+                            <div class="actions start"><button type="button" class="btn small" data-copy="quick_invite_link">Copy link</button></div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            <section class="settings_section">
+                <header><h3>Projects on it</h3></header>
+                <div class="setting stacked">
+                    <ul class="sync_list" id="projects"></ul>
+                </div>
+            </section>
+        </main>
+
+        <!-- Devices: invites (one device, or several until they expire) and the devices with their own key -->
+        <main class="settings" data-panel="devices" hidden>
+            <section class="settings_section">
+                <header><h3>Invite devices</h3></header>
+                <div class="setting stacked">
+                    <p class="hint">Each device that uses an invite gets its own key, so adding or removing one never
+                        disturbs the others.</p>
+                    <form class="invite_form" id="invite_form">
+                        <label>For
+                            <select id="invite_uses">
+                                <option value="1">one device</option>
+                                <option value="0">any number of devices</option>
+                            </select>
+                        </label>
+                        <label>within
+                            <select id="invite_minutes">
+                                <option value="20">20 minutes</option>
+                                <option value="60">1 hour</option>
+                                <option value="1440">1 day</option>
+                                <option value="10080">7 days</option>
+                            </select>
+                        </label>
+                        <label id="invite_address_label">at
+                            <select id="invite_address"></select>
+                        </label>
+                        <button type="submit" class="btn primary">Make an invite</button>
+                    </form>
+                    <div class="sync_invite" id="invite" hidden>
+                        <div class="sync_invite_qr" id="invite_qr"></div>
+                        <div class="sync_invite_text">
+                            <p class="hint" id="invite_note"></p>
+                            <input type="text" id="invite_link" readonly aria-label="Invite link">
+                            <div class="actions start"><button type="button" class="btn small" data-copy="invite_link">Copy link</button></div>
+                        </div>
+                    </div>
+                    <strong class="list_head">Open invites</strong>
+                    <ul class="sync_list" id="invites"></ul>
+                </div>
+            </section>
+            <section class="settings_section">
+                <header><h3>Devices</h3></header>
+                <div class="setting stacked">
+                    <ul class="sync_list" id="devices"></ul>
+                </div>
+            </section>
+        </main>
+
+        <!-- People: accounts, for a server open to the public (later work, shown so its place is clear) -->
+        <main class="settings" data-panel="people" hidden>
+            <section class="settings_section">
+                <header><h3>People <span class="soon">coming later</span></h3></header>
+                <div class="setting stacked">
+                    <p class="hint">For a server open to the public: people sign up with an account, each with their
+                        own projects and devices, and share projects with others as members. You'll see and manage
+                        them here. Until then, this server is for you and the devices you invite.</p>
+                    <ul class="sync_list future">
+                        <li><span>Sign-ups<small>Off: only devices you invite can join</small></span><button type="button" class="btn small" disabled>Allow</button></li>
+                        <li><span>Accounts<small>None yet</small></span></li>
+                        <li><span>Storage per person<small>No limit: it's your server</small></span></li>
+                    </ul>
+                </div>
+            </section>
+        </main>
+
+        <!-- Appearance: the same controls as the app's Settings (core/appearance.js), kept in this server's data -->
+        <main class="settings" data-panel="appearance" hidden>
+            <p class="hint panel_intro">The look of this page and of the app opened from this server (theme, style,
+                colours, your own CSS). Each device keeps its own look for the app on it.</p>
+            <section class="settings_section customization" id="appearance"></section>
+        </main>
+
+        <!-- Server: how it's reached and started, its main key -->
+        <main class="settings" data-panel="server" hidden>
+            <section class="settings_section">
+                <header><h3>Settings</h3></header>
+                <form class="setting stacked" id="settings_form">
+                    <p class="hint" id="settings_hint">Saved for the next start.</p>
+                    <label>Reached from
+                        <select id="set_mode">
+                            <option value="network">This network: devices on the same Wi-Fi or network (http)</option>
+                            <option value="public">Any network: a temporary https address through Cloudflare (for testing)</option>
+                        </select>
+                    </label>
+                    <label>Port <input type="number" id="set_port" min="1024" max="65535" required></label>
+                    <label>Data folder <input type="text" id="set_data" placeholder="(the default)" autocomplete="off" spellcheck="false"></label>
+                    <div class="actions start">
+                        <button type="submit" class="btn primary" id="settings_save">Save and restart</button>
+                    </div>
+                </form>
+                <div class="setting">
+                    <div>
+                        <strong>Start with the computer</strong>
+                        <p class="hint" id="autostart_hint"></p>
+                    </div>
+                    <button type="button" class="btn" id="autostart"></button>
+                </div>
+            </section>
+            <section class="settings_section">
+                <header><h3>Main key</h3></header>
+                <div class="setting">
+                    <div>
+                        <p class="hint">For this page, and for devices given it directly (before invites). A new one
+                            doesn't affect devices with their own key.</p>
+                        <code class="main_key" id="main_key_shown">••••••••</code>
+                    </div>
+                    <div class="actions">
+                        <button type="button" class="btn small" id="key_show">Show</button>
+                        <button type="button" class="btn small danger" id="key_new">Make a new one</button>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="../script/core/ui.js"></script>
+    <script src="../script/core/appearance.js"></script>
+    <script src="../script/pages/server_control.js"></script>
+</body>
+
+</html>
