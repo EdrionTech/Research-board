@@ -24,13 +24,13 @@ const SAMPLE = {
     ],
 };
 
-// the server on `port` with a new data folder: the sample in it unless { empty: true }
-async function startServer(port, { empty = false } = {}) {
+// the server on `port` with a new data folder: the sample in it unless { empty: true }; env: more of its options
+async function startServer(port, { empty = false, env = {} } = {}) {
     const data = fs.mkdtempSync(path.join(os.tmpdir(), 'rb-test-'));
     const base = `http://127.0.0.1:${port}/`;
     let server;
     const start = () => new Promise((resolve, reject) => {
-        server = spawn(process.execPath, [path.join(REPO, 'apps', 'server', 'server.js')], { env: { ...process.env, PORT: port, DATA: data } });
+        server = spawn(process.execPath, [path.join(REPO, 'apps', 'server', 'server.js')], { env: { ...process.env, PORT: port, DATA: data, ...env } });
         let out = '';
         server.stdout.on('data', d => { out += d; if (out.includes('Research Board:')) resolve(out); });
         server.stderr.on('data', d => { out += d; });
@@ -38,7 +38,7 @@ async function startServer(port, { empty = false } = {}) {
     });
     const stop = () => new Promise(r => { server.removeAllListeners('exit'); server.on('exit', r); server.kill(); });
     const api = (method, route, body) => fetch(base + 'api/' + route, {
-        method, headers: { 'Content-Type': 'application/json' }, body: body === undefined ? undefined : JSON.stringify(body),
+        method, headers: { 'Content-Type': 'application/json', ...(env.KEY ? { Authorization: 'Bearer ' + env.KEY } : {}) }, body: body === undefined ? undefined : JSON.stringify(body),
     });
 
     await start();

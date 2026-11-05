@@ -12,6 +12,8 @@ Each test file starts its own server on a spare port with a new, temporary data 
 | --- | --- |
 | `api.test.js` | The server API and its SQLite storage: saving, older saves and deletes, files kept once, the changes feed, restart, restore and clear |
 | `pages.test.js` | Every page opens with no errors, shows the data and saves a change; without the server, the pages say how to start it |
+| `sync.test.js` | Sync between a device and a server with a key: linking, edits both ways, newer wins, deletes, files, a second device, an unreachable server, restore; wrong keys and the upload limit; Settings (connecting, a saved server, the one line with its key, a server at a new address); a project's settings and a separate copy |
+| `layout.test.js` | Every page and every popup at phone widths (360, 412 px): nothing scrolls sideways, popups fit, their buttons are in view ([system_documents/design/ui.md](../system_documents/design/ui.md)) |
 | `offline.test.js` | With the internet refused (as in the apps): the libraries, PDF.js and each style's font still load |
 
 `bun shots.js` (or `bun run shots`) isn't a test: it saves phone-size (Pixel 7) and desktop screenshots of the main pages into `shots/` (not in git), for checking layouts by eye.
