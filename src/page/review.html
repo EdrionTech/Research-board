@@ -59,6 +59,8 @@
                 <button type="button" data-action="redo" title="Redo (Ctrl+Y)" aria-label="Redo">↷</button>
                 <span class="spacer"></span>
                 <small id="counts"></small>
+                <!-- the side panel folded away: brings it back -->
+                <button type="button" class="side_unfold" id="side_unfold" title="Show the side panel: preview, sources, figures, notes" hidden>⟨ Side panel</button>
             </div>
             <!-- appears while you type @…: pick a source to complete the citation -->
             <div class="cite_suggest" id="cite_suggest" hidden></div>
@@ -77,12 +79,16 @@
             </p>
         </section>
 
-        <!-- preview with citations resolved, and your sources with their summaries and notes -->
+        <!-- preview with citations resolved (Markdown mode only: Visual already shows the formatted text), your sources
+             with their summaries and notes, the figures, and your notes and summaries from the Literature tab -->
         <section class="panel side_panel">
             <div class="tabs" id="tabs">
                 <button type="button" data-tab="preview" aria-selected="true">Preview</button>
                 <button type="button" data-tab="sources" aria-selected="false">Sources</button>
                 <button type="button" data-tab="figures" aria-selected="false">Figures</button>
+                <button type="button" data-tab="notes" aria-selected="false">Notes</button>
+                <!-- folds the whole panel away: the writing takes the width (review.js) -->
+                <button type="button" class="side_fold" id="side_fold" title="Fold this panel away (more room to write)" aria-label="Fold the side panel away" aria-expanded="true">⟩</button>
             </div>
             <p class="cite_warning" id="cite_warning" hidden></p>
             <article class="preview md" id="preview"></article>
@@ -96,6 +102,13 @@
                     Table 1, 2…), its title, and a credit note in the project's style (“From …” or “Adapted from …”); the
                     source goes in the reference list. Save more with ★ or 📷 on a source's page.</p>
                 <ul class="figure_grid" id="review_figures"></ul>
+            </div>
+            <!-- the Literature tab's Notes and Summaries (the dashboard): put one into your writing -->
+            <div class="notes_tab" id="notes_tab" hidden>
+                <input type="search" id="notes_search" placeholder="Search your notes and summaries…">
+                <p class="hint">Your notes and summaries from the project's Literature tab. Insert puts one where your cursor is,
+                    citations and all.</p>
+                <ul class="lit_notes" id="lit_notes"></ul>
             </div>
         </section>
     </main>

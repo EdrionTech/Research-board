@@ -96,6 +96,39 @@ const { REPO, SAMPLE, startServer, launchBrowser, tester, wait, text } = require
         const saved = (await (await server.api('GET', 'boot')).json()).data.items.find(i => i.id === source.id)?.summary || '';
         if (!/^Summary citing \[@lovelace\d{4}\w*\]\s?done\.$/.test(saved)) return 'saved as: ' + JSON.stringify(saved);
     });
+    await page('the Cite button puts in Author (year) or (Author, year)', base + 'page/material.html?id=' + source.id, async tab => {
+        const field = '[data-field="summary"]';
+        await tab.click(`${field} .edit_md`);
+        await tab.click(`${field} .md_visual`);
+        await tab.keyboard.type('As ');
+        await tab.click(`${field} .md_bar [data-act="cite"]`);
+        await wait(300);
+        if (await tab.$eval('.cite_picker', e => e.hidden)) return 'the list of papers did not open';
+        await tab.keyboard.type('lovel');
+        await tab.keyboard.down('Shift'); await tab.keyboard.press('Enter'); await tab.keyboard.up('Shift');
+        await tab.keyboard.type('shows it ');
+        await tab.click(`${field} .md_bar [data-act="cite"]`);
+        await wait(300);
+        await tab.click('.cite_form[data-form="parenthetical"]');
+        await tab.click(`${field} .save_md`);
+        await wait(800);
+        const saved = (await (await server.api('GET', 'boot')).json()).data.items.find(i => i.id === source.id)?.summary || '';
+        if (!/^As @lovelace\d{4}\w*\s?shows it \[@lovelace\d{4}\w*\]$/.test(saved)) return 'saved as: ' + JSON.stringify(saved);
+    });
+    await page('review: no Preview beside Visual; a Literature note inserted from the Notes tab', base + 'page/review.html?id=' + project.id, async tab => {
+        await server.api('PUT', 'items/g1', { id: 'g1', projectId: project.id, type: 'note', title: 'A literature note', body: 'Notes reach the review.', updatedAt: Date.now() });
+        await tab.reload({ waitUntil: 'networkidle0' });
+        await wait(500);
+        await tab.click('#mode_toggle [data-mode="visual"]');
+        if (!(await tab.$eval('#tabs [data-tab="preview"]', b => b.hidden))) return 'Preview still shown in Visual';
+        await tab.click('#tabs [data-tab="notes"]');
+        await tab.click('#visual_editor');
+        await tab.evaluate(() => [...document.querySelectorAll('.lit_note')].find(li => /A literature note/.test(li.textContent))?.querySelector('button').click());
+        await wait(800);
+        if (!(await tab.$eval('#review_text', e => e.value.includes('Notes reach the review.')))) return 'the note was not inserted';
+        await tab.click('#mode_toggle [data-mode="markdown"]');
+        if (await tab.$eval('#tabs [data-tab="preview"]', b => b.hidden)) return 'Preview missing in Markdown';
+    });
     await page('settings from the data are applied', base, async tab => {
         await server.api('PUT', 'kv/settings', { theme: 'dark', style: 'pixel-pop' });
         await tab.reload({ waitUntil: 'networkidle0' });

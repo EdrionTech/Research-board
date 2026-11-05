@@ -66,7 +66,11 @@ function init() {
     setMode(turndown ? saved : 'markdown');
     renderSources();
     renderFigures();
+    renderLitNotes();
     renderPreview();
+    // opened from the dashboard on a tab (…#figures, …#notes)
+    const asked = location.hash.slice(1);
+    if (['sources', 'figures', 'notes', 'preview'].includes(asked)) showTab(asked);
 }
 
 // sources and their notes (re-read when you come back from another tab)
@@ -203,6 +207,9 @@ function setMode(next) {
     for (const btn of $$('#mode_toggle button')) btn.setAttribute('aria-pressed', btn.dataset.mode === mode);
     editor.hidden = mode !== 'markdown';
     visual.hidden = mode !== 'visual';
+    // Visual is the formatted text already: no Preview beside it
+    $('#tabs [data-tab="preview"]').hidden = mode === 'visual';
+    if (mode === 'visual' && currentTab() === 'preview') showTab('sources');
     for (const hint of $$('.writer .hint')) hint.hidden = hint.dataset.for !== mode;
     hideSuggestions();
     if (mode === 'visual') renderVisual();
@@ -632,10 +639,39 @@ function sourceCard(source) {
 }
 
 function showTab(tab) {
-    for (const btn of $$('#tabs button')) btn.setAttribute('aria-selected', btn.dataset.tab === tab);
+    if (tab === 'preview' && mode === 'visual') tab = 'sources'; // (Visual is the formatted text already)
+    for (const btn of $$('#tabs button[data-tab]')) btn.setAttribute('aria-selected', btn.dataset.tab === tab);
     $('#preview').hidden = tab !== 'preview';
     $('#sources_tab').hidden = tab !== 'sources';
     $('#figures_tab').hidden = tab !== 'figures';
+    $('#notes_tab').hidden = tab !== 'notes';
+}
+const currentTab = () => $('#tabs [aria-selected="true"]')?.dataset.tab || 'preview';
+
+// ---- notes tab: the Literature tab's Notes and Summaries (dashboard sections 'note' and 'summary') ----
+
+function renderLitNotes() {
+    const query = $('#notes_search').value.trim().toLowerCase();
+    const kinds = { note: 'Note', summary: 'Summary' };
+    const all = Store.getItems(project.id)
+        .filter(item => kinds[item.type] && (item.body || item.title))
+        .sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
+    const shown = all.filter(item => !query || [item.title, item.body].join(' ').toLowerCase().includes(query));
+    $('#lit_notes').replaceChildren(...(shown.length ? shown.map(item => {
+        const li = el('li', 'lit_note');
+        const head = el('div', 'lit_note_head');
+        head.append(el('small', '', kinds[item.type]), el('strong', '', item.title || ''));
+        const body = el('div', 'md');
+        renderMarkdown(body, resolve(item.body || '', styleOf()).text); // (its citations as they'll read)
+        foldLong(body, 6);
+        const actions = el('div', 'lit_note_actions');
+        actions.append(
+            button('Insert', 'Put it into your writing where the cursor is', () => insertBlock(item.body || item.title)),
+            button('As a quote', 'Put it in as a block quote', () => insertBlock((item.body || item.title).split('\n').map(line => '> ' + line).join('\n'))),
+        );
+        li.append(head, body, actions);
+        return li;
+    }) : [el('li', 'none', all.length ? 'No note matches.' : 'No notes or summaries yet: add them on the project\'s Literature tab (Notes, Summaries).')]));
 }
 
 // ---- figures tab (sources/figures.js) ----
@@ -756,6 +792,28 @@ $('#tabs').addEventListener('click', e => {
     if (btn) showTab(btn.dataset.tab);
 });
 $('#source_search').oninput = renderSources;
+$('#notes_search').oninput = renderLitNotes;
+
+// ---- the side panel folds away (remembered on this device) ----
+const SIDE_KEY = 'research_board_review_side';
+function foldSide(folded) {
+    $('.review').classList.toggle('side_folded', folded);
+    $('.side_panel').hidden = folded;
+    $('#side_unfold').hidden = !folded;
+    $('#side_fold').setAttribute('aria-expanded', !folded);
+    try { localStorage.setItem(SIDE_KEY, folded ? 'folded' : ''); } catch { }
+}
+$('#side_fold').onclick = () => foldSide(true);
+$('#side_unfold').onclick = () => foldSide(false);
+// folded last time, unless the page was opened on one of its tabs (…#notes from the dashboard)
+foldSide((() => { try { return localStorage.getItem(SIDE_KEY) === 'folded'; } catch { return false; } })() && !location.hash);
+// …#notes / #figures asked for while the page is open (a link, Back): that tab, the panel shown
+addEventListener('hashchange', () => {
+    const asked = location.hash.slice(1);
+    if (!['sources', 'figures', 'notes', 'preview'].includes(asked)) return;
+    foldSide(false);
+    showTab(asked);
+});
 
 $('#cite_style').onchange = e => {
     project.citeStyle = e.target.value;
@@ -794,6 +852,7 @@ window.addEventListener('focus', () => {
     loadSources();
     renderSources();
     renderFigures();
+    renderLitNotes();
     if (mode === 'visual') refreshChips();
     renderPreview();
 });

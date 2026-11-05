@@ -163,7 +163,9 @@ const MdBar = (() => {
         { act: 'list', label: '• List', title: 'Bullet list', shift: true, code: 'Digit8', keyLabel: '8', run: a => prefix(a, '- ') },
         { act: 'numbered', label: '1. List', title: 'Numbered list', shift: true, code: 'Digit7', keyLabel: '7', run: a => prefix(a, '1. ') },
         { act: 'quote', label: '❝', title: 'Quote', shift: true, code: 'Digit9', keyLabel: '9', run: a => prefix(a, '> ') },
-        { act: 'link', label: 'Link', title: 'Link', key: 'k', run: link },
+        { act: 'link', label: '🔗 Link', title: 'Link: its address and words', key: 'k', run: link },
+        // boxes that can cite papers (CitePicker.attach shows it): the papers, to put one in as (Author, year) or Author (year)
+        { act: 'cite', label: '@ Cite', title: 'Cite a paper (or type @)', run: a => a.rbCite?.(), hiddenAtFirst: true },
         { act: 'undo', label: '↶', title: 'Undo', keyLabel: 'Z', run: a => history(a, 'undo') },
         { act: 'redo', label: '↷', title: 'Redo', keyLabel: 'Y', run: a => history(a, 'redo') },
         // pages that load writing/sketch.js: draw or handwrite into the text
@@ -451,6 +453,7 @@ const MdBar = (() => {
             btn.textContent = label;
             btn.title = title;
             btn.setAttribute('aria-label', title);
+            if (b.hiddenAtFirst) btn.hidden = true;
             bar.append(btn);
         }
         // Visual / Markdown, at the end of the bar

@@ -451,13 +451,23 @@ form.modal .image_field label.image_field_upload { display: inline-flex; align-i
     .bar .back { max-width: 46vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 }
 
-/* @ in a note box: the papers to cite (citepicker.js) */
-.composer.cite_picker { position: fixed; z-index: 2000; padding: 4px; max-height: 280px; overflow: auto; display: grid; gap: 2px; }
+/* the papers to cite: @ in a text box, or the Cite button (citepicker.js) */
+.composer.cite_picker { position: fixed; z-index: 2000; padding: 6px; max-height: min(380px, 70vh); overflow: hidden; display: grid; grid-template-rows: auto minmax(0, 1fr) auto; gap: 4px; }
 .cite_picker[hidden] { display: none; }
-.cite_pick { display: grid; gap: 1px; padding: 6px 8px; border-radius: 6px; cursor: pointer; }
+.cite_search { display: none; width: 100%; }
+.cite_picker.browsing .cite_search { display: block; }
+.cite_rows { display: grid; gap: 2px; overflow: auto; min-height: 0; }
+.cite_pick { display: grid; gap: 4px; padding: 6px 8px; border-radius: 6px; }
+.cite_main { display: grid; gap: 1px; cursor: pointer; min-width: 0; }
 .cite_pick strong { font-size: .85rem; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .cite_pick small { color: var(--muted); font-size: .74rem; }
 .cite_pick.active, .cite_pick:hover { background: color-mix(in srgb, var(--accent) 14%, transparent); }
+.cite_forms { display: flex; flex-wrap: wrap; gap: 4px; }
+.cite_form { padding: 2px 8px; border: 1px solid var(--line); border-radius: 999px; background: var(--bg); color: var(--text); font: inherit; font-size: .75rem; cursor: pointer; }
+.cite_form:hover { border-color: var(--accent); color: var(--accent); }
+.cite_none { margin: 4px 8px; color: var(--muted); font-size: .85rem; font-style: italic; }
+.cite_keys { padding: 2px 6px 0; color: var(--muted); font-size: .7rem; }
+@media (pointer: coarse) { .cite_keys { display: none; } }
 /* a cited paper in a note: opens the paper */
 a.paper_ref { color: var(--accent); text-decoration: none; border-bottom: 1px dotted currentColor; }
 a.paper_ref:hover { border-bottom-style: solid; }

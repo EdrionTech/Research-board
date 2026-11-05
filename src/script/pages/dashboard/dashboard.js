@@ -62,6 +62,15 @@ function buildSections() {
         $('h3', el).textContent = section.label;
         $('.hint', el).textContent = section.hint;
         $('.add', el).title = 'Add to ' + section.label;
+        // the Literature tab's notes and summaries go into your writing from the review's Notes tab
+        if (type === 'note' || type === 'summary') {
+            const use = document.createElement('a');
+            use.className = 'link use_in_review';
+            use.textContent = 'Use in the review →';
+            use.title = 'Insert them into your literature review (its Notes tab)';
+            use.href = 'review.html?id=' + encodeURIComponent(project.id) + '#notes';
+            $('.add', el).before(use);
+        }
         $(`[data-sections="${section.tab}"]`).append(el);
     }
 }

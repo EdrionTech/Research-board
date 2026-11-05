@@ -95,6 +95,7 @@
 .figures_panel h3 small { color: var(--muted); font-weight: normal; }
 .figures_panel header .spacer { flex: 1; }
 .figures_panel .hint { margin: 0; font-size: .8rem; color: var(--muted); }
+.section header .use_in_review { margin-left: auto; margin-right: 8px; font-size: .8rem; }
 
 
 .selection_bar { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; font-size: .85rem; color: var(--muted); }

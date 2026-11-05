@@ -26,6 +26,7 @@ const digestPicker = createSourcePicker($('#digest_picker'), { sources: sourceIt
 for (const [value, label] of Object.entries(Cite.STYLES)) exportForm.elements.style.append(new Option(label, value));
 for (const [value, label] of Object.entries(Cite.INLINE_STYLES)) $('#project_cite_style').append(new Option(label, value));
 $('#open_review').href = 'review.html?id=' + encodeURIComponent(project?.id || '');
+$('#figures_to_review').href = 'review.html?id=' + encodeURIComponent(project?.id || '') + '#figures';
 
 // sources that pass the search, status, tag and author filters
 function shownSources() {

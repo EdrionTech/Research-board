@@ -113,6 +113,11 @@
     border-bottom: 2px solid transparent;
 }
 .tabs button[aria-selected="true"] { color: var(--text); border-bottom-color: var(--accent); font-weight: 600; }
+/* ⟩ folds the side panel away; "⟨ Side panel" in the writing toolbar brings it back */
+.tabs .side_fold { margin-left: auto; border-bottom-color: transparent; font-size: 1rem; }
+.review.side_folded { grid-template-columns: minmax(0, 1fr); }
+.side_panel[hidden], .side_unfold[hidden] { display: none; }
+.toolbar .side_unfold { margin-left: 6px; }
 
 .cite_warning { margin: 0 0 8px; padding: 6px 10px; border-radius: 8px; font-size: .85rem; background: color-mix(in srgb, var(--danger) 15%, transparent); }
 
@@ -194,3 +199,16 @@
     .export_menu.open .menu_items { display: grid; gap: 6px; }
     .menu_items .btn { width: 100%; justify-content: flex-start; }
 }
+
+/* Notes tab: the Literature tab's notes and summaries, to insert */
+.notes_tab { flex: 1; min-height: 0; overflow: auto; display: grid; gap: 8px; align-content: start; }
+.notes_tab[hidden] { display: none; }
+.notes_tab .hint { margin: 0; font-size: .8rem; color: var(--muted); }
+.lit_notes { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.lit_notes .none { color: var(--muted); font-size: .85rem; font-style: italic; }
+.lit_note { display: grid; gap: 6px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); }
+.lit_note_head { display: grid; gap: 2px; }
+.lit_note_head small { color: var(--muted); font-size: .72rem; text-transform: uppercase; letter-spacing: .04em; }
+.lit_note .md { font-size: .88rem; }
+.lit_note_actions { display: flex; flex-wrap: wrap; gap: 6px; }
+#tabs [hidden] { display: none; }
