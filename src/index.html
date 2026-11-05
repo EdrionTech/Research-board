@@ -7,6 +7,7 @@
     <link rel="icon" type="image/svg+xml" href="assets/logo.svg">
     <title>Research Board</title>
     <link rel="stylesheet" href="style/base.css">
+    <link rel="stylesheet" href="style/icons.css">
     <link rel="stylesheet" href="style/style.css">
     <!-- theme + style, before the page draws -->
     <!-- where the data is (the server, or the app on this device); then it runs the page's scripts (data-src) -->
@@ -30,7 +31,7 @@
             <img alt="Project thumbnail" class="project_thumbnail">
             <div class="overhead">
                 <div class="hover_hide">
-                    <button type="button" class="edit">Edit</button>
+                    <button type="button" class="edit">Settings</button>
                     <button type="button" class="delete">Delete</button>
                 </div>
                 <h1 class="project_title"></h1>
@@ -51,6 +52,15 @@
             <label>Description <textarea name="desc" rows="3"></textarea></label>
             <!-- a link or an uploaded image (images.js) -->
             <div id="project_image"></div>
+            <!-- a new project: on this device only, or on one of your servers from the start (home.js) -->
+            <label id="project_place_label" hidden>Keep it
+                <select name="place" id="project_place"></select>
+            </label>
+            <!-- an existing project's sync with a server, and copies (core/project_sync.js) -->
+            <section class="project_sync" id="project_sync" hidden>
+                <h3>Sync</h3>
+                <div id="project_sync_body"></div>
+            </section>
             <div class="actions">
                 <button type="button" class="btn" data-close>Cancel</button>
                 <button type="submit" class="btn primary">Save</button>
@@ -71,8 +81,10 @@
         </div>
     </div>
 
+    <script data-src="script/core/ui.js"></script>
     <script data-src="script/core/store.js"></script>
     <script data-src="script/core/images.js"></script>
+    <script data-src="script/core/project_sync.js"></script>
     <script data-src="script/pages/home.js"></script>
 </body>
 

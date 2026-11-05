@@ -17,12 +17,20 @@
 
     // ---- the browser, talking to a server ----
 
+    // a server open to other computers asks for its key (apps/server/server.js, "Access"); this browser keeps it
+    const KEY = 'research_board_server_key';
+    const storedKey = () => { try { return localStorage.getItem(KEY) || ''; } catch { return ''; } };
+    const auth = () => storedKey() ? { Authorization: 'Bearer ' + storedKey() } : {};
+
     async function remoteRequest(method, path, body) {
         const file = body instanceof Blob;
         const res = await fetch('/api/' + path, {
             method,
-            headers: file ? { 'Content-Type': body.type || 'application/octet-stream', 'X-File-Name': encodeURIComponent(body.name || '') }
-                : body === undefined ? {} : { 'Content-Type': 'application/json' },
+            headers: {
+                ...auth(),
+                ...(file ? { 'Content-Type': body.type || 'application/octet-stream', 'X-File-Name': encodeURIComponent(body.name || '') }
+                    : body === undefined ? {} : { 'Content-Type': 'application/json' }),
+            },
             body: file || body === undefined ? body : JSON.stringify(body),
         });
         if (res.ok && method === 'GET' && path.startsWith('files/')) {
@@ -35,7 +43,25 @@
 
     async function fromServer() {
         let res;
-        try { res = await fetch('/api/boot', { cache: 'no-store' }); } catch { return null; }
+        // opened from an invite (…/#invite=…, a link or QR code from the server): swapped once for the key
+        const invite = new URLSearchParams(location.hash.slice(1)).get('invite');
+        if (invite) {
+            try {
+                const ua = navigator.userAgent;
+                const name = `${/Edg\//.test(ua) ? 'Edge' : /Firefox\//.test(ua) ? 'Firefox' : /Chrome\//.test(ua) ? 'Chrome' : /Safari\//.test(ua) ? 'Safari' : 'A browser'}`
+                    + ` on ${/Android/.test(ua) ? 'Android' : /iPhone|iPad/.test(ua) ? 'iPhone or iPad' : /Windows/.test(ua) ? 'Windows' : /Mac/.test(ua) ? 'Mac' : /Linux/.test(ua) ? 'Linux' : 'a device'}`;
+                const answer = await fetch('/api/invite', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token: invite, name }) });
+                if (answer.ok) localStorage.setItem(KEY, (await answer.json()).key);
+            } catch { /* then it asks for the key as usual */ }
+            history.replaceState(null, '', location.pathname + location.search); // (used up: not kept in the address)
+        }
+        for (let asked = 0; ; asked++) {
+            try { res = await fetch('/api/boot', { cache: 'no-store', headers: auth() }); } catch { return null; }
+            if (res.status !== 401) break;
+            const key = prompt(asked ? "That key wasn't accepted. The server's key:" : "This Research Board server needs its key (shown where the server was started):");
+            if (!key) throw new Error("this server needs its key. Reload the page to enter it.");
+            try { localStorage.setItem(KEY, key.trim()); } catch { }
+        }
         if (!res.ok) return null; // not our server (Live Server)
         return { ...(await res.json()), request: remoteRequest };
     }

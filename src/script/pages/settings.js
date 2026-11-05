@@ -1,241 +1,5 @@
-// Settings page: appearance (theme, style, your own CSS) and your data (backup, restore, delete).
-// Appearance is saved by core/settings.js; data goes through core/store.js.
-
-// ---- appearance ----
-
-function renderAppearance() {
-    const settings = Settings.read();
-    for (const btn of $$('[data-theme-choice]')) btn.setAttribute('aria-checked', btn.dataset.themeChoice === settings.theme);
-
-    $('#style_cards').replaceChildren(...Object.entries(Settings.STYLES).map(([id, style]) => {
-        const card = el('button', 'style_card');
-        card.type = 'button';
-        card.setAttribute('role', 'radio');
-        card.setAttribute('aria-checked', id === settings.style);
-        card.dataset.style = id;
-        // a tiny picture of the style: page, window, button, ink
-        const [page, sheet, key, ink] = style.swatch;
-        const preview = el('span', 'style_preview');
-        preview.style.background = page;
-        preview.innerHTML = `<span class="pv_window" style="background:${sheet};border-color:${ink}">
-            <span class="pv_line" style="background:${ink}"></span><span class="pv_line short" style="background:${ink}"></span>
-            <span class="pv_key" style="background:${key};border-color:${ink}"></span></span>`;
-        preview.classList.add('pv_' + id); // each style can draw its own little picture (settings.css)
-        card.append(preview, el('strong', '', style.label), el('small', '', style.description));
-        return card;
-    }));
-
-    renderPalettes(settings);
-    if (document.activeElement !== $('#custom_css')) $('#custom_css').value = settings.customCss;
-}
-
-// ---- colours: the style's own choices, your saved sets (editable), and + New ----
-
-const sliceOf = colors => (colors.length === 1 ? colors[0]
-    : `conic-gradient(${colors.map((c, i) => `${c} ${i * 100 / colors.length}% ${(i + 1) * 100 / colors.length}%`).join(', ')})`);
-const RAINBOW = 'conic-gradient(#f03e3e, #f59f00, #fab005, #40c057, #15aabf, #4c6ef5, #ae3ec9, #f03e3e)';
-const newSetId = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 5);
-
-function circle(id, label, background, on, extra = '') {
-    const btn = el('button', 'palette_choice' + extra);
-    btn.type = 'button';
-    btn.setAttribute('role', 'radio');
-    btn.setAttribute('aria-checked', on);
-    btn.dataset.palette = id;
-    btn.title = label;
-    const dot = el('span', 'palette_circle');
-    dot.style.background = background;
-    btn.append(dot, el('small', '', label));
-    return btn;
-}
-
-// An earlier version kept one "Your own" per style (customColors): it becomes a saved set, once
-function adoptOldCustom(settings) {
-    const style = settings.style;
-    const old = settings.customColors?.[style];
-    if (!old || !Settings.PALETTES[style]) return settings;
-    const set = { id: newSetId(), label: 'My colours', colors: Settings.fullColors(style, old) };
-    const { [style]: _, ...customColors } = settings.customColors;
-    return Settings.save({
-        customColors,
-        savedPalettes: { ...settings.savedPalettes, [style]: [...Settings.savedOf(settings, style), set] },
-        palettes: settings.palettes?.[style] === 'custom' ? { ...settings.palettes, [style]: 'saved:' + set.id } : settings.palettes,
-    });
-}
-
-function renderPalettes(settings) {
-    const palette = Settings.PALETTES[settings.style];
-    $('#palette_setting').hidden = !palette;
-    if (!palette) return;
-    settings = adoptOldCustom(settings);
-    const style = settings.style;
-    let chosen = settings.palettes?.[style] || 'original';
-    if (!Settings.choiceOf(settings, style, chosen)) chosen = 'original'; // a deleted set
-    $('#palette_hint').textContent = `Repaint ${Settings.STYLES[style].label} in other colours${palette.families.length > 1 ? ' (each circle is a set)' : ''}. Light and dark follow. + New saves your own set, to edit any time.`;
-    const saved = Settings.savedOf(settings, style);
-    const newBtn = circle('new', '+ New', RAINBOW, false, ' new');
-    newBtn.title = 'Save a new colour set, starting from the colours you have now';
-    $('#palette_circles').replaceChildren(
-        ...palette.choices.map(c => circle(c.id, c.label, sliceOf(c.colors), c.id === chosen)),
-        ...saved.map(set => circle('saved:' + set.id, set.label, sliceOf(Settings.fullColors(style, set.colors)), 'saved:' + set.id === chosen, ' saved')),
-        newBtn);
-    renderSetEditor(settings, chosen);
-}
-
-// the chosen saved set, editable: its name, a colour box per family, duplicate, delete
-function renderSetEditor(settings, chosen) {
-    const box = $('#palette_custom');
-    const choice = Settings.choiceOf(settings, settings.style, chosen);
-    box.hidden = !choice?.saved;
-    if (!choice?.saved) return;
-    const { families, roles = [] } = Settings.PALETTES[settings.style];
-    const name = el('input', 'set_name');
-    name.value = choice.label;
-    name.maxLength = 40;
-    name.setAttribute('aria-label', 'Name of this colour set');
-    const nameLabel = el('label', 'set_name_label');
-    nameLabel.append(el('span', '', 'Name'), name);
-    const colors = el('div', 'set_colors');
-    colors.append(...families.map((family, i) => {
-        const label = el('label', 'custom_color');
-        const input = el('input');
-        input.type = 'color';
-        input.value = choice.colors[i];
-        input.dataset.index = i;
-        // named for what it paints (the details on hover)
-        const [name, what] = roles[i] || [family[0].toUpperCase() + family.slice(1), ''];
-        label.title = what;
-        input.setAttribute('aria-label', what ? `${name}: ${what}` : name);
-        label.append(input, el('span', '', name));
-        return label;
-    }));
-    const actions = el('div', 'set_actions');
-    for (const [act, label] of [['duplicate', 'Duplicate'], ['delete', 'Delete']]) {
-        const btn = el('button', 'btn small' + (act === 'delete' ? ' danger' : ''), label);
-        btn.type = 'button';
-        btn.dataset.setAct = act;
-        actions.append(btn);
-    }
-    box.dataset.set = choice.saved.id;
-    box.replaceChildren(nameLabel, colors, actions, el('small', 'hint', 'Changes are saved as you make them. Shades for light and dark are worked out from these colours, kept readable.'));
-}
-
-// the saved sets of the style, with one changed (or removed: change null)
-function withSet(settings, id, change) {
-    const style = settings.style;
-    const list = Settings.savedOf(settings, style)
-        .map(set => (set.id === id ? (change ? { ...set, ...change } : null) : set)).filter(Boolean);
-    return { ...settings.savedPalettes, [style]: list };
-}
-
-function addSet(settings, colors, label) {
-    const style = settings.style;
-    const list = Settings.savedOf(settings, style);
-    const set = { id: newSetId(), label: label || `My colours ${list.length + 1}`, colors };
-    Settings.save({ savedPalettes: { ...settings.savedPalettes, [style]: [...list, set] }, palettes: { ...settings.palettes, [style]: 'saved:' + set.id } });
-    renderAppearance();
-    $('#palette_custom .set_name')?.select();
-}
-
-const editedColors = input => {
-    const settings = Settings.read();
-    const id = $('#palette_custom').dataset.set;
-    const set = Settings.savedOf(settings, settings.style).find(p => p.id === id);
-    const colors = Settings.fullColors(settings.style, set?.colors);
-    colors[Number(input.dataset.index)] = input.value;
-    return { settings, id, savedPalettes: withSet(settings, id, { colors }) };
-};
-// while dragging in the picker: shown at once; saved when you let go
-$('#palette_custom').addEventListener('input', e => {
-    if (!e.target.matches('input[type="color"]')) return;
-    const { settings, savedPalettes } = editedColors(e.target);
-    Settings.apply({ ...settings, savedPalettes });
-});
-$('#palette_custom').addEventListener('change', e => {
-    const settings = Settings.read();
-    const id = $('#palette_custom').dataset.set;
-    if (e.target.matches('input[type="color"]')) Settings.save({ savedPalettes: editedColors(e.target).savedPalettes });
-    else if (e.target.matches('.set_name')) Settings.save({ savedPalettes: withSet(settings, id, { label: e.target.value.trim() || 'My colours' }) });
-    else return;
-    // the circles show the new colours / name; the editor stays as it is (you may still be in it)
-    const after = Settings.read();
-    const btn = $(`#palette_circles [data-palette="saved:${id}"]`);
-    const set = Settings.choiceOf(after, after.style, 'saved:' + id);
-    if (btn && set) btn.replaceWith(circle(btn.dataset.palette, set.label, sliceOf(set.colors), true, ' saved'));
-});
-$('#palette_custom').addEventListener('keydown', e => {
-    if (e.key === 'Enter' && e.target.matches('.set_name')) e.target.blur();
-});
-$('#palette_custom').addEventListener('click', e => {
-    const act = e.target.closest('[data-set-act]')?.dataset.setAct;
-    if (!act) return;
-    const settings = Settings.read();
-    const id = $('#palette_custom').dataset.set;
-    const set = Settings.choiceOf(settings, settings.style, 'saved:' + id);
-    if (!set) return;
-    if (act === 'duplicate') return addSet(settings, [...set.colors], (set.label + ' copy').slice(0, 40));
-    if (!confirm(`Delete the colour set "${set.label}"?`)) return;
-    Settings.save({ savedPalettes: withSet(settings, id, null), palettes: { ...settings.palettes, [settings.style]: 'original' } });
-    renderAppearance();
-});
-
-$('#palette_circles').addEventListener('click', e => {
-    const btn = e.target.closest('[data-palette]');
-    if (!btn) return;
-    const settings = Settings.read();
-    if (btn.dataset.palette === 'new') {
-        // starts from what's showing now: the chosen colours, or the style's own
-        const current = Settings.choiceOf(settings, settings.style, settings.palettes?.[settings.style] || 'original')
-            || Settings.PALETTES[settings.style].choices[0];
-        return addSet(settings, [...current.colors]);
-    }
-    Settings.save({ palettes: { ...settings.palettes, [settings.style]: btn.dataset.palette } });
-    renderAppearance();
-});
-
-$('#theme_choice').addEventListener('click', e => {
-    const btn = e.target.closest('[data-theme-choice]');
-    if (!btn) return;
-    Settings.save({ theme: btn.dataset.themeChoice });
-    renderAppearance();
-});
-
-$('#style_cards').addEventListener('click', e => {
-    const card = e.target.closest('[data-style]');
-    if (!card) return;
-    Settings.save({ style: card.dataset.style });
-    renderAppearance();
-});
-
-function showCssState(text) {
-    $('#css_state').textContent = text;
-    setTimeout(() => { if ($('#css_state').textContent === text) $('#css_state').textContent = ''; }, 2500);
-}
-
-$('#apply_css').onclick = () => {
-    Settings.save({ customCss: $('#custom_css').value });
-    showCssState('Applied ✓');
-};
-$('#clear_css').onclick = () => {
-    $('#custom_css').value = '';
-    Settings.save({ customCss: '' });
-    showCssState('Cleared');
-};
-$('#css_file').addEventListener('change', async e => {
-    const file = e.target.files[0];
-    e.target.value = '';
-    if (!file) return;
-    $('#custom_css').value = await file.text();
-    Settings.save({ customCss: $('#custom_css').value });
-    showCssState(`Loaded ${file.name} ✓`);
-});
-// Ctrl/Cmd + Enter applies
-$('#custom_css').addEventListener('keydown', e => {
-    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
-        e.preventDefault();
-        $('#apply_css').click();
-    }
-});
+// Settings page: appearance (core/appearance.js: theme, style, colours, your own CSS, shared with the server's
+// control page), sync with a server, and your data (backup, restore, delete). Data goes through core/store.js.
 
 // ---- your data ----
 
@@ -300,8 +64,289 @@ $('#delete_all').onclick = async () => {
     renderStorage();
 };
 
-renderAppearance();
+// ---- sync with a server (Store.syncLinks…, core/place/sync.js) ----
+
+let connected = null; // { address, key, name, projects } once a connection worked
+
+const setSyncState = text => { $('#sync_state').textContent = text; };
+const projectTitle = id => Store.getProject(id)?.title || 'A project no longer here';
+const ago = time => {
+    if (!time) return 'not yet';
+    const minutes = Math.round((Date.now() - time) / 60000);
+    return minutes < 1 ? 'just now' : minutes < 60 ? `${minutes} min ago` : new Date(time).toLocaleString();
+};
+function syncRow(title, detail, buttons, error = false) {
+    const li = document.createElement('li');
+    const label = document.createElement('span');
+    label.textContent = title;
+    if (detail) {
+        const small = document.createElement('small');
+        small.textContent = detail;
+        small.classList.toggle('error', error);
+        label.append(small);
+    }
+    li.append(label, ...buttons);
+    return li;
+}
+function syncButton(text, onClick, primary = false) {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'btn small' + (primary ? ' primary' : '');
+    button.textContent = text;
+    button.onclick = async () => {
+        button.disabled = true;
+        try { await onClick(); } finally { button.disabled = false; }
+    };
+    return button;
+}
+const emptyRow = text => Object.assign(document.createElement('li'), { className: 'empty', textContent: text });
+const counted = (n, word) => `${n} ${word}${n === 1 ? '' : 's'}`;
+const syncSummary = r => r.error ? r.error : `${counted(r.pulled, 'change')} came, ${counted(r.pushed, 'change')} went, ${counted(r.files, 'file')} copied`;
+
+// whether each saved server answers (checked when the page opens): address → { ok, count } | { error }
+const serverStatus = new Map();
+const serverName = address => {
+    const saved = Store.savedServers().find(s => s.address === String(address).replace(/\/+$/, ''));
+    return saved?.name ? `${saved.name} (${address.replace(/^https?:\/\//, '').replace(/\/+$/, '')})` : String(address).replace(/^https?:\/\//, '').replace(/\/+$/, '');
+};
+async function checkServers() {
+    await Promise.all(Store.savedServers().map(async s => {
+        try { serverStatus.set(s.address, { ok: true, count: (await Store.serverProjects(s.address, s.key)).length }); }
+        catch (err) { serverStatus.set(s.address, { error: err.message }); }
+    }));
+    renderSavedServers();
+}
+
+// the servers this device knows: their projects (what can go there, what can come here), invites, forgetting
+let lastLinks = [];
+function renderSavedServers() {
+    const servers = Store.savedServers();
+    const same = (a, b) => String(a).replace(/\/+$/, '') === String(b).replace(/\/+$/, '');
+    $('#sync_saved').replaceChildren(...servers.map(s => {
+        const synced = lastLinks.filter(l => same(l.server, s.address)).length;
+        const status = serverStatus.get(s.address);
+        const state = !status ? 'checking…' : status.ok ? `answering · ${counted(status.count, 'project')} on it` : `not answering (${status.error})`;
+        const row = syncRow(s.name || s.address, `${s.name ? s.address + ' · ' : ''}${counted(synced, 'project')} synced here · ${state}`, [
+            syncButton(connected?.address === s.address ? 'Projects ✓' : 'Projects', () => connect(s.address, s.key), connected?.address !== s.address),
+            syncButton('Invite a device', () => showInvite(s)),
+            syncButton('Forget', async () => {
+                if (!confirm(`Forget ${s.name || s.address} and its key on this device? Projects synced with it keep syncing; to stop one, use its own settings.`)) return;
+                Store.forgetServer(s.address);
+                if (connected?.address === s.address) connected = null;
+                renderSync();
+            }),
+        ], !!status?.error);
+        return row;
+    }));
+    if (!servers.length) $('#sync_saved').append(emptyRow('None yet: add one below.'));
+}
+
+async function connect(address, key = '', { quiet = false } = {}) {
+    if (!quiet) setSyncState('Connecting…');
+    try {
+        const { server, projects, moved } = await Store.connectServer(address, key);
+        connected = { address: server.address, key: server.key, name: server.name, projects };
+        serverStatus.set(server.address, { ok: true, count: projects.length });
+        $('#sync_address').value = ''; // (added: it's under Your servers now)
+        $('#sync_key').value = '';
+        $('.sync_keybox').open = false;
+        setSyncState(`Connected to ${server.name || server.address}: ${counted(projects.length, 'project')} there.`
+            + (moved ? ` Its new address now syncs ${counted(moved, 'project')} that used the old one.` : ''));
+    } catch (err) {
+        if (!quiet) connected = null;
+        setSyncState(quiet ? `${address} isn't answering right now (${err.message}). If its address changed, enter the new one.` : `Couldn't connect: ${err.message}`);
+    }
+    renderSync();
+}
+
+async function renderSync() {
+    let links = [];
+    try { links = await Store.syncLinks(); } catch (err) { setSyncState("Couldn't read the synced projects: " + err.message); }
+    lastLinks = links;
+    renderSavedServers();
+    const linked = new Set(links.map(l => l.projectId));
+
+    links.sort((a, b) => serverName(a.server).localeCompare(serverName(b.server)) || projectTitle(a.projectId).localeCompare(projectTitle(b.projectId)));
+    $('#sync_links').replaceChildren(...links.map(link => syncRow(
+        projectTitle(link.projectId),
+        link.error ? `on ${serverName(link.server)} · last try failed: ${link.error}` : `on ${serverName(link.server)} · synced ${ago(link.syncedAt)}`,
+        [syncButton('Stop syncing', async () => {
+            if (!confirm(`Stop syncing "${projectTitle(link.projectId)}"? Both copies stay; this one won't get the server's changes any more.`)) return;
+            await Store.unlinkProject(link.projectId);
+            setSyncState('Stopped syncing ' + projectTitle(link.projectId));
+            renderSync();
+        })],
+        !!link.error,
+    )));
+    if (!links.length) $('#sync_links').append(emptyRow("None yet: open a server above (Projects), or a project's own settings."));
+    $('#sync_now').hidden = !links.length;
+
+    $('#sync_choices').hidden = !connected;
+    if (!connected) return;
+    $('#sync_choices_title').textContent = `Projects on ${connected.name || connected.address.replace(/^https?:\/\//, '')}`;
+    const link = { server: connected.address, key: connected.key };
+    const here = Store.getProjects().filter(p => !linked.has(p.id));
+    const there = connected.projects.filter(p => !linked.has(p.id) && !Store.getProject(p.id));
+
+    $('#sync_up').replaceChildren(...here.map(project => syncRow(project.title || 'Untitled project', '', [
+        syncButton('Put on server', async () => {
+            setSyncState(`Putting "${project.title}" on the server…`);
+            try {
+                const result = await Store.linkProject(project.id, link);
+                setSyncState(`"${project.title}" is on the server and synced: ${syncSummary(result)}.`);
+            } catch (err) { setSyncState(`Couldn't put "${project.title}" on the server: ${err.message}`); }
+            await refreshServerList();
+        }, true),
+    ])));
+    if (!here.length) $('#sync_up').append(emptyRow('Every project here is synced.'));
+
+    $('#sync_down').replaceChildren(...there.map(project => syncRow(project.title || 'Untitled project', '', [
+        syncButton('Bring here', async () => {
+            setSyncState(`Bringing "${project.title}" here…`);
+            try {
+                const result = await Store.linkProject(project.id, link);
+                setSyncState(`"${project.title}" is here and synced: ${syncSummary(result)}.`);
+            } catch (err) { setSyncState(`Couldn't bring "${project.title}" here: ${err.message}`); }
+            await refreshServerList();
+        }, true),
+    ])));
+    if (!there.length) $('#sync_down').append(emptyRow('Nothing else on this server.'));
+}
+
+async function refreshServerList() {
+    if (connected) {
+        try { connected.projects = await Store.serverProjects(connected.address, connected.key); } catch { }
+    }
+    renderSync();
+}
+
+$('#sync_form').addEventListener('submit', async e => {
+    e.preventDefault();
+    await connect($('#sync_address').value, $('#sync_key').value);
+});
+
+$('#sync_now').onclick = async () => {
+    setSyncState('Syncing…');
+    const results = await Store.syncNow().catch(err => [{ error: err.message }]);
+    setSyncState(results.length
+        ? results.map(r => `${projectTitle(r.projectId)}: ${syncSummary(r)}`).join(' · ')
+        : 'Another open page is syncing right now.');
+    renderSync();
+};
+
+// ---- QR codes: scanning a server's invite, showing one for another device ----
+// (src/vendor: qrcode.js draws them, jsQR.js reads them where the browser has no BarcodeDetector of its own)
+
+const vendorScript = (file, global) => window[global] ? Promise.resolve(window[global]) : new Promise((resolve, reject) => {
+    const script = document.createElement('script');
+    script.src = '../vendor/' + file;
+    script.onload = () => resolve(window[global]);
+    script.onerror = () => reject(new Error(`couldn't load ${file}`));
+    document.head.append(script);
+});
+
+let stopScan = null;
+async function startScan() {
+    stopScan?.();
+    let stream;
+    try {
+        stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false });
+    } catch (err) {
+        return setSyncState(`Couldn't open the camera (${err.message}). Paste the invite link instead.`);
+    }
+    const video = $('#sync_video');
+    $('#sync_scanner').hidden = false;
+    video.srcObject = stream;
+    await video.play().catch(() => { });
+    const native = 'BarcodeDetector' in window && (await BarcodeDetector.getSupportedFormats?.().catch(() => []))?.includes('qr_code');
+    const detector = native ? new BarcodeDetector({ formats: ['qr_code'] }) : null;
+    const read = detector ? null : await vendorScript('jsQR.js', 'jsQR');
+    const canvas = document.createElement('canvas');
+    const context = canvas.getContext('2d', { willReadFrequently: true });
+    const stop = () => {
+        stream.getTracks().forEach(track => track.stop());
+        $('#sync_scanner').hidden = true;
+        if (stopScan === stop) stopScan = null;
+    };
+    stopScan = stop;
+    const look = async () => {
+        if (stopScan !== stop) return;
+        let text = null;
+        if (video.readyState >= 2 && video.videoWidth) {
+            if (detector) text = (await detector.detect(video).catch(() => []))[0]?.rawValue;
+            else {
+                const scale = Math.min(1, 640 / video.videoWidth); // (smaller frames read faster)
+                canvas.width = Math.round(video.videoWidth * scale);
+                canvas.height = Math.round(video.videoHeight * scale);
+                context.drawImage(video, 0, 0, canvas.width, canvas.height);
+                const image = context.getImageData(0, 0, canvas.width, canvas.height);
+                text = read(image.data, image.width, image.height, { inversionAttempts: 'attemptBoth' })?.data;
+            }
+        }
+        if (!text) return setTimeout(look, 250);
+        stop();
+        $('#sync_address').value = text;
+        connect(text);
+    };
+    look();
+}
+
+async function showInvite(server) {
+    setSyncState('Making an invite…');
+    try {
+        const { link, minutes } = await Store.inviteDevice(server.address, server.key);
+        const qrcode = await vendorScript('qrcode.js', 'qrcode');
+        const qr = qrcode(0, 'L');
+        qr.addData(link);
+        qr.make();
+        $('#sync_invite_qr').innerHTML = qr.createSvgTag({ cellSize: 4, margin: 4, scalable: true, alt: 'Invite QR code' });
+        $('#sync_invite_link').value = link;
+        $('#sync_invite_note').textContent = `On the other device: Settings › Sync with a server › Scan QR code, or paste this link there. It works once, for ${minutes} minutes.`;
+        $('#sync_invite').hidden = false;
+        setSyncState('');
+    } catch (err) {
+        setSyncState("Couldn't make an invite: " + err.message);
+    }
+}
+
+$('#sync_scan').hidden = !navigator.mediaDevices?.getUserMedia; // (a camera needs https, or the apps)
+$('#sync_scan').onclick = startScan;
+$('#sync_scan_stop').onclick = () => stopScan?.();
+$('#sync_invite_close').onclick = () => { $('#sync_invite').hidden = true; };
+$('#sync_invite_copy').onclick = async e => {
+    const ok = await copyText($('#sync_invite_link').value);
+    e.target.textContent = ok ? 'Copied ✓' : 'Copy failed';
+    setTimeout(() => { e.target.textContent = 'Copy link'; }, 1600);
+};
+
+// a sync brought changes (here or in another tab): titles and times may have changed
+addEventListener('storage', e => { if (e.key === 'research_board_projects') renderSync(); });
+
+Appearance.mount($('#appearance'));
+
+// ---- tabs: Appearance, Sync, Your data (a link to settings.html#sync opens that one; the last one is kept) ----
+
+const TAB_KEY = 'research_board_settings_tab';
+function showTab(name) {
+    if (!$(`#tabs [data-tab="${name}"]`)) name = 'appearance';
+    for (const tab of $$('#tabs [data-tab]')) tab.setAttribute('aria-selected', tab.dataset.tab === name);
+    for (const panel of $$('[data-panel]')) panel.hidden = panel.dataset.panel !== name;
+    try { sessionStorage.setItem(TAB_KEY, name); } catch { }
+}
+$('#tabs').addEventListener('click', e => {
+    const tab = e.target.closest('[data-tab]');
+    if (tab) showTab(tab.dataset.tab);
+});
+addEventListener('hashchange', () => showTab(location.hash.slice(1)));
+let firstTab = location.hash.slice(1);
+try { firstTab ||= sessionStorage.getItem(TAB_KEY) || ''; } catch { }
+showTab(firstTab);
 renderStorage();
+renderSync();
+// the server used last: opened again by itself (its projects listed, nothing typed); the others checked
+const lastServer = Store.savedServers()[0];
+if (lastServer) connect(lastServer.address, lastServer.key, { quiet: true });
+checkServers();
 
 // back to the page that opened Settings
 Nav.backLink($('#back_link'), '../index.html', 'Projects');

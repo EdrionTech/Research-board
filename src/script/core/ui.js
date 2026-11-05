@@ -141,16 +141,23 @@ function fillFilterRow(row, label, chips, extra = []) {
     row.replaceChildren(toggle, ...chips, ...extra);
 }
 
-// ---- popups: every .modal sits inside #modals and one shows at a time ----
+// ---- popups: every .modal sits inside #modals and one shows at a time (the one window system for every page:
+// system_documents/design/ui.md). On phones they're sheets along the bottom, their buttons always in view.
+// A page tidies up after its own popup on its 'modalclose' event (closed by a button, a click outside, Escape).
 
 function openModal(modal) {
     const modals = $('#modals');
     modals.hidden = false;
     for (const m of $$('.modal', modals)) m.hidden = m !== modal;
+    modal.scrollTop = 0;
 }
 
 function closeModals() {
-    $('#modals').hidden = true;
+    const modals = $('#modals');
+    if (!modals || modals.hidden) return;
+    const open = $$('.modal', modals).find(m => !m.hidden);
+    modals.hidden = true;
+    open?.dispatchEvent(new Event('modalclose'));
 }
 
 document.addEventListener('click', e => {

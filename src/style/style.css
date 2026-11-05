@@ -91,3 +91,7 @@
 @media (max-width: 560px) {
     .project_shelf { padding: 16px; }
 }
+
+/* a project kept in step with a server (project_sync.js) */
+.sync_badge { display: inline-flex; align-items: center; gap: 4px; margin-bottom: 4px; padding: 1px 8px; border-radius: 999px; background: var(--accent); color: #fff; font-size: .75rem; font-weight: 600; }
+.sync_badge .i { width: 1em; height: 1em; }

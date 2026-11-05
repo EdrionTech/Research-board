@@ -304,6 +304,23 @@ $('#tabs').addEventListener('click', e => {
 });
 
 $('#quick_note').onclick = () => openForm(null, 'inbox');
+$('#project_settings').onclick = () => {
+    ProjectSync.render($('#project_sync_body'), project.id, {
+        onCopied: id => { if (confirm('Open the copy now?')) location.href = 'project_dashboard.html?id=' + encodeURIComponent(id); },
+    });
+    openModal($('#project_settings_form'));
+};
+$('#project_settings_form').addEventListener('submit', e => e.preventDefault());
+// edits that clashed while syncing: a count on the Project button (resolved in its window)
+async function markClashes() {
+    const count = (await Store.conflicts(project.id).catch(() => [])).length;
+    $('#project_settings .clash_count')?.remove();
+    if (count) $('#project_settings').append(el('span', 'clash_count', String(count)));
+    $('#project_settings').title = count ? `${count} edit${count === 1 ? '' : 's'} clashed while syncing: open to choose` : 'This project: sync with a server, copies';
+}
+markClashes();
+addEventListener('rb-synced', markClashes);
+$('#project_settings_form').addEventListener('click', e => { if (e.target.closest('button')) setTimeout(markClashes, 500); });
 
 $('.workspace').addEventListener('click', e => {
     const add = e.target.closest('.add');

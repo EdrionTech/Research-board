@@ -327,6 +327,8 @@ const Settings = (() => {
         try { localStorage.setItem(KEY, JSON.stringify(settings)); } catch { /* storage unavailable */ }
         if (window.RB_SERVER && typeof Store !== 'undefined') Store.saveSettings(settings); // (store.js loads after this file)
         apply(settings);
+        // (a page keeping it elsewhere listens: the server's control page saves it in the server's data)
+        dispatchEvent(new CustomEvent('settingssaved', { detail: settings }));
         return settings;
     }
 

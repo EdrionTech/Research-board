@@ -1,26 +1,7 @@
 /* Project dashboard. Shared styles live in base.css. */
 
 
-/* tabs */
-.workspacetabs {
-    display: flex;
-    gap: 4px;
-    padding: 0 24px;
-    border-bottom: 1px solid var(--line);
-    overflow-x: auto;
-}
-.workspacetabs button {
-    border: none;
-    background: none;
-    color: var(--muted);
-    padding: 12px 14px;
-    border-bottom: 2px solid transparent;
-}
-.workspacetabs button[aria-selected="true"] {
-    color: var(--text);
-    border-bottom-color: var(--accent);
-    font-weight: 600;
-}
+/* tabs: the shared .tabs (base.css) */
 
 .workspace { padding: 24px; }
 

@@ -7,6 +7,7 @@
     <link rel="icon" type="image/svg+xml" href="../assets/logo.svg">
     <title>Dashboard</title>
     <link rel="stylesheet" href="../style/base.css">
+    <link rel="stylesheet" href="../style/icons.css">
     <link rel="stylesheet" href="../style/dashboard.css">
     <link rel="stylesheet" href="../style/literature.css">
     <!-- theme + style, before the page draws -->
@@ -23,6 +24,7 @@
         <a href="../index.html" class="back">← Projects</a>
         <h2 class="brand" id="project_title"></h2>
         <!-- quick text note: lands in the Overview inbox unless a section is picked -->
+        <button type="button" class="btn small has_i" id="project_settings" title="This project: sync with a server, copies"><span class="i" data-i="cloud" aria-hidden="true"></span><span class="lbl">Project</span></button>
         <a class="btn small has_i settings_link" href="settings.html" title="Settings: theme, style and your data"><span class="i" data-i="settings" aria-hidden="true"></span><span class="lbl">Settings</span></a>
         <button type="button" class="btn primary" id="quick_note">+ Quick note</button>
     </div>
@@ -156,6 +158,17 @@
     </template>
 
     <div class="modals" id="modals" hidden>
+        <!-- this project's settings: sync with a server, a separate copy (core/project_sync.js) -->
+        <form class="project_settings_form modal" id="project_settings_form" hidden>
+            <h2>Project settings</h2>
+            <section class="project_sync">
+                <h3>Sync</h3>
+                <div id="project_sync_body"></div>
+            </section>
+            <div class="actions">
+                <button type="button" class="btn primary" data-close>Done</button>
+            </div>
+        </form>
         <!-- quick notes and generic section items -->
         <!-- quick notes and the general sections: the note first; papers it's about; where it goes -->
         <form class="item_form modal" id="item_form" hidden>
@@ -341,6 +354,7 @@
     <script data-src="../script/core/ui.js"></script>
     <script data-src="../script/core/store.js"></script>
     <script data-src="../script/core/images.js"></script>
+    <script data-src="../script/core/project_sync.js"></script>
     <script data-src="../script/writing/markdown.js"></script>
     <script data-src="../script/writing/sketch.js"></script>
     <script data-src="../script/writing/mdbar.js"></script>

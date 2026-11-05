@@ -25,6 +25,7 @@ const Store = (() => {
     const newId = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
     const server = window.RB_SERVER; // always there: boot.js runs the page's scripts only once it is
     const remote = Remote(server);
+    const SYNC_MODULE = new URL('place/sync.js', document.currentScript.src).href;
 
     // ---- where records are read and written ----
 
@@ -68,6 +69,7 @@ const Store = (() => {
         if (project) Object.assign(project, data);
         else projects.unshift(project = { ...data, id: newId() });
         write(PROJECTS_KEY, projects, { project });
+        return project.id;
     }
 
     // files an item uses: its uploaded PDF and images written into its text as ![…](asset:ID)
@@ -219,6 +221,183 @@ const Store = (() => {
         return data;
     }
 
+    // ---- sync with servers (place/sync.js): projects here kept in step with a server's copy ----
+    // The local side is this page's own place (RB_SERVER.request); sync.js reaches the server itself.
+
+    const sync = () => import(SYNC_MODULE);
+    const local = (method, path, body) => server.request(method, path, body);
+
+    // after a sync brought changes: this page's copy is read again, and the page (and other tabs) told
+    let reloadWanted = false;
+    async function reloadData() {
+        // changes of this page's still on their way here would be lost from the copy: once they're saved (onSaved)
+        if (remote.pending()) { reloadWanted = true; return; }
+        reloadWanted = false;
+        const { body } = await local('GET', 'boot');
+        Object.assign(server.data, { projects: body.data.projects, items: body.data.items, library: body.data.library });
+        for (const key of [PROJECTS_KEY, ITEMS_KEY]) window.dispatchEvent(new StorageEvent('storage', { key }));
+    }
+
+    const syncLinks = async () => (await sync()).getLinks(local);
+    const serverProjects = async (address, key) => (await sync()).serverProjects(address, key);
+
+    // The servers this device has connected to, so an address and key are entered once:
+    // [{ id, name, address, key, usedAt }], most recently used first. Kept on this device (with its sign-in
+    // tokens, the one thing besides preferences a device keeps for itself: platforms.md "The browser").
+    const SERVERS_KEY = 'research_board_servers';
+    function savedServers() {
+        try { return (JSON.parse(localStorage.getItem(SERVERS_KEY)) || []).sort((a, b) => (b.usedAt || 0) - (a.usedAt || 0)); } catch { return []; }
+    }
+    function keepServers(list) {
+        try { localStorage.setItem(SERVERS_KEY, JSON.stringify(list)); } catch { /* storage unavailable: entered again next time */ }
+    }
+    function forgetServer(address) {
+        keepServers(savedServers().filter(s => s.address !== address));
+    }
+
+    // Connects to a server (`address` may be the one line holding the key: "https://…/#key=…"; with no key, the
+    // saved one for that server is used). Remembers it; if it's a server known at another address (a new tunnel),
+    // the projects synced with it move to this address. → { server: saved entry, projects, moved }
+    async function connectServer(address, key = '') {
+        const { parseAddress, serverInfo, moveServer, redeemInvite, deviceName } = await sync();
+        const parsed = parseAddress(address);
+        const saved = savedServers();
+        if (parsed.invite) key = (await redeemInvite(parsed.server, parsed.invite, deviceName())).key; // this device's own key
+        key = (key || parsed.key || saved.find(s => s.address === parsed.server)?.key || '').trim();
+        let info;
+        try {
+            info = await serverInfo(parsed.server, key);
+        } catch (err) {
+            // a new address for a server known before: try each saved key (a quick tunnel's address changes,
+            // its key doesn't)
+            if (key || !/key/.test(err.message)) throw err;
+            for (const s of saved) {
+                try { info = await serverInfo(parsed.server, s.key); key = s.key; break; } catch { }
+            }
+            if (!info) throw err;
+        }
+        const id = info.server?.id || parsed.server;
+        const before = saved.find(s => s.id === id);
+        let moved = 0;
+        if (before && before.address !== parsed.server) moved = await moveServer(local, before.address, parsed.server, key);
+        const entry = { id, name: info.server?.name || '', address: parsed.server, key, usedAt: Date.now() };
+        keepServers([entry, ...saved.filter(s => s.id !== id && s.address !== parsed.server)]);
+        if (moved) autoSync();
+        return { server: entry, projects: info.projects, moved };
+    }
+
+    // Edits that clashed while devices couldn't sync (place.js `conflicts`): the newer was kept, the other can be
+    // brought back. → [{ id, projectId, kind, recordId, kept, lost, lostFrom: 'here' | 'elsewhere', at }]
+    async function conflicts(projectId = '') {
+        const answer = await local('GET', 'conflicts' + (projectId ? '?project=' + encodeURIComponent(projectId) : ''));
+        return answer.body?.conflicts || [];
+    }
+    async function keepReplaced(conflictId) {
+        await remote.call('POST', 'conflicts/' + conflictId);
+        await reloadData();
+        remote.announceReload();
+        syncSoon(100);
+    }
+    const dismissConflict = conflictId => remote.call('DELETE', 'conflicts/' + conflictId);
+
+    // an invite for another device to a saved server: → { link, minutes } (the link also as a QR code)
+    const inviteDevice = async (address, key) => (await sync()).createInvite(address, key);
+
+    async function linkProject(projectId, { server: address, key }) {
+        const result = await (await sync()).linkProject(local, projectId, { server: address, key });
+        if (result.pulled) { await reloadData(); remote.announceReload(); }
+        watchLinked();
+        return result;
+    }
+
+    async function unlinkProject(projectId) {
+        await (await sync()).unlinkProject(local, projectId);
+        watchLinked();
+    }
+
+    // A separate copy of a project, here only (not synced): its own ids, and its own copies of its files, so it
+    // and the original can change or be deleted apart. The original keeps syncing. → the copy's id
+    async function copyProject(id, title) {
+        const project = getProject(id);
+        if (!project) throw new Error('no such project');
+        const items = getItems(id);
+        // every id the copy needs anew, and the text that refers to them (a note's sourceId, links in writing…)
+        const ids = new Map([[id, newId()], ...items.map(i => [i.id, newId()])]);
+        for (const assetId of new Set([project, ...items].flatMap(assetIdsOf))) {
+            try {
+                const blob = await getAsset(assetId);
+                if (blob) ids.set(assetId, await putAsset(blob));
+            } catch { /* a missing file stays missing in the copy too */ }
+        }
+        // (whole ids only: one isn't changed where it's part of a longer word)
+        const pattern = new RegExp(`(?<![A-Za-z0-9_-])(${[...ids.keys()].map(i => i.replace(/[^A-Za-z0-9_-]/g, '\\$&')).join('|')})(?![A-Za-z0-9_-])`, 'g');
+        const renew = record => JSON.parse(JSON.stringify(record).replace(pattern, from => ids.get(from)));
+        const now = Date.now();
+        const copy = { ...renew(project), title: title || `${project.title} (copy)` };
+        const copies = items.map(i => ({ ...renew(i), updatedAt: now }));
+        write(PROJECTS_KEY, [copy, ...getProjects()], { project: copy });
+        write(ITEMS_KEY, [...allItems(), ...copies], { items: copies });
+        return copy.id;
+    }
+
+    // Every synced project, now. One sync at a time: asked for while one runs, it runs once more after it (so
+    // nothing asked for is missed); open pages take turns (Web Locks). Returns sync.js's results.
+    let syncing = null;
+    let syncAgain = false;
+    function syncNow() {
+        if (syncing) { syncAgain = true; return syncing; }
+        const run = async () => {
+            const results = await (await sync()).syncAll(local);
+            if (results.some(r => r.pulled)) { await reloadData(); remote.announceReload(); }
+            dispatchEvent(new CustomEvent('rb-synced', { detail: results })); // (pages: sync states, clashes)
+            return results;
+        };
+        syncing = (navigator.locks ? navigator.locks.request('research_board_sync', run) : run()).finally(() => {
+            syncing = null;
+            if (syncAgain) { syncAgain = false; syncNow().catch(() => { }); }
+        });
+        return syncing;
+    }
+
+    // ---- live: changes go up within a second of being saved here, and come down as the server announces them ----
+
+    let linkedCount = 0;
+    let soon = null;
+    function syncSoon(wait = 800) {
+        if (!linkedCount) return;
+        clearTimeout(soon);
+        soon = setTimeout(() => syncNow().catch(() => { /* kept on each link; Settings shows it */ }), wait);
+    }
+    // a change of this page's reached this device's storage: it goes to the server, and a reload put off for it is done
+    remote.onSaved = () => {
+        if (reloadWanted) reloadData().catch(() => { });
+        syncSoon();
+    };
+
+    // one live stream per server that projects here sync with (sync.js watchServer); its news starts a sync
+    const watchers = new Map(); // "address key" → stop()
+    async function watchLinked() {
+        let links;
+        try { links = await syncLinks(); } catch { return; }
+        linkedCount = links.length;
+        const wanted = new Map(links.map(l => [`${l.server.replace(/\/+$/, '')} ${l.key}`, l]));
+        for (const [id, stop] of watchers) if (!wanted.has(id)) { stop(); watchers.delete(id); }
+        const { watchServer } = await sync();
+        for (const [id, link] of wanted) {
+            if (!watchers.has(id)) watchers.set(id, watchServer(link.server, link.key, () => syncSoon(300)));
+        }
+    }
+
+    // and, in case a stream is down: soon after the page opens, every minute while it's shown, when the network is back
+    async function autoSync() {
+        await watchLinked();
+        if (document.hidden || !linkedCount) return;
+        try { await syncNow(); } catch { /* kept on each link; Settings shows it */ }
+    }
+    setTimeout(autoSync, 1000);
+    setInterval(autoSync, 60000);
+    addEventListener('online', autoSync);
+
     return {
         DEFAULT_IMAGE, LIBRARY_ID,
         mode: server.app ? 'app' : 'server',
@@ -227,6 +406,9 @@ const Store = (() => {
         saveSettings,
         putAsset, getAsset, deleteAsset,
         backup, restore, clearAll, browserData,
+        syncLinks, serverProjects, linkProject, unlinkProject, syncNow,
+        savedServers, connectServer, forgetServer, copyProject, inviteDevice,
+        conflicts, keepReplaced, dismissConflict,
     };
 
     // ---- talking to the server ----
@@ -236,6 +418,7 @@ const Store = (() => {
     // tabs are told (BroadcastChannel) and refresh as they would for a localStorage change. The server keeps the
     // newer of two saves of an item (updatedAt), so a late one can't undo a later edit.
     function Remote(server) {
+        const api = {}; // what it gives Store (filled in at the end; onSaved set by Store)
         // each open page has its own outbox, and holds a lock (Web Locks) on it while it's open; a page takes over
         // the outboxes of pages that have closed, never one another page is still sending
         const OUTBOX_PREFIX = 'research_board_outbox';
@@ -271,6 +454,7 @@ const Store = (() => {
         // what changed in records → requests
         function send(key, change, value) {
             if (key === ITEMS_KEY && change?.item) queue({ method: 'PUT', path: 'items/' + change.item.id, body: change.item });
+            if (key === ITEMS_KEY) for (const item of change?.items || []) queue({ method: 'PUT', path: 'items/' + item.id, body: item });
             for (const id of change?.deleted || []) queue({ method: 'DELETE', path: 'items/' + id });
             if (key === PROJECTS_KEY && change?.project) queue({ method: 'PUT', path: 'projects/' + change.project.id, body: change.project });
             if (change?.deletedProject) queue({ method: 'DELETE', path: 'projects/' + change.deletedProject });
@@ -298,6 +482,7 @@ const Store = (() => {
                     keep();
                 }
                 notice(false);
+                api.onSaved?.(); // (Store: synced projects send it on)
             } catch {
                 notice(true);
                 retry = setTimeout(flush, 4000);
@@ -347,11 +532,13 @@ const Store = (() => {
 
         // another tab changed something: take the change, and let the page refresh as for a localStorage change
         channel?.addEventListener('message', ({ data }) => {
+            if (data.reload) return reloadData(); // a sync in another tab brought changes
             const { key, change, value } = data;
             if (key === ITEMS_KEY) {
-                const gone = new Set([...(change.deleted || []), ...(change.item ? [change.item.id] : [])]);
+                const added = [...(change.item ? [change.item] : []), ...(change.items || [])];
+                const gone = new Set([...(change.deleted || []), ...added.map(i => i.id)]);
                 server.data.items = server.data.items.filter(i => !gone.has(i.id));
-                if (change.item) server.data.items.push(change.item);
+                server.data.items.push(...added);
             } else if (key === PROJECTS_KEY) {
                 if (change.deletedProject) server.data.projects = server.data.projects.filter(p => p.id !== change.deletedProject);
                 if (change.project) {
@@ -393,7 +580,10 @@ const Store = (() => {
 
         const deleteFile = id => call('DELETE', 'files/' + id);
 
-        return { send, queue, call, putFile, getFile, deleteFile };
+        const pending = () => outbox.length > 0;
+        const announceReload = () => channel?.postMessage({ reload: true });
+
+        return Object.assign(api, { send, queue, call, putFile, getFile, deleteFile, pending, announceReload });
     }
 })();
 

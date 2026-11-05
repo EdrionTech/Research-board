@@ -1,5 +1,7 @@
 {
   "appId": "com.researchboard.phone",
   "appName": "Research Board",
-  "webDir": "../../src"
+  "webDir": "../../src",
+  "server": { "cleartext": true },
+  "android": { "allowMixedContent": true }
 }

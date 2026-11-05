@@ -1,6 +1,6 @@
 // Home page: the shelf of project cards. Data comes from store.js.
 
-const $ = (sel, root = document) => root.querySelector(sel);
+// ($ and the popups: core/ui.js)
 
 const shelf = $('#shelf');
 const template = $('#project_template');
@@ -43,6 +43,7 @@ function render() {
         $('.desc', card).textContent = p.desc;
         return card;
     }));
+    markSynced();
 
     $('#empty').hidden = visible.length > 0;
     $('#empty').innerHTML = projects.length
@@ -50,24 +51,44 @@ function render() {
         : 'No projects yet. Click <b>+ New project</b> to start one.';
 }
 
+// projects kept in step with a server: a "Synced" mark on their cards
+async function markSynced() {
+    let links = [];
+    let clashes = [];
+    try { [links, clashes] = await Promise.all([Store.syncLinks(), Store.conflicts()]); } catch { return; }
+    for (const link of links) {
+        const card = shelf.querySelector(`.project[data-id="${CSS.escape(link.projectId)}"]`);
+        if (!card || card.querySelector('.sync_badge')) continue;
+        const clashed = clashes.filter(c => c.projectId === link.projectId).length;
+        const badge = document.createElement('span');
+        badge.className = 'sync_badge' + (clashed ? ' clash' : '');
+        badge.title = clashed ? `${clashed} edit${clashed === 1 ? '' : 's'} clashed while apart: see its Settings`
+            : link.error ? `Synced with ${link.server}; last try failed: ${link.error}` : `Synced with ${link.server}`;
+        badge.innerHTML = '<span class="i" data-i="cloud" aria-hidden="true"></span>Synced' + (clashed ? ` · ${clashed} clash${clashed === 1 ? '' : 'es'}` : '');
+        $('.overhead', card).prepend(badge);
+    }
+}
+addEventListener('storage', e => { if (e.key === 'research_board_projects') render(); }); // a sync brought changes
+
 // ---- modals ----
 
-function showModal(modal) {
-    modals.hidden = false;
-    form.hidden = modal !== form;
-    viewer.hidden = modal !== viewer;
-}
-
-function closeModals() {
-    if (!form.hidden) imageField.discard(); // an image uploaded but not saved
-    modals.hidden = true;
+const showModal = openModal; // (core/ui.js)
+form.addEventListener('modalclose', () => {
+    imageField.discard(); // an image uploaded but not saved
     editingId = null;
-    openId = null;
-}
+});
+viewer.addEventListener('modalclose', () => { openId = null; });
 
 function openForm(project) {
     editingId = project?.id ?? null;
-    $('#form_heading').textContent = project ? 'Edit project' : 'New project';
+    $('#form_heading').textContent = project ? 'Project settings' : 'New project';
+    // where a new one is kept: here only, or synced with a server you've connected to (Settings › Sync with a server)
+    const servers = project ? [] : Store.savedServers();
+    $('#project_place_label').hidden = !servers.length;
+    $('#project_place').replaceChildren(new Option('On this device only', ''),
+        ...servers.map(s => new Option(`On ${s.name || s.address.replace(/^https?:\/\//, '')}, synced with this device`, s.address)));
+    $('#project_sync').hidden = !project;
+    if (project) ProjectSync.render($('#project_sync_body'), project.id, { settingsHref: 'page/settings.html', onCopied: () => render() });
     form.reset();
     if (project) {
         form.elements.title.value = project.title;
@@ -120,7 +141,9 @@ shelf.addEventListener('keydown', e => {
 
 form.addEventListener('submit', e => {
     e.preventDefault();
-    Store.saveProject({
+    const isNew = !editingId;
+    const server = isNew && Store.savedServers().find(s => s.address === form.elements.place.value);
+    const id = Store.saveProject({
         id: editingId,
         title: form.elements.title.value.trim(),
         desc: form.elements.desc.value.trim(),
@@ -129,13 +152,14 @@ form.addEventListener('submit', e => {
     imageField.commit();
     render();
     closeModals();
+    // on a server from the start (it goes up once it's saved here: the link sends everything)
+    if (server) {
+        Store.linkProject(id, { server: server.address, key: server.key })
+            .then(render)
+            .catch(err => alert(`The project was made on this device, but couldn't be put on ${server.name || server.address}: ${err.message}. Try again from its Settings (Sync).`));
+    }
 });
 
-modals.addEventListener('click', e => {
-    if (e.target === modals || e.target.closest('[data-close]')) closeModals();
-});
-document.addEventListener('keydown', e => {
-    if (e.key === 'Escape' && !modals.hidden) closeModals();
-});
+// (closing a popup: a click outside it, a [data-close] button, Escape: core/ui.js)
 
 render();

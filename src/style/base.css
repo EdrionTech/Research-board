@@ -130,7 +130,7 @@ input, textarea, select {
 }
 textarea { resize: vertical; }
 
-.actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 8px; }
+.actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; margin-top: 8px; } /* (wraps: never wider than its popup) */
 .actions .spacer { flex: 1; }
 .actions [hidden] { display: none; }
 
@@ -250,8 +250,19 @@ form.modal .checks label { display: flex; align-items: center; gap: 6px; color: 
 @media (max-width: 700px) {
     .bar { position: static; gap: 8px; padding: 10px 14px; }
     .brand { font-size: 1.05rem; }
-    .modals { padding: 8px; align-items: end; }
-    .modal { max-height: 92dvh; }
+    /* every popup is a sheet along the bottom (system_documents/design/ui.md), its buttons kept in view */
+    .modals { padding: 0; align-items: end; }
+    .modal, .modal.wide { width: 100%; max-height: 92dvh; border-radius: var(--radius) var(--radius) 0 0; }
+    form.modal { padding-bottom: 0; }
+    form.modal > .actions:last-child {
+        position: sticky;
+        bottom: 0;
+        z-index: 1;
+        margin: 4px -20px 0;
+        padding: 12px 20px calc(12px + env(safe-area-inset-bottom));
+        background: var(--surface);
+        border-top: 1px solid var(--line);
+    }
 }
 
 /* a button's words stay on one line (a squeezed bar wraps whole buttons instead, never their words) */
@@ -542,3 +553,53 @@ body.sketching { overflow: hidden; }
 .fold.folded:not(.open) { -webkit-mask-image: linear-gradient(#000 55%, transparent); mask-image: linear-gradient(#000 55%, transparent); }
 .fold_toggle { justify-self: start; font-size: .85rem; margin-top: 2px; }
 .fold_toggle[hidden] { display: none; }
+
+/* a project's sync settings (project_sync.js): in its settings window (home) and "Project" (dashboard) */
+.project_sync { display: grid; gap: 10px; padding-top: 12px; border-top: 1px solid var(--line); }
+.project_sync h3 { margin: 0; font-size: 1rem; }
+.sync_status { margin: 0; display: grid; gap: 2px; }
+.sync_status small { color: var(--muted); font-size: .85rem; }
+.sync_status small.error { color: var(--danger); }
+.sync_actions, .sync_copy { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.sync_copy small { flex: 1 1 14em; color: var(--muted); font-size: .85rem; }
+.sync_server_pick { flex: 1 1 12em; min-width: 0; }
+.sync_state { margin: 0; font-size: .9rem; color: var(--accent); }
+.sync_state:empty { display: none; }
+.sync_clashes { display: grid; gap: 8px; padding: 10px; border: 1px solid var(--danger); border-radius: var(--radius); }
+.sync_clashes > small { color: var(--muted); font-size: .85rem; }
+.sync_clash { display: grid; gap: 6px; padding-top: 8px; border-top: 1px solid var(--line); }
+.sync_clash small { color: var(--muted); font-size: .8rem; }
+.sync_clash_what { font-weight: 600; overflow-wrap: anywhere; }
+.sync_clash_versions { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 8px; }
+.sync_version { padding: 8px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); min-width: 0; }
+.sync_version p { margin: 2px 0 0; font-size: .85rem; white-space: pre-wrap; overflow-wrap: anywhere; max-height: 8em; overflow: auto; }
+.sync_badge.clash { background: var(--danger); }
+.clash_count { display: inline-grid; place-items: center; min-width: 1.4em; height: 1.4em; margin-left: 4px; padding: 0 4px; border-radius: 999px; background: var(--danger); color: #fff; font-size: .7rem; font-weight: 700; }
+
+/* tabs along the top of a page (system_documents/design/ui.md): buttons with aria-selected; scroll sideways on
+   their own on a narrow screen, never the page */
+.tabs, .workspacetabs {
+    display: flex;
+    gap: 4px;
+    padding: 0 24px;
+    border-bottom: 1px solid var(--line);
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+.tabs button, .workspacetabs button {
+    flex: none;
+    border: none;
+    background: none;
+    color: var(--muted);
+    padding: 12px 14px;
+    border-bottom: 2px solid transparent;
+    white-space: nowrap;
+}
+.tabs button[aria-selected="true"], .workspacetabs button[aria-selected="true"] {
+    color: var(--text);
+    border-bottom-color: var(--accent);
+    font-weight: 600;
+}
+.tabs .tab_badge:empty { display: none; }
+.tabs .tab_badge { margin-left: 6px; padding: 0 6px; border-radius: 999px; background: var(--line); font-size: .75rem; font-weight: 600; }
+@media (max-width: 700px) { .tabs, .workspacetabs { padding: 0 8px; } }

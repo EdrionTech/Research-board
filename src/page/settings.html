@@ -7,6 +7,7 @@
     <link rel="icon" type="image/svg+xml" href="../assets/logo.svg">
     <title>Settings · Research Board</title>
     <link rel="stylesheet" href="../style/base.css">
+    <link rel="stylesheet" href="../style/icons.css">
     <link rel="stylesheet" href="../style/settings.css">
     <!-- theme + style, before the page draws -->
     <!-- where the data is (the server, or the app on this device); then it runs the page's scripts (data-src) -->
@@ -23,67 +24,20 @@
         <h2 class="brand">Settings</h2>
     </div>
 
+    <!-- tabs (the shared .tabs): one part of Settings at a time; settings.html#sync opens that one -->
+    <nav class="tabs" id="tabs" role="tablist">
+        <button type="button" role="tab" data-tab="appearance" aria-selected="true">Appearance</button>
+        <button type="button" role="tab" data-tab="sync">Sync</button>
+        <button type="button" role="tab" data-tab="data">Your data</button>
+    </nav>
+
     <main class="settings">
-        <!-- customization: how the app looks (kept with your data; a copy in this browser draws the page at once) -->
-        <section class="settings_section customization">
-            <header>
-                <h3>Appearance</h3>
-            </header>
-
-            <div class="setting">
-                <div>
-                    <strong>Theme</strong>
-                    <p class="hint">Light or dark. System follows your device.</p>
-                </div>
-                <div class="segmented" id="theme_choice" role="radiogroup" aria-label="Theme">
-                    <button type="button" role="radio" aria-checked="false" data-theme-choice="system">System</button>
-                    <button type="button" role="radio" aria-checked="false" data-theme-choice="light">Light</button>
-                    <button type="button" role="radio" aria-checked="false" data-theme-choice="dark">Dark</button>
-                </div>
-            </div>
-
-            <div class="setting stacked">
-                <div>
-                    <strong>Style</strong>
-                    <p class="hint">The look of every page. Each style has light and dark versions.</p>
-                </div>
-                <!-- one card per style in core/settings.js -->
-                <div class="style_cards" id="style_cards" role="radiogroup" aria-label="Style"></div>
-            </div>
-
-            <!-- the style's colours: one circle per choice; a set of colours shares one circle (core/settings.js) -->
-            <div class="setting stacked" id="palette_setting" hidden>
-                <div>
-                    <strong>Colours</strong>
-                    <p class="hint" id="palette_hint">Repaint the style in other colours.</p>
-                </div>
-                <div class="palette_circles" id="palette_circles" role="radiogroup" aria-label="Colours"></div>
-                <!-- a saved set of your own, while it's chosen: its name and a colour box per colour the style is built on -->
-                <div class="palette_custom" id="palette_custom" hidden></div>
-            </div>
-
-            <div class="setting stacked">
-                <div>
-                    <strong>Your own CSS</strong>
-                    <p class="hint">Fine-tune any style: applied last, on every page. For example
-                        <code>:root { --accent: #c2185b; }</code> or <code>.bar { font-size: 1.1rem; }</code>.
-                        You can also load a .css file.</p>
-                </div>
-                <textarea id="custom_css" rows="7" spellcheck="false" aria-label="Your own CSS"></textarea>
-                <div class="actions">
-                    <small id="css_state"></small>
-                    <span class="spacer"></span>
-                    <label class="btn small">Load .css file
-                        <input type="file" id="css_file" accept=".css,text/css" hidden>
-                    </label>
-                    <button type="button" class="btn small" id="clear_css">Clear</button>
-                    <button type="button" class="btn small primary" id="apply_css">Apply</button>
-                </div>
-            </div>
-        </section>
+        <!-- customization: how the app looks (core/appearance.js draws it; kept with your data, and a copy in this
+             browser draws the page at once) -->
+        <section class="settings_section customization" id="appearance" data-panel="appearance"></section>
 
         <!-- your data: in the server's data folder, or the app's own storage (settings.js) -->
-        <section class="settings_section">
+        <section class="settings_section" data-panel="data" hidden>
             <header>
                 <h3>Your data</h3>
             </header>
@@ -120,10 +74,90 @@
             </div>
             <p class="data_state" id="data_state" aria-live="polite"></p>
         </section>
+
+        <!-- sync: projects here kept in step with a Research Board server (core/place/sync.js, settings.js) -->
+        <section class="settings_section" id="sync_section" data-panel="sync" hidden>
+            <header>
+                <h3>Sync with a server</h3>
+            </header>
+            <p class="section_intro hint">Have your projects on your other devices too: they sync through a Research
+                Board server, yours or your group's. You always work on the copy here, online or not; changes cross
+                within seconds whenever the server can be reached.</p>
+
+            <!-- the servers this device has connected to (Store.savedServers): their projects, invites, forgetting -->
+            <div class="setting stacked">
+                <strong>Your servers</strong>
+                <ul class="sync_list" id="sync_saved"></ul>
+                <!-- one server's projects, once opened: what can go there, and what can come here -->
+                <div class="sync_lists" id="sync_choices" hidden>
+                    <p class="sync_choices_title" id="sync_choices_title"></p>
+                    <div>
+                        <strong>Put on the server</strong>
+                        <ul class="sync_list" id="sync_up"></ul>
+                    </div>
+                    <div>
+                        <strong>Bring here from the server</strong>
+                        <ul class="sync_list" id="sync_down"></ul>
+                    </div>
+                </div>
+                <!-- an invite for another device, from a saved server: its QR code and link -->
+                <div class="sync_invite" id="sync_invite" hidden>
+                    <div class="sync_invite_qr" id="sync_invite_qr"></div>
+                    <div class="sync_invite_text">
+                        <p class="hint" id="sync_invite_note"></p>
+                        <input type="text" id="sync_invite_link" readonly aria-label="Invite link">
+                        <div class="actions">
+                            <button type="button" class="btn small" id="sync_invite_copy">Copy link</button>
+                            <button type="button" class="btn small" id="sync_invite_close">Done</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- adding one: an invite (scanned, or its link pasted), or an address with a key -->
+            <div class="setting stacked">
+                <div>
+                    <strong>Add a server</strong>
+                    <p class="hint">Get an invite from the server: its window shows one, its control page makes
+                        more, and so does any device already on it (Your servers › Invite a device). Scan it, or
+                        paste its link. A server whose address changed needs only the new address.</p>
+                </div>
+                <form class="sync_server" id="sync_form">
+                    <input type="text" inputmode="url" id="sync_address" placeholder="Invite link, or the server's address" aria-label="Invite link or server address" autocomplete="off" autocapitalize="off" spellcheck="false" required>
+                    <button type="submit" class="btn primary">Connect</button>
+                    <button type="button" class="btn has_i" id="sync_scan" hidden><span class="i" data-i="camera" aria-hidden="true"></span>Scan QR code</button>
+                    <details class="sync_keybox">
+                        <summary>Have its key instead of an invite?</summary>
+                        <input type="password" id="sync_key" placeholder="The server's key" aria-label="Access key" autocomplete="off">
+                    </details>
+                </form>
+                <!-- scanning an invite with the camera (settings.js) -->
+                <div class="sync_scanner" id="sync_scanner" hidden>
+                    <video id="sync_video" playsinline muted></video>
+                    <p class="hint">Point the camera at the invite's QR code: in the server's window, on its control
+                        page, or on another of your devices.</p>
+                    <button type="button" class="btn small" id="sync_scan_stop">Cancel</button>
+                </div>
+            </div>
+
+            <div class="setting stacked">
+                <div>
+                    <strong>Synced projects</strong>
+                    <p class="hint">Each project's own settings (Settings on its card, or Project on its page) put it
+                        on a server, sync it, or stop. Stopping keeps both copies.</p>
+                </div>
+                <ul class="sync_list" id="sync_links"></ul>
+                <div class="actions">
+                    <button type="button" class="btn small" id="sync_now">Sync now</button>
+                </div>
+            </div>
+            <p class="data_state" id="sync_state" aria-live="polite"></p>
+        </section>
     </main>
 
     <script data-src="../script/core/ui.js"></script>
     <script data-src="../script/core/store.js"></script>
+    <script data-src="../script/core/appearance.js"></script>
     <script data-src="../script/pages/settings.js"></script>
 </body>
 

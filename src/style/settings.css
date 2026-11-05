@@ -211,3 +211,54 @@ label.btn { cursor: pointer; }
 .custom_color { display: flex; align-items: center; gap: 6px; font-size: .85rem; cursor: pointer; }
 .custom_color input[type="color"] { width: 40px; height: 32px; padding: 2px; border: 1px solid var(--line); border-radius: 8px; background: none; cursor: pointer; }
 .palette_custom .hint { flex-basis: 100%; }
+
+/* sync with a server */
+.sync_server { display: flex; flex-wrap: wrap; gap: 8px; }
+.sync_server input { flex: 1 1 14em; min-width: 0; }
+.sync_lists { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
+.sync_list { display: grid; gap: 6px; margin: 6px 0 0; padding: 0; list-style: none; }
+.sync_list li { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; }
+.sync_list li > span { flex: 1 1 10em; min-width: 0; overflow-wrap: anywhere; }
+.sync_list li small { display: block; color: var(--muted); font-size: .8rem; }
+.sync_list li small.error { color: var(--danger); }
+.sync_list .empty { border-style: dashed; color: var(--muted); font-size: .85rem; }
+
+/* a QR code: scanning one (the camera), showing an invite */
+.sync_scanner { display: grid; gap: 8px; justify-items: start; }
+.sync_scanner video { width: min(360px, 100%); aspect-ratio: 1; object-fit: cover; border-radius: var(--radius); background: #000; }
+.sync_invite { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; padding: 12px; border: 1px solid var(--line); border-radius: var(--radius); }
+.sync_invite_qr { width: 200px; max-width: 100%; padding: 8px; background: #fff; border-radius: 8px; line-height: 0; }
+.sync_invite_qr svg { width: 100%; height: auto; }
+.sync_invite_text { flex: 1 1 16em; min-width: 0; display: grid; gap: 8px; }
+.sync_invite_text input { width: 100%; font-size: .85rem; }
+
+/* the server's control page (page/server.html) */
+.server_live { margin-left: auto; font-size: .85rem; color: var(--muted); }
+.invite_form { display: flex; flex-wrap: wrap; align-items: end; gap: 10px 14px; }
+.invite_form label, #settings_form label { display: grid; gap: 4px; font-size: .85rem; }
+#settings_form label { max-width: 34em; }
+.plain_list { margin: 6px 0 0; padding: 0; list-style: none; display: grid; gap: 4px; overflow-wrap: anywhere; }
+.main_key { display: inline-block; margin-top: 6px; overflow-wrap: anywhere; }
+#settings_form select, #settings_form input { width: 100%; min-width: 0; text-overflow: ellipsis; }
+.settings_section { min-width: 0; }
+
+/* the sync section: its intro, the key box behind "Have its key instead", one server's projects */
+.section_intro { margin: 0; padding: 12px 18px 0; font-size: .85rem; color: var(--muted); max-width: 70ch; }
+#sync_scan { gap: 6px; }
+.sync_keybox { flex-basis: 100%; font-size: .85rem; color: var(--muted); }
+.sync_keybox summary { cursor: pointer; }
+.sync_keybox input { display: block; width: min(24em, 100%); margin-top: 6px; }
+.sync_choices_title { grid-column: 1 / -1; margin: 6px 0 0; font-weight: 600; }
+
+/* the server's control page: its tabs, status, the people (accounts) to come */
+.page_state { padding: 10px 24px 0; }
+.server_name { font-weight: 400; color: var(--muted); font-size: .9em; }
+.status_line { display: flex; align-items: center; gap: 8px; }
+.status_dot { width: 10px; height: 10px; border-radius: 50%; background: var(--muted); }
+.status_dot.ok { background: var(--accent); }
+.status_dot.down { background: var(--danger); }
+.actions.start { justify-content: flex-start; }
+.list_head { margin-top: 6px; }
+.soon { margin-left: 8px; padding: 1px 8px; border-radius: 999px; background: var(--line); font-size: .75rem; font-weight: 600; color: var(--muted); vertical-align: middle; }
+.sync_list.future li { opacity: .7; }
+.panel_intro { margin: 0; padding: 0 2px; }

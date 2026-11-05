@@ -861,7 +861,7 @@ body.reading_full .abstract { display: none; }
 .ref_profile_meta { margin: 0; font-size: .88rem; color: var(--muted); }
 .ref_profile_links { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: .85rem; }
 .ref_profile_abstract .md { font-size: .9rem; }
-.ref_profile_cited blockquote { margin: 0; padding: 6px 10px; border-left: 3px solid var(--line); color: var(--muted); font-size: .85rem; }
+.ref_profile_cited blockquote { margin: 0; overflow-wrap: anywhere; padding: 6px 10px; border-left: 3px solid var(--line); color: var(--muted); font-size: .85rem; }
 
 /* ---- "Get the paper": no copy the app can read ---- */
 .get_paper { display: grid; gap: 8px; padding: 16px; margin: 4px 0 12px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--bg); }
