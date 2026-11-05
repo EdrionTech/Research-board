@@ -16,6 +16,14 @@ Everything that builds or runs Research Board is here. Each one serves or wraps 
 
 `build.bat test` runs the tests in [../tests](../tests/README.md).
 
+### A release
+
+1. Raise the version in `apps/desktop/src-tauri/tauri.conf.json` (the one version for every build: the file names, the desktop app, and the phone app's version name and number).
+2. Write its notes: `system_documents/releases/<version>.md`.
+3. `build.bat release`: the tests first (nothing is built if one fails), then the server zip, the Windows installer and `.msi`, and the phone app for sharing, all together in `builds/release-<version>/` with `RELEASE-NOTES.md` and `SHA256SUMS.txt`.
+
+`build.bat apk-release` builds only the phone app for sharing: smaller (unused code and resources left out, 64-bit ARM only), and signed with the **release key**. The first time, it makes the key in `apps/phone/keystore/` (not in git: the key and its random passwords in `keystore.properties`). **Back that folder up** somewhere other than this computer: Android installs an update only when it's signed with the same key, so without it, phones would have to remove the app, and its data, to take a new version. `build.bat apk` stays the quick build for testing (`…-debug.apk`, signed with a key of its own, so the two don't install over each other).
+
 The sections below are the manual steps, for when you need them.
 
 ## Desktop

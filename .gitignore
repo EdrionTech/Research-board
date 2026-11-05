@@ -14,6 +14,8 @@
 /apps/desktop/src-tauri/target
 /apps/desktop/src-tauri/gen
 /apps/phone/node_modules
+# the phone app's release key and its passwords (build.bat apk-release): back it up, never commit it
+/apps/phone/keystore
 
 # the tests' tools and screenshots
 /tests/node_modules

@@ -1,10 +1,14 @@
 # Research Board's builds, one at a time or all together. Run build.bat (in the project folder) with no task for a
 # menu, which also says which builds are older than the code.
 #
-#   build.bat apk          the Android app      -> builds\ResearchBoard-<version>-debug.apk
+#   build.bat apk          the Android app      -> builds\ResearchBoard-<version>-debug.apk (for testing)
+#   build.bat apk-release  the Android app to share: smaller, signed -> builds\ResearchBoard-<version>.apk
 #   build.bat exe          the Windows app      -> builds\ResearchBoard-<version>-setup.exe (+ .msi)
 #   build.bat host         the server version   -> builds\host\ and ResearchBoard-<version>-host.zip (serve.bat / serve.sh run it)
-#   build.bat all          all three
+#   build.bat all          all three (the phone app for testing)
+#   build.bat release      a release: the tests, then the server zip, the Windows app and the signed phone app,
+#                          with the release notes (system_documents\releases\<version>.md) and checksums,
+#                          together in builds\release-<version>\
 #   build.bat status       which builds are missing or older than the code they're made from
 #   build.bat test         run the tests (tests\)
 #   build.bat sync         copy src\ into the phone app without building (then Android Studio)
@@ -100,12 +104,50 @@ function Build-Apk {
     Sync-Phone
     Use-Android
     Say 'Building the Android app (Gradle)'
-    Run (Join-Path $Phone 'android\gradlew.bat') @('assembleDebug') (Join-Path $Phone 'android')
+    Run (Join-Path $Phone 'android\gradlew.bat') (@('assembleDebug') + (Version-Args)) (Join-Path $Phone 'android')
     New-Out
     $apk = Join-Path $Out "ResearchBoard-$Version-debug.apk"
     Copy-Item (Join-Path $Phone 'android\app\build\outputs\apk\debug\app-debug.apk') $apk -Force
     Done "Android app: $apk"
     Done 'Install: copy it to the phone and open it (allow installing unknown apps), or: adb install -r <file>'
+}
+
+# the version (tauri.conf.json) for Gradle: its name, and a number that grows with it (0.2.0 -> 200)
+function Version-Args {
+    $parts = ($Version -split '[.-]')[0..2] | ForEach-Object { [int]$_ }
+    $code = $parts[0] * 10000 + $parts[1] * 100 + $parts[2]
+    @("-PrbVersion=$Version", "-PrbVersionCode=$code")
+}
+
+# The release key, made the first time (keytool, from the Java the build uses), in apps\phone\keystore\ (not in
+# git). Its passwords are random and kept beside it in keystore.properties.
+function Use-Keystore {
+    $dir = Join-Path $Phone 'keystore'
+    $props = Join-Path $dir 'keystore.properties'
+    if (Test-Path $props) { return }
+    Say 'Making the release key (once)'
+    New-Item -ItemType Directory -Force $dir | Out-Null
+    $password = -join ((48..57) + (65..90) + (97..122) | Get-Random -Count 32 | ForEach-Object { [char]$_ })
+    $keytool = Join-Path $env:JAVA_HOME 'bin\keytool.exe'
+    Run $keytool @('-genkeypair', '-v', '-keystore', (Join-Path $dir 'research-board.jks'), '-alias', 'research-board', '-keyalg', 'RSA',
+        '-keysize', '4096', '-validity', '10000', '-storepass', $password, '-keypass', $password,
+        '-dname', 'CN=Research Board, O=Research Board') $dir
+    Set-Content $props "storeFile=research-board.jks`nstorePassword=$password`nkeyAlias=research-board`nkeyPassword=$password" -NoNewline
+    Write-Host "   Release key: $dir" -ForegroundColor Yellow
+    Write-Host '   BACK UP this folder (outside this computer). Updates to the app must be signed with this same key:' -ForegroundColor Yellow
+    Write-Host '   without it, phones would need the app removed (and its data with it) to install a new version.' -ForegroundColor Yellow
+}
+
+function Build-ApkRelease {
+    Sync-Phone
+    Use-Android
+    Use-Keystore
+    Say 'Building the Android app for release (Gradle: shrunk, arm64, signed)'
+    Run (Join-Path $Phone 'android\gradlew.bat') (@('assembleRelease') + (Version-Args)) (Join-Path $Phone 'android')
+    New-Out
+    $apk = Join-Path $Out "ResearchBoard-$Version.apk"
+    Copy-Item (Join-Path $Phone 'android\app\build\outputs\apk\release\app-release.apk') $apk -Force
+    Done ("Android app (release): $apk ({0:N1} MB)" -f ((Get-Item $apk).Length / 1MB))
 }
 
 function Build-Exe {
@@ -187,6 +229,7 @@ function Set-Icons($file) {
 function Show-Status {
     $builds = [ordered]@{
         apk  = @("ResearchBoard-$Version-debug.apk", @('src', 'apps\phone\capacitor.config.json', 'apps\phone\android\app\src\main\res', 'apps\phone\android\app\src\main\java', 'apps\phone\android\app\src\main\AndroidManifest.xml'))
+        'apk-release' = @("ResearchBoard-$Version.apk", @('src', 'apps/phone/capacitor.config.json', 'apps/phone/android/app/src/main/res', 'apps/phone/android/app/src/main/java', 'apps/phone/android/app/src/main/AndroidManifest.xml', 'apps/phone/android/app/build.gradle', 'apps/phone/android/app/proguard-rules.pro'))
         exe  = @("ResearchBoard-$Version-setup.exe", @('src', 'apps\desktop\src-tauri\src', 'apps\desktop\src-tauri\icons', 'apps\desktop\src-tauri\tauri.conf.json', 'apps\desktop\src-tauri\Cargo.toml'))
         host = @("ResearchBoard-$Version-host.zip", @('src', 'apps\server', 'start.bat', 'start.sh', 'serve.bat', 'serve.sh'))
     }
@@ -219,8 +262,32 @@ function Invoke-Tests {
     Run $bun @('run.js') $tests
 }
 
+# A release: nothing is built unless every test passes; then each build, and builds\release-<version>\ holding
+# them, the release notes and SHA256SUMS.txt. The version is tauri.conf.json's: raise it there first.
+function Build-Release {
+    $notes = Join-Path $Root "system_documents\releases\$Version.md"
+    if (-not (Test-Path $notes)) { throw "No release notes for ${Version} yet: write system_documents\releases\${Version}.md (or raise the version in apps\desktop\src-tauri\tauri.conf.json)" }
+    Say "Release ${Version}: the tests first"
+    Invoke-Tests
+    Build-Host
+    Build-Exe
+    Build-ApkRelease
+    $dir = Join-Path $Out "release-$Version"
+    if (Test-Path $dir) { Remove-Item $dir -Recurse -Force }
+    New-Item -ItemType Directory -Force $dir | Out-Null
+    $files = "ResearchBoard-$Version-setup.exe", "ResearchBoard-$Version.msi", "ResearchBoard-$Version.apk", "ResearchBoard-$Version-host.zip"
+    foreach ($file in $files) { Copy-Item (Join-Path $Out $file) $dir }
+    Copy-Item $notes (Join-Path $dir 'RELEASE-NOTES.md')
+    $sums = foreach ($file in $files) { '{0}  {1}' -f (Get-FileHash (Join-Path $dir $file) -Algorithm SHA256).Hash.ToLower(), $file }
+    Set-Content (Join-Path $dir 'SHA256SUMS.txt') ($sums -join "`n") -NoNewline
+    Done "Release ${Version}: $dir"
+    Get-ChildItem $dir | ForEach-Object { Write-Host ('   {0,-36} {1,8:N1} MB' -f $_.Name, ($_.Length / 1MB)) }
+}
+
 $tasks = [ordered]@{
-    apk     = 'Android app (.apk)'
+    apk     = 'Android app (.apk, for testing)'
+    'apk-release' = 'Android app to share (.apk: smaller, signed)'
+    release = 'A release: tests, then every build, notes and checksums together'
     exe     = 'Windows app (installer .exe and .msi)'
     host    = 'Server version (folder and .zip)'
     all     = 'All three'
@@ -247,6 +314,8 @@ if (-not $Task) {
 $started = Get-Date
 switch ($Task) {
     'apk' { Build-Apk }
+    'apk-release' { Build-ApkRelease }
+    'release' { Build-Release }
     'exe' { Build-Exe }
     'host' { Build-Host }
     'all' { Build-Host; Build-Exe; Build-Apk }

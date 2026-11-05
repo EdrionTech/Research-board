@@ -78,7 +78,9 @@ Everything still to do, by category. Details are in the linked plans. Done work 
 - [ ] LATER: a public hosted server anyone can sign up to (our online service): accounts, sign-in, a server per user or shared with limits, storage allowance; projects shared between accounts with members and roles (platforms.md "Our online service", collaboration.md)
 - [ ] Accounts and roles per project (members), on top of device keys
 - [ ] Try vps-setup.sh on a real VPS (written and syntax-checked, not yet run on one)
-- [ ] Before a release: undo the phone app's plain-http allowance (`apps/phone/capacitor.config.json`) once servers are reached over HTTPS; a release APK (smaller: shrunk code, arm64)
+- [x] Release builds: one version (tauri.conf.json) for every build; `build.bat apk-release` (shrunk, arm64, signed with the release key in apps/phone/keystore, 7.3 MB); `build.bat release` (tests, then every build, notes and checksums in builds/release-<version>/); 0.2.0 notes in system_documents/releases/
+- [ ] The phone app's plain-http allowance (`apps/phone/capacitor.config.json`): kept, since servers on your own network are http; drop it once those can be reached over HTTPS too
+- [ ] The release key: back up apps/phone/keystore (outside this computer)
 - [ ] Sync, next: live updates (WebSockets) instead of every minute; files fetched when opened instead of all at once; the browser on a remote server with no copy (outbox only, as now); keys in the apps' secure storage instead of the database; http servers from the phone app (Android blocks plain http from the app's https page)
 - [ ] The server as coordinator: checking roles on each change, numbering and fanning out changes, Yjs relay ([collaboration/collaboration.md](collaboration/collaboration.md))
 - [ ] Online service: hosting, storage allowance per account, sign-in methods (proposal written)

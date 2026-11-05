@@ -1,5 +1,11 @@
 apply plugin: 'com.android.application'
 
+// The release key (build.bat apk-release makes it once): apps/phone/keystore/, kept out of git. Back it up:
+// Android installs an update only when it's signed with the same key.
+def keystoreProperties = new Properties()
+def keystorePropertiesFile = rootProject.file('../keystore/keystore.properties')
+if (keystorePropertiesFile.exists()) keystorePropertiesFile.withInputStream { keystoreProperties.load(it) }
+
 android {
     namespace = "com.researchboard.phone"
     compileSdk = rootProject.ext.compileSdkVersion
@@ -7,8 +13,9 @@ android {
         applicationId "com.researchboard.phone"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 1
-        versionName "1.0"
+        // from apps/build.ps1: the version in apps/desktop/src-tauri/tauri.conf.json (one version for every build)
+        versionCode((project.findProperty('rbVersionCode') ?: '1') as int)
+        versionName(project.findProperty('rbVersion') ?: '0.0.0')
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
@@ -16,10 +23,24 @@ android {
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+    signingConfigs {
+        release {
+            if (keystorePropertiesFile.exists()) {
+                storeFile rootProject.file('../keystore/' + keystoreProperties['storeFile'])
+                storePassword keystoreProperties['storePassword']
+                keyAlias keystoreProperties['keyAlias']
+                keyPassword keystoreProperties['keyPassword']
+            }
+        }
+    }
     buildTypes {
         release {
-            minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            // smaller: unused code and resources left out, only 64-bit ARM (practically every phone in use)
+            minifyEnabled true
+            shrinkResources true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            ndk { abiFilters 'arm64-v8a' }
+            if (keystorePropertiesFile.exists()) signingConfig signingConfigs.release
         }
     }
 }
