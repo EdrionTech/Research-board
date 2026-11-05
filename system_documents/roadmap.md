@@ -61,7 +61,25 @@ Everything still to do, by category. Details are in the linked plans. Done work 
 **Online places** ([platforms/platforms.md](platforms/platforms.md))
 - [ ] Places in Settings: our online service and private servers, reachable from every client
 - [ ] Server sign-in: accounts, device tokens, invite links the host can revoke
-- [ ] Sync: each app keeps its own copy of server projects and syncs with the server when online (local-first; replaces desktop sharing on the local network, dropped 2026-11-04)
+- [x] Sync, first layer (branch `feature/project-sync`): a project here linked to a server, kept in step both ways (newer edit wins, delete markers, files), every minute and from Settings → Sync with a server; one access key per server ([../apps/server/README.md](../apps/server/README.md), "Access", "Sync")
+- [x] A server in one run: `serve.bat` / `serve.sh` install Bun if needed, start it open to the network, print its addresses and key; `--autostart` starts it with the machine; included in `build.bat host`
+- [x] From any network: `serve --public` (Cloudflare quick tunnel, separate data folder) and `apps/server/vps-setup.sh` (one run on Ubuntu/Debian: Bun, Caddy HTTPS, systemd, firewall); wrong-key lockout and an upload limit
+- [x] Servers remembered on each device (address and key entered once; the one line `address#key=…` the server prints); a server reached at a new address (a new tunnel) takes its synced projects along (its lasting id)
+- [x] Project settings: sync with a saved server, sync now, stop syncing (the copy stays here), make a separate copy (own ids and files); "Synced" on the project's card; "Project" on its dashboard
+- [x] Adding a device by QR code or link, used once (invites: 20 minutes, made at start, by i + Enter, or by a connected device); scanning in Settings (BarcodeDetector, else jsQR); the browser signed in by the link too
+- [x] A key and id per device, made when an invite is used (removing one, or a new main key, leaves the others); invites for one device or any number, up to 7 days
+- [x] The server's control page (serve.bat opens it): invites as QR codes, devices (remove), main key, settings with Save and restart, start with the computer
+- [x] Live sync: changes go up about a second after they're saved, and come down as the server announces them (Server-Sent Events, /api/events); the minute's sync stays as a fallback
+- [x] A new project can be put on a saved server as it's made ("Keep it" in its form)
+- [x] Edits that clash while two devices can't sync: the newer is kept, the other is kept aside (place.js `conflicts`), shown in the project's sync settings ("Use the replaced one" / "Keep as it is"), a count on its card and its Project button; a device's own changes aren't sent back to it (place id)
+- [x] One window system on every page (ui.js openModal/closeModals, bottom sheets on phones with their buttons in view), shared tabs, the design guide (system_documents/design/ui.md) and tests/layout.test.js (every page and popup at phone widths)
+- [x] Settings › Sync reorganised: your servers (status, projects, invite, forget), add a server (invite link or QR; a key only if needed), synced projects by server
+- [x] The server's control page in tabs (Overview, Devices, People, Server), in the server's own appearance; People holds the place for accounts
+- [ ] LATER: a public hosted server anyone can sign up to (our online service): accounts, sign-in, a server per user or shared with limits, storage allowance; projects shared between accounts with members and roles (platforms.md "Our online service", collaboration.md)
+- [ ] Accounts and roles per project (members), on top of device keys
+- [ ] Try vps-setup.sh on a real VPS (written and syntax-checked, not yet run on one)
+- [ ] Before a release: undo the phone app's plain-http allowance (`apps/phone/capacitor.config.json`) once servers are reached over HTTPS; a release APK (smaller: shrunk code, arm64)
+- [ ] Sync, next: live updates (WebSockets) instead of every minute; files fetched when opened instead of all at once; the browser on a remote server with no copy (outbox only, as now); keys in the apps' secure storage instead of the database; http servers from the phone app (Android blocks plain http from the app's https page)
 - [ ] The server as coordinator: checking roles on each change, numbering and fanning out changes, Yjs relay ([collaboration/collaboration.md](collaboration/collaboration.md))
 - [ ] Online service: hosting, storage allowance per account, sign-in methods (proposal written)
 

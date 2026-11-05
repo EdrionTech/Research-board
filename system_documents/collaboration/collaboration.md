@@ -51,8 +51,8 @@ The server does more than serve the app: for every project it holds, it coordina
 | --- | --- | --- |
 | Source of truth | The project's SQLite and files; every device's copy syncs with it | Yes |
 | Order of changes | A number on every change it accepts, for "changes since N" | Yes (`GET /api/changes?since=N`) |
-| Who may do what | Accounts, device tokens, invite links, members and roles per project, checked on every change | No |
-| Sync | Takes each device's offline changes, checks them, numbers them, and sends them to the others | No |
+| Who may do what | Accounts, device tokens, invite links, members and roles per project, checked on every change | A first step: one access key per server, all-or-nothing (`apps/server/server.js`, "Access") |
+| Sync | Takes each device's offline changes, checks them, numbers them, and sends them to the others | Yes, per project, run by each device (`src/script/core/place/sync.js`; `/api/sync/…`): no role checks yet |
 | Live updates | Pushes accepted changes to everyone with the project open (WebSockets) | No |
 | Conflicts | The newer edit wins per record, the overwritten version kept in its history; delete markers kept until every device has them | Data model ready |
 | Literature review | Relays and stores Yjs updates, which merge typing done offline as well as live | No |
