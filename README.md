@@ -20,7 +20,7 @@ n, by providing a simple interface to create and manage research notes and docum
 
 Needs [Bun](https://bun.sh); nothing else to install.
 
-Double-click `start.bat` (Windows) or run `./start.sh` (macOS, Linux): the app opens in your browser at <http://127.0.0.1:5500/>. Or run it yourself:
+Double-click `run.bat` (Windows) and choose **open**, or run `./run.sh open` (macOS, Linux): the app opens in your browser at <http://127.0.0.1:5500/>. Or run it yourself:
 
 ```sh
 bun apps/server/server.js
@@ -30,15 +30,16 @@ Your data (projects, materials, notes, uploaded PDFs and images) is kept in the 
 
 ## Building the apps
 
-`build.bat` (double-click for a menu) builds the Android app, the Windows installer and the server version into `builds/`, says which builds are older than the code, and runs the tests. See [apps/README.md](apps/README.md).
+The same launcher builds the Android app, the Windows installer and the server version into `apps/builds/` (`run build all`, or `run release`), says which builds are older than the code (`run status`), and runs the tests (`run test`). See [apps/README.md](apps/README.md).
 
 | Folder | |
 | --- | --- |
 | `src/` | The app itself, the same in the browser and in every app |
-| `apps/` | What builds or runs it: `server/`, `desktop/`, `phone/` and the build script |
+| `run.bat`, `run.sh` | The one launcher: open, host, build, release, test |
+| `apps/` | What builds or runs it: `server/`, `desktop/`, `phone/`, the kit (`kit/`, `project.json`) and the finished builds (`builds/`) |
 | `tests/` | The tests ([tests/README.md](tests/README.md)) |
 | `system_documents/` | Plans and the [roadmap](system_documents/roadmap.md) |
-| `data/`, `builds/` | Your data and finished builds (not in git) |
+| `data/`, `local/` | Your data, and this computer's own settings and tools (not in git) |
 
 Opening `src/index.html` directly, or with Live Server, still works, but then the data is kept only in that browser at that address. See [apps/server/README.md](apps/server/README.md) for options and the API.
 
