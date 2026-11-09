@@ -27,7 +27,7 @@ Everything a person can do, an agent should be able to do, through the same rule
 
 - **One documented set of actions over the data.** List and search projects, materials and notes; add a material (with lookup); attach notes and highlights to a place; write the summary and review; cite; tag; bookmark; export. These are the server API (`apps/server/README.md`) plus higher-level actions, not screen scraping.
 - **An MCP server** exposing those actions as tools, so Claude or another assistant can work in your Research Board: "find the papers on grasping I haven't summarised and draft summaries", "which notes cite Vaswani et al.?".
-- **Stable, described data.** The item types and fields are documented (model/literature material.json is the start), each record says who made or changed it (person or agent), and places in materials use the same format the app uses (page and position, paragraph, line, time).
+- **Stable, described data.** The item types and fields are documented ([model/literature material.json](../model/literature%20material.json) is the start), each record says who made or changed it (person or agent), and places in materials use the same format the app uses (page and position, paragraph, line, time).
 - **Permissions like a collaborator.** An agent gets a role (viewer, commenter, editor) per project. Its changes are labelled and can be reviewed and undone; large changes (bulk tagging, merging, deleting) are proposed first and applied after you accept them.
 - **Text it can read.** Materials keep their extracted text (PDF lines, HTML paragraphs, transcripts), so an agent reads exactly what the reader shows, with positions to cite.
 

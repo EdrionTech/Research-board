@@ -9,7 +9,7 @@
 // projects: [{ id, title, desc, image }]   image: a link, 'asset:<id>' (an uploaded picture) or '' (the style's own)
 // items:    [{ id, projectId, type, title, body, ..., createdAt, updatedAt }]
 //           `type` decides which section an item shows in (see dashboard.js);
-//           sources follow model/literature material.json.
+//           sources follow system_documents/model/literature material.json.
 
 const Store = (() => {
     const PROJECTS_KEY = 'research_board_projects';

@@ -13,7 +13,7 @@ Use **CSL (Citation Style Language)**, the format Zotero, Mendeley and Pandoc us
 - **Thousands of ready styles** (the Zotero style repository): every journal's house style, university variants, APA 7, Chicago, Vancouver, Nature… Importing one is uploading its `.csl` file, or picking it from a search.
 - **Your own styles** are CSL files too, so they can be exported and used in Zotero or Word, and the other way round.
 - **Rendering** with citeproc-js (the library Zotero uses): the reference list and in-text citations (parenthetical, narrative, numbered), in the review, the bibliography export and "Copy citation".
-- Materials are given to it as CSL-JSON. That's a short mapping from the material fields (model/literature material.json), including kinds the app doesn't format today (books, chapters, theses, reports, web pages, datasets).
+- Materials are given to it as CSL-JSON. That's a short mapping from the material fields ([model/literature material.json](../model/literature%20material.json)), including kinds the app doesn't format today (books, chapters, theses, reports, web pages, datasets).
 
 The built-in styles become CSL files shipped with the app, so nothing changes for existing projects.
 

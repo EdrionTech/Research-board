@@ -121,7 +121,7 @@ This is everything the app needs. A desktop or mobile version, or another framew
 
 A project on a device (the desktop or phone app, or the data of a server on your own computer) can be kept in step with its copy on a server: [src/script/core/place/sync.js](../../src/script/core/place/sync.js), run by the app: within a second of a change being saved on the device, at once when the server announces a change (`/api/events`, a stream each device keeps open), and every minute in case the stream is down. Each sync fetches the server's changes since the last one, sends the changes made on the device since the last one, then copies the project's files either side lacks. The newer edit wins, record by record (by the time it was made); deletes leave a marker, so an older save can't bring a record back. Both sides are `place.js`, answering the requests above.
 
-Items are anything in a project, told apart by `type`: `source` (a material), `source_note`, `bookmark`, `figure`, `lit_review`, and the dashboard's notes. Materials follow [model/literature material.json](../model/literature%20material.json).
+Items are anything in a project, told apart by `type`: `source` (a material), `source_note`, `bookmark`, `figure`, `lit_review`, and the dashboard's notes. Materials follow [system_documents/model/literature material.json](../system_documents/model/literature%20material.json).
 
 ## Later
 

@@ -1,6 +1,6 @@
 // Literature sources, shared by the dashboard and material pages:
 // helpers, the link lookup and the add/edit source form.
-// Sources follow model/literature material.json.
+// Sources follow system_documents/model/literature material.json.
 
 const KIND_LABELS = {
     article: 'Article', book: 'Book', chapter: 'Chapter', report: 'Report',
