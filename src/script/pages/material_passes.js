@@ -85,18 +85,17 @@ const PassMode = (() => {
     function renderBar() {
         const steps = [1, 2, 3].map(n => {
             const data = passData(n);
-            const li = el('li', 'pass_stage');
             const state = n === pass() ? 'current' : data.doneAt ? 'done' : data.skipped ? 'skipped' : '';
-            if (state) li.dataset.state = state;
             const btn = el('button', 'pass_step');
+            btn.append(el('span', 'pass_mark', state === 'done' ? '✓' : state === 'skipped' ? '↷' : String(n)), ' ', el('span', 'pass_name', Passes.PASSES[n].short));
             btn.type = 'button';
             btn.dataset.pass = n;
-            btn.setAttribute('aria-current', n === pass() ? 'step' : 'false');
+            if (state) btn.dataset.state = state;
+            btn.setAttribute('role', 'radio');
+            btn.setAttribute('aria-checked', n === pass());
             btn.title = `Pass ${n}: ${Passes.PASSES[n].name}` + (state === 'done' ? ' (done)' : state === 'skipped' ? ' (skipped)' : '')
                 + (n > pass() ? '. Skip to it' : n < pass() ? '. Read it again' : '');
-            btn.append(el('span', 'pass_num', state === 'done' ? '✓' : state === 'skipped' ? '↷' : String(n)), el('span', 'pass_name', Passes.PASSES[n].short));
-            li.append(btn);
-            return li;
+            return btn;
         });
         $('#pass_steps').replaceChildren(...steps);
         $('#pass_state').textContent = record.state !== 'reading' ? Passes.label(record) : '';
@@ -223,24 +222,25 @@ const PassMode = (() => {
     const docOf = unit => unit.head.ownerDocument;
 
     // folded: the heading stays (greyed), with a chip saying what's under it; a click opens it
+    const chipHolder = unit => unit.head.querySelector(':scope > .txt') || unit.head;
     function fold(unit, s, view) {
         unit.head.classList.add('pass_head');
         for (const node of unit.body) node.classList.add('pass_folded');
         const count = unit.body.length;
-        const chip = ui(docOf(unit), 'button', 'pass_chip', count ? `${count} ${view === 'text' ? (count === 1 ? 'line' : 'lines') : '¶'} · open` : 'open');
+        const chip = ui(docOf(unit), 'button', 'tag_chip pass_chip', count ? `${count} ${view === 'text' ? (count === 1 ? 'line' : 'lines') : '¶'} · open` : 'open');
         chip.type = 'button';
         chip.dataset.peek = s.key;
         chip.title = `Not part of pass ${pass()} (${Passes.ROLES[s.role].toLowerCase()}). Open it if you need to.`;
-        unit.head.append(chip);
+        chipHolder(unit).append(chip);
     }
 
     // opened with a click: it can be folded again
     function markOpen(unit, s) {
-        const chip = ui(docOf(unit), 'button', 'pass_chip open', 'fold');
+        const chip = ui(docOf(unit), 'button', 'tag_chip pass_chip open', 'fold');
         chip.type = 'button';
         chip.dataset.unpeek = s.key;
         chip.title = 'Fold it again';
-        unit.head.append(chip);
+        chipHolder(unit).append(chip);
     }
 
     // just after the heading (in pasted text, a line of its own, so the line numbers stay)
@@ -276,7 +276,7 @@ const PassMode = (() => {
             const key = 'proof|' + i;
             if (peeked.has(key)) return;
             proof.classList.add('pass_folded');
-            const btn = ui(proof.ownerDocument, 'button', 'pass_chip solo', 'Proof · open');
+            const btn = ui(proof.ownerDocument, 'button', 'tag_chip pass_chip solo', 'Proof · open');
             btn.type = 'button';
             btn.dataset.peek = key;
             btn.title = 'Proofs wait for pass 3. Open it if you need to.';
@@ -312,8 +312,9 @@ const PassMode = (() => {
         const box = ui(doc, 'div', 'pass_card');
         box.dataset.key = s.key;
         const title = Passes.clean(s.title);
+        const inPage = doc === document;
         const button = (label, data, primary) => {
-            const b = ui(doc, 'button', 'pass_btn' + (primary ? ' primary' : ''), label);
+            const b = ui(doc, 'button', (inPage ? 'btn small' : 'pass_btn') + (primary ? ' primary' : ''), label);
             b.type = 'button';
             Object.assign(b.dataset, data);
             return b;
@@ -517,7 +518,7 @@ const PassMode = (() => {
     function step(n, title, hint, ...content) {
         const box = el('section', 'pass_stepbox');
         const head = el('h4', 'pass_stephead');
-        head.append(el('span', 'pass_stepnum', String(n)), el('span', '', title));
+        head.append(el('span', 'badge pass_stepnum', String(n)), el('span', '', title));
         box.append(head);
         if (hint) box.append(el('p', 'pass_stephint', hint));
         box.append(...content.filter(Boolean));
@@ -739,8 +740,9 @@ const PassMode = (() => {
         box.append(el('h4', '', n === 1 ? 'Is a second pass worth it?' : n === 2 ? 'Is a third pass worth it?' : 'Done with the paper?'));
         const choices = el('div', 'pass_choices');
         const choice = (value, title, text, primary) => {
-            const b = el('button', 'pass_choice' + (primary ? ' primary' : '') + (data.decision === value ? ' chosen' : ''));
+            const b = el('button', 'btn pass_choice' + (primary ? ' primary' : ''));
             b.type = 'button';
+            if (data.decision === value) b.setAttribute('aria-pressed', 'true');
             b.dataset.decide = value;
             b.append(el('strong', '', title), el('small', '', text));
             return b;
@@ -897,19 +899,27 @@ const PassMode = (() => {
             record = Passes.savePass(record, pass(), { activeMs: ms });
         }
         const total = () => (passData().activeMs || 0) + pending;
+        // 4:05, 1:02:30
+        const clock = ms => {
+            const t = Math.floor(ms / 1000);
+            const h = Math.floor(t / 3600), m = Math.floor(t / 60) % 60, sec = String(t % 60).padStart(2, '0');
+            return h ? `${h}:${String(m).padStart(2, '0')}:${sec}` : `${m}:${sec}`;
+        };
         function show() {
             const pill = $('#pass_timer');
-            pill.hidden = !on() || !visible() || record.state !== 'reading';
+            pill.hidden = !on() || !visible();
             if (pill.hidden) return;
+            const reading = record.state === 'reading';
             const target = Passes.PASSES[pass()].target;
-            const minutes = Math.floor(total() / 60000);
-            const over = target && minutes >= target[1];
+            const over = reading && target && total() >= target[1] * 60000;
             pill.classList.toggle('over', !!over);
-            pill.textContent = !target ? `${Passes.duration(total())} so far`
-                : over ? `${Passes.duration(total())} · ready to decide?`
-                : `${Passes.duration(total())} of ${target[1] >= 60 ? '~1 h' : `${target[0]}–${target[1]} min`}`;
-            pill.title = 'Time spent reading (paused when you’re away). Hide it in Settings → Reading.'
-                + (over ? ' Click to go to the form.' : '');
+            pill.classList.toggle('paused', !reading);
+            $('#pass_timer_text').textContent = clock(total())
+                + (!reading ? ' · ' + (record.state === 'parked' ? 'parked' : 'stopped')
+                    : over ? ' · time to decide?'
+                    : target ? ` · aim ${target[1] >= 60 ? '~1 h' : `${target[0]}–${target[1]} min`}` : '');
+            pill.title = 'Time spent on this pass (counts only while you’re reading here). Hide it in Settings → Reading.'
+                + (over ? ' Click to go to the notes and decide.' : '');
             if (over && !nudged) { nudged = true; pill.classList.add('nudge'); setTimeout(() => pill.classList.remove('nudge'), 2400); }
         }
         return { setup, restart, flush, show, touch };

@@ -8,10 +8,6 @@
     --book-ink: #fbf7ee;
 }
 
-.segmented { display: flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
-.segmented button { border: 0; background: none; color: var(--muted); padding: 6px 14px; font: inherit; cursor: pointer; }
-.segmented button + button { border-left: 1px solid var(--line); }
-.segmented button[aria-checked="true"] { background: var(--accent); color: #fff; }
 
 /* ---- shelves: books stand on a board ---- */
 .shelf { display: grid; }

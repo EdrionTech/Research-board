@@ -231,7 +231,6 @@
 
 /* added from another paper's references */
 .source_row .cited_from { font-style: italic; }
-.badge.check { background: color-mix(in srgb, #ffa94d 25%, transparent); color: var(--text); }
 
 /* copy a citation straight from the library */
 .source_item { position: relative; }
@@ -280,65 +279,54 @@
 .draft_form { width: min(440px, 100%); display: grid; gap: 12px; }
 .draft_form label { display: grid; gap: 4px; }
 
-/* ---- List | Survey (pages/dashboard/survey.js) ---- */
-.lit_view { display: flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
-.lit_view button { padding: 6px 12px; border: 0; background: var(--surface); color: var(--muted); font: inherit; font-size: .88rem; cursor: pointer; }
-.lit_view button + button { border-left: 1px solid var(--line); }
-.lit_view button[aria-pressed="true"] { background: var(--accent); color: #fff; }
+/* ---- List | Survey (pages/dashboard/survey.js): built from the shared pieces (.segmented, .badge, .source_row,
+   .tag_chip, .btn, .link), placed here with the theme's colours ---- */
 .library.survey_on #source_list, .library.survey_on .selection_bar, .library.survey_on #continue_row { display: none; }
 .survey { display: grid; gap: 16px; }
 .survey[hidden] { display: none; }
 
 /* the four steps of a survey: done, the one you're on, to come */
 .survey_steps { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin: 0; padding: 0; list-style: none; }
-.survey_step { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
-.survey_step[data-state="current"] { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 7%, var(--surface)); }
-.survey_num {
-    display: inline-grid; place-items: center; flex: none;
-    width: 24px; height: 24px; border-radius: 50%;
-    border: 1.5px solid var(--line); font-size: .78rem; font-weight: 700; color: var(--muted);
-}
-.survey_step[data-state="current"] .survey_num { border-color: var(--accent); background: var(--accent); color: #fff; }
-.survey_step[data-state="done"] .survey_num { border-color: var(--accent); color: var(--accent); }
+.survey_step { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border: 1px solid var(--line); border-radius: var(--radius); }
+.survey_step[data-state="current"] { border-color: var(--accent); box-shadow: inset 0 3px 0 var(--accent); }
+.survey_step[data-state="done"] .survey_num, .survey_step[data-state="current"] .survey_num { background: var(--accent); color: #fff; }
+.survey_num { flex: none; min-width: 1.6em; text-align: center; font-weight: 700; }
 .survey_step_text { display: grid; gap: 2px; min-width: 0; }
 .survey_step_text strong { font-size: .9rem; }
-.survey_status { color: var(--muted); font-size: .78rem; }
-.survey_hint { margin: 2px 0 0; font-size: .8rem; color: var(--muted); }
+.survey_status { color: var(--muted); font-size: .8rem; }
+.survey_hint { margin: 2px 0 0; font-size: .82rem; color: var(--muted); }
 
-/* the board: a column per stage; cards move as you read */
+/* the board: a column per stage; cards (.source_row) move as you read */
 .survey_board { display: grid; grid-template-columns: repeat(6, minmax(170px, 1fr)); gap: 10px; overflow-x: auto; padding-bottom: 4px; }
-.survey_col { display: grid; align-content: start; gap: 8px; min-width: 0; padding: 10px; border-radius: 10px; background: var(--bg); }
-.survey_col_head { display: flex; justify-content: space-between; align-items: baseline; margin: 0; font-size: .82rem; }
+.survey_col { display: grid; align-content: start; gap: 8px; min-width: 0; padding: 10px; border: 1px solid var(--line); border-radius: var(--radius); }
+.survey_col_head { display: flex; justify-content: space-between; align-items: baseline; margin: 0; font-size: .85rem; }
 .survey_col_head small { color: var(--muted); font-weight: 600; }
 .survey_cards { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
 .survey_empty { color: var(--muted); font-size: .85rem; text-align: center; }
-.survey_card { position: relative; border-radius: 8px; background: var(--surface); box-shadow: var(--shadow); }
-.survey_card.seed { box-shadow: inset 3px 0 0 #e0a800, var(--shadow); }
-.survey_open { display: grid; gap: 3px; padding: 10px 30px 10px 12px; color: inherit; text-decoration: none; overflow-wrap: anywhere; }
-.survey_open:hover strong { color: var(--accent); }
-.survey_open strong { font-size: .86rem; line-height: 1.3; }
-.survey_open small { color: var(--muted); font-size: .76rem; }
-.survey_cat { margin: 2px 0 0; font-size: .78rem; color: var(--text); opacity: .85; display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.survey_card { position: relative; }
+.survey_card .source_row { padding-right: 30px; }
+.survey_card.seed .source_row { box-shadow: inset 3px 0 0 var(--accent); }
+.survey_open strong { font-size: .88rem; line-height: 1.3; }
+.survey_cat { margin: 2px 0 0; font-size: .8rem; display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .survey_meta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 2px; }
-.survey_star { position: absolute; top: 6px; right: 6px; padding: 0 4px; border: 0; background: none; color: var(--muted); font-size: 1rem; line-height: 1; cursor: pointer; }
-.survey_star[aria-pressed="true"] { color: #e0a800; }
-.survey_star:hover { color: #e0a800; }
+.survey_star { position: absolute; top: 8px; right: 8px; font-size: 1rem; line-height: 1; }
+.survey_star[aria-pressed="true"] { color: var(--accent); }
 
 /* the key papers and authors the references share */
-.survey_keys { display: grid; gap: 10px; padding: 14px 16px; border: 1px solid var(--line); border-radius: 10px; }
+.survey_keys { display: grid; gap: 10px; padding: 14px 16px; border: 1px solid var(--line); border-radius: var(--radius); }
 .survey_keys_head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; }
 .survey_keys_head h3 { margin: 0; font-size: 1rem; }
 .survey_keys_head small { color: var(--muted); }
 .survey_keys .hint, .survey_keys > .link { margin: 0; justify-self: start; }
 .survey_papers { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; }
-.survey_paper { display: flex; align-items: center; gap: 12px; padding: 8px 10px; border-radius: 8px; background: var(--bg); }
-.survey_count { display: inline-grid; place-items: center; flex: none; min-width: 28px; height: 28px; border-radius: 8px; background: color-mix(in srgb, var(--accent) 14%, var(--surface)); color: var(--accent); font-weight: 700; font-size: .85rem; }
+.survey_paper { display: flex; align-items: center; gap: 12px; padding: 8px 10px; border-radius: var(--radius); background: var(--bg); }
+.survey_count { flex: none; min-width: 2em; text-align: center; font-weight: 700; }
 .survey_paper_text { display: grid; gap: 2px; flex: 1; min-width: 0; }
-.survey_paper_text strong { font-size: .88rem; overflow-wrap: anywhere; }
-.survey_paper_text small { color: var(--muted); font-size: .76rem; }
-.survey_sub { margin: 6px 0 0; font-size: .85rem; }
+.survey_paper_text strong { font-size: .9rem; overflow-wrap: anywhere; }
+.survey_paper_text small { color: var(--muted); font-size: .8rem; }
+.survey_sub { margin: 6px 0 0; font-size: .88rem; }
 .survey_authors { display: flex; flex-wrap: wrap; gap: 6px; }
-.survey_author { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border: 1px solid var(--line); border-radius: 999px; color: var(--text); font-size: .82rem; text-decoration: none; }
+.survey_author { display: inline-flex; align-items: center; gap: 6px; text-decoration: none; }
 .survey_author small { color: var(--muted); font-weight: 600; }
 .survey_author:hover { border-color: var(--accent); }
 
@@ -347,9 +335,9 @@
 }
 @media (max-width: 700px) {
     .survey_steps { grid-template-columns: 1fr; }
-    .survey_step:not([data-state="current"]) .survey_status { margin-left: auto; }
     .survey_step:not([data-state="current"]) { align-items: center; padding: 8px 10px; }
     .survey_step:not([data-state="current"]) .survey_step_text { display: flex; flex: 1; gap: 8px; align-items: baseline; }
+    .survey_step:not([data-state="current"]) .survey_status { margin-left: auto; }
     /* the columns one after another; empty ones fold away */
     .survey_board { grid-template-columns: 1fr; overflow: visible; }
     .survey_col:has(.survey_empty) { padding: 8px 10px; }

@@ -49,10 +49,9 @@
 .writer .hint { margin: 8px 0 0; font-size: .78rem; color: var(--muted); }
 
 /* Visual / Markdown switch */
-.mode_toggle { display: flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; margin-right: 6px; }
+.mode_toggle { margin-right: 6px; } /* (the piece: base.css) */
 .toolbar .mode_toggle button { border: none; border-radius: 0; padding: 4px 10px; color: var(--muted); }
 .toolbar .mode_toggle button[aria-pressed="true"] { background: var(--accent); color: #fff; }
-.toolbar .mode_toggle button:disabled { opacity: .4; cursor: default; }
 
 /* Visual mode: the formatted text, editable */
 .visual {

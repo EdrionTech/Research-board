@@ -31,16 +31,13 @@
 .setting strong { display: block; }
 .setting .hint { margin: 2px 0 0; font-size: .85rem; color: var(--muted); max-width: 60ch; }
 .setting code { background: var(--bg); padding: 0 4px; border-radius: 4px; font-size: .8rem; }
-.check { display: flex; align-items: center; gap: 6px; margin-top: 8px; font-size: .85rem; cursor: pointer; }
+.setting .check { margin-top: 8px; }
 .data_state { margin: 0; padding: 0 18px 14px; font-size: .9rem; color: var(--accent); }
 .data_state:empty { display: none; }
 label.btn { cursor: pointer; }
 
 /* theme: one of three */
-.segmented { display: flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
-.segmented button { border: 0; background: none; color: var(--muted); padding: 7px 16px; }
-.segmented button + button { border-left: 1px solid var(--line); }
-.segmented button[aria-checked="true"] { background: var(--accent); color: #fff; }
+.segmented button { padding: 7px 16px; } /* (the piece: base.css) */
 
 /* style cards with a small preview */
 .style_cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }

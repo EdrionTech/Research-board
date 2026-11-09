@@ -23,7 +23,7 @@ const SurveyBoard = (() => {
 
     function render() {
         const on = view() === 'survey';
-        for (const btn of $$('#lit_view button')) btn.setAttribute('aria-pressed', btn.dataset.view === view());
+        for (const btn of $$('#lit_view button')) btn.setAttribute('aria-checked', btn.dataset.view === view());
         $('.library').classList.toggle('survey_on', on);
         $('#survey').hidden = !on;
         if (!on) return;
@@ -40,7 +40,7 @@ const SurveyBoard = (() => {
         for (const s of list) {
             const li = el('li', 'survey_step');
             li.dataset.state = s.done ? 'done' : s.n === current ? 'current' : '';
-            const num = el('span', 'survey_num', s.done ? '✓' : String(s.n));
+            const num = el('span', 'badge survey_num', s.done ? '✓' : String(s.n));
             const text = el('div', 'survey_step_text');
             const head = el('strong', '', s.title);
             text.append(head);
@@ -73,7 +73,7 @@ const SurveyBoard = (() => {
     function card(source, record) {
         const seed = seeds().includes(source.id);
         const li = el('li', 'survey_card' + (seed ? ' seed' : '') + (source.surveyKey ? ' key' : ''));
-        const open = el('a', 'survey_open');
+        const open = el('a', 'source_row survey_open');
         open.href = materialUrl(source.id);
         open.append(el('strong', '', source.title), el('small', '', shortCitation(source) || 'No authors yet'));
         const category = record?.passes?.[1]?.cs?.category?.trim();
@@ -83,7 +83,7 @@ const SurveyBoard = (() => {
         const spent = minutes(record);
         if (spent >= 60000) meta.append(el('small', '', Passes.duration(spent)));
         if (meta.childElementCount) open.append(meta);
-        const star = el('button', 'survey_star', seed ? '★' : '☆');
+        const star = el('button', 'link survey_star', seed ? '★' : '☆');
         star.type = 'button';
         star.dataset.seed = source.id;
         star.setAttribute('aria-pressed', seed);
@@ -120,7 +120,9 @@ const SurveyBoard = (() => {
             add.dataset.add = work.key;
             add.disabled = busy.has(work.key);
             add.title = 'Add it to the project (its details are looked up)';
-            li.append(el('span', 'survey_count', String(work.citers.length)), text, add);
+            const count = el('span', 'badge survey_count', String(work.citers.length));
+            count.title = `Cited by ${work.citers.length} of your papers`;
+            li.append(count, text, add);
             list.append(li);
         }
         if (keys.papers.length) box.append(list);
@@ -134,7 +136,7 @@ const SurveyBoard = (() => {
             box.append(el('h4', 'survey_sub', 'Authors who keep coming up'));
             const chips = el('div', 'survey_authors');
             for (const a of keys.authors.slice(0, 16)) {
-                const chip = el('a', 'survey_author');
+                const chip = el('a', 'tag_chip survey_author');
                 chip.href = 'https://scholar.google.com/scholar?q=' + encodeURIComponent('author:"' + a.name + '"');
                 chip.target = '_blank';
                 chip.rel = 'noopener';

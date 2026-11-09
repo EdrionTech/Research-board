@@ -62,9 +62,9 @@
             <div class="library">
                 <div class="library_tools">
                     <!-- the sources as a list, or as a survey board by how far each is read (survey.js) -->
-                    <div class="lit_view" id="lit_view" role="group" aria-label="Show the sources as">
-                        <button type="button" data-view="list" aria-pressed="true">List</button>
-                        <button type="button" data-view="survey" aria-pressed="false" title="A literature survey: seed papers, a first pass on each, the key papers their references share">Survey</button>
+                    <div class="segmented lit_view" id="lit_view" role="radiogroup" aria-label="Show the sources as">
+                        <button type="button" role="radio" data-view="list" aria-checked="true">List</button>
+                        <button type="button" role="radio" data-view="survey" aria-checked="false" title="A literature survey: seed papers, a first pass on each, the key papers their references share">Survey</button>
                     </div>
                     <input type="search" id="source_search" placeholder="Search title, author, keyword...">
                     <select id="source_filter" aria-label="Filter by status">

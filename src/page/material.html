@@ -169,13 +169,13 @@
 
             <!-- reading in passes: the three passes as steps, the time, the way to the pass's notes (material_passes.js) -->
             <div class="pass_bar" id="pass_bar" hidden>
-                <ol class="pass_stepper" id="pass_steps" aria-label="Reading passes"></ol>
+                <div class="segmented pass_steps" id="pass_steps" role="radiogroup" aria-label="Reading passes"></div>
                 <small class="pass_state" id="pass_state"></small>
                 <span class="spacer"></span>
-                <button type="button" class="pass_timer" id="pass_timer" hidden></button>
-                <button type="button" class="pass_icon" id="pass_form_btn" title="This pass's notes, at the end of the paper" aria-label="Go to this pass's notes"><span class="i" data-i="notebook-pen" aria-hidden="true"></span></button>
-                <button type="button" class="pass_icon" id="pass_leave" title="Stop reading in passes (what you wrote stays)" aria-label="Stop reading in passes">✕</button>
-                <p class="pass_notice" id="pass_hint" hidden></p>
+                <button type="button" class="btn small has_i pass_timer" id="pass_timer" hidden><span class="i" data-i="timer" aria-hidden="true"></span><span class="lbl" id="pass_timer_text"></span></button>
+                <button type="button" class="btn small has_i" id="pass_form_btn" title="This pass's notes, at the end of the paper"><span class="i" data-i="notebook-pen" aria-hidden="true"></span><span class="lbl">Notes</span></button>
+                <button type="button" class="btn small has_i" id="pass_leave" title="Stop reading in passes (what you wrote stays)" aria-label="Stop reading in passes"><span class="i" data-i="x" aria-hidden="true"></span></button>
+                <p class="pass_notice hint" id="pass_hint" hidden></p>
             </div>
 
             <details class="abstract" id="abstract">

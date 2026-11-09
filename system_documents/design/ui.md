@@ -6,7 +6,7 @@ Every page is built from the same few pieces, styled once in `src/style/base.css
 
 ## Colours, theme, style
 
-- Colours come from the theme's variables only: `--bg`, `--surface`, `--text`, `--muted`, `--line`, `--accent`, `--danger`, plus `--radius` and `--shadow`. No colour written into a page's CSS, so every style (`src/style/themes/`) and light/dark, and the person's own colours and CSS (Settings → Appearance), apply everywhere.
+- Colours come from the theme's variables only: `--bg`, `--surface`, `--text`, `--muted`, `--line`, `--accent`, `--danger`, `--ok` (done, saved), `--warn` (worth a check, past the time), plus `--radius` and `--shadow`. Corners use `--radius` (a style may make them square). White text on the accent is the one exception. A highlight's own colour (the project's note colours) is the person's choice, not a page's. No colour written into a page's CSS, so every style (`src/style/themes/`) and light/dark, and the person's own colours and CSS (Settings → Appearance), apply everywhere.
 - A page loads `core/settings.js` in its `<head>`, so it's drawn in the person's theme and style from the start. The appearance controls themselves are one shared piece, `core/appearance.js` (`Appearance.mount(section)`), used by the app's Settings and by the server's control page (its Appearance tab, saved in that server's data via the `settingssaved` event).
 
 ## The pieces
@@ -23,7 +23,10 @@ Every page is built from the same few pieces, styled once in `src/style/base.css
 | Settings-style page | `.settings_section` with a `header h3`, rows `.setting` (`.stacked` for a full-width one), `.hint` under a label | Settings and the server's control page |
 | List of things with actions | `ul.sync_list > li` with a `span` (name, `small` detail) then buttons; `li.empty` when there's none | Servers, devices, synced projects, invites |
 | Status line | `.data_state` (`aria-live`), empty when there's nothing to say | One per section |
-| Badges | `.sync_badge` (`.clash` for a problem), `.clash_count` on a button | |
+| Badges | `.badge` (`.reading`, `.done`, `.check`, `.material`), `.sync_badge` (`.clash` for a problem), `.clash_count` on a button | Also a step's number |
+| One choice of a few | `.segmented` with `button[role=radio][aria-checked]`; `.view_toggle` and `.mode_toggle` with `aria-pressed` | One piece in `base.css` under three names (each style dresses them) |
+| Chip | `.tag_chip` (`.active` when on) | Filters, authors, a folded section's "open" |
+| Checkbox with words | `label.check` | |
 
 ## Rules for phones (≤ 700 px)
 

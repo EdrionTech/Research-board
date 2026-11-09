@@ -10,6 +10,8 @@
     --line: rgba(0, 0, 0, .12);
     --accent: #3d5afe;
     --danger: #d32f2f;
+    --ok: #2e7d32;      /* done, saved */
+    --warn: #d9822b;    /* worth a check, past the time */
     --radius: 12px;
     --shadow: 0 2px 10px rgba(0, 0, 0, .08);
 }
@@ -23,6 +25,8 @@
     --line: rgba(255, 255, 255, .14);
     --accent: #7c8dff;
     --danger: #ef6b6b;
+    --ok: #6cc070;
+    --warn: #f0a050;
     --shadow: 0 2px 10px rgba(0, 0, 0, .4);
 }
 
@@ -35,6 +39,8 @@
         --line: rgba(255, 255, 255, .14);
         --accent: #7c8dff;
         --danger: #ef6b6b;
+        --ok: #6cc070;
+        --warn: #f0a050;
         --shadow: 0 2px 10px rgba(0, 0, 0, .4);
     }
 }
@@ -151,8 +157,23 @@ textarea { resize: vertical; }
     background: var(--line);
 }
 .badge.reading { background: color-mix(in srgb, var(--accent) 22%, transparent); }
-.badge.done { background: color-mix(in srgb, #2e7d32 28%, transparent); }
+.badge.done { background: color-mix(in srgb, var(--ok) 28%, transparent); }
 .badge.material { background: none; border: 1px solid var(--line); }
+.badge.check { background: color-mix(in srgb, var(--warn) 25%, transparent); color: var(--text); }
+
+/* a choice of one among a few, as joined buttons. Three names for the same piece (each style dresses them):
+   .segmented (role="radio", aria-checked), .view_toggle and .mode_toggle (aria-pressed) */
+.segmented, .view_toggle, .mode_toggle { display: flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.segmented button, .view_toggle button, .mode_toggle button {
+    border: 0; border-radius: 0; background: none; color: var(--muted);
+    padding: 6px 12px; font: inherit; font-size: .85rem; cursor: pointer;
+}
+.segmented button + button, .view_toggle button + button, .mode_toggle button + button { border-left: 1px solid var(--line); }
+.segmented button[aria-checked="true"], .view_toggle button[aria-pressed="true"], .mode_toggle button[aria-pressed="true"] { background: var(--accent); color: #fff; }
+.segmented button:disabled, .view_toggle button:disabled, .mode_toggle button:disabled { opacity: .4; cursor: default; }
+
+/* a checkbox with its words */
+.check { display: flex; align-items: center; gap: 6px; font-size: .85rem; cursor: pointer; }
 
 .keywords { list-style: none; padding: 0; margin: 0 0 10px; display: flex; flex-wrap: wrap; gap: 6px; }
 .keywords li { font-size: .78rem; padding: 2px 10px; border-radius: 999px; border: 1px solid var(--line); }
