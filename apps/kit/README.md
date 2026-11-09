@@ -18,11 +18,12 @@ In Research Board, `project.json` and `kit/` are in `apps/`, with the server, de
 
 ## Using it
 
-Double-click `run.bat` (Windows), or run `./run.sh` (macOS, Linux), for a menu that also says which builds are older than their code. The menu comes back after each task (a failed one too) until you press Enter on its own or type `q`. Tasks that keep running (`open`, `host`, `dev desktop`) get a window of their own on Windows, so the menu stays usable; on macOS and Linux they run in place and Ctrl + C brings the menu back. Or name a task:
+Double-click `run.bat` (Windows), or run `./run.sh` (macOS, Linux), for a menu that also says which builds are older than their code. The menu comes back after each task (a failed one too) until you press Enter on its own or type `q`. Tasks that keep running (`browser`, `dev browser`, `host`, `dev desktop`) get a window of their own on Windows, so the menu stays usable; on macOS and Linux they run in place and Ctrl + C brings the menu back. Or name a task:
 
 | Task | What it does |
 | --- | --- |
-| `open` | Start the server here and open the app in the browser |
+| `browser` | Start the server here and open the app in the browser (`open`, its old name, still works) |
+| `dev browser` | The same, and the page reloads itself when the web folder changes: the server is given `server.dev` (`"dev": "--dev"`), offered only when that's set |
 | `host [options]` | The server for other devices (its own options, passed on: in Research Board `--public`, `--start`, `--autostart`, `--no-autostart`) |
 | `build server` | The server version, ready to copy elsewhere: `builds/host/` and `<file>-<version>-host.zip`. Started once to check it answers |
 | `build desktop [options]` | The app for the system it's built on: Windows `-setup.exe` and `.msi`; macOS `.dmg` and `-mac.app.zip`; Linux `.AppImage`, `.deb`, `.rpm`. Options go to `cargo tauri build` (e.g. `--target universal-apple-darwin`: one Mac app for Intel and Apple silicon) |
@@ -41,7 +42,7 @@ Double-click `run.bat` (Windows), or run `./run.sh` (macOS, Linux), for a menu t
 | `clean` | Empty `builds/` |
 | `help` | The tasks this project has |
 
-A task is offered only when its part of the project exists. The server version (`build server`) carries the kit and the launcher with it, marked `"bundle": true`, so on the other computer `run` offers only `open` and `host`.
+A task is offered only when its part of the project exists. The server version (`build server`) carries the kit and the launcher with it, marked `"bundle": true`, so on the other computer `run` offers only `browser` and `host`.
 
 ### Releases
 
@@ -72,7 +73,7 @@ builds/
   "web": "src",                        // the web app (every path below is from the top folder)
   "builds": "apps/builds",             // where builds go ("builds" by default)
   "releaseNotes": "system_documents/releases",
-  "server":  { "dir": "apps/server", "start": "server.js", "host": "serve.js", "health": "/api/health",
+  "server":  { "dir": "apps/server", "start": "server.js", "host": "serve.js", "health": "/api/health", "dev": "--dev",  // dev: the option for dev browser
                "bundle": ["*.js", "*.sh", "README.md"] },  // the server folder's files in the server version
   "desktop": { "dir": "apps/desktop/src-tauri" },
   "phone":   { "dir": "apps/phone", "key": "research-board",    // key: Android's release key alias

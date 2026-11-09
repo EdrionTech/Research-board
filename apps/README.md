@@ -10,7 +10,7 @@ Everything that builds or runs Research Board is here: the three apps, [the kit]
 
 ## Running and building: `run`
 
-`run.bat` (Windows; double-click it for a menu) or `./run.sh` (macOS, Linux) in the project folder is the one launcher. `run open` starts the app here, `run host` serves it to other devices, and `run build phone`, `build desktop`, `build server` or `build all` build into `apps/builds/` (not in git). The work is done by [the kit](kit/README.md) (`kit/`, reusable in other projects), which reads [project.json](project.json): the name, **the version** and where each part is. It finds Bun, Rust, Java and the Android SDK by itself.
+`run.bat` (Windows; double-click it for a menu) or `./run.sh` (macOS, Linux) in the project folder is the one launcher. `run browser` starts the app here in your browser (`run dev browser`: the page reloads itself as you change `src/`), `run host` serves it to other devices, and `run build phone`, `build desktop`, `build server` or `build all` build into `apps/builds/` (not in git). The work is done by [the kit](kit/README.md) (`kit/`, reusable in other projects), which reads [project.json](project.json): the name, **the version** and where each part is. It finds Bun, Rust, Java and the Android SDK by itself.
 
 **`run status`** (also shown at the top of the menu) says which builds are missing or **older than the code they're made from**. A build only has the code as it was when it was built: after changing `src/`, the browser shows the change straight away, but the phone and desktop apps only once they're rebuilt and reinstalled.
 

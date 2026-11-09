@@ -10,7 +10,8 @@
     "dir": "apps/server",
     "start": "server.js",
     "host": "serve.js",
-    "health": "/api/health"
+    "health": "/api/health",
+    "dev": "--dev"
   },
   "desktop": {
     "dir": "apps/desktop/src-tauri"

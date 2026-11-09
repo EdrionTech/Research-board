@@ -20,7 +20,7 @@ n, by providing a simple interface to create and manage research notes and docum
 
 Needs [Bun](https://bun.sh); nothing else to install.
 
-Double-click `run.bat` (Windows) and choose **open**, or run `./run.sh open` (macOS, Linux): the app opens in your browser at <http://127.0.0.1:5500/>. Or run it yourself:
+Double-click `run.bat` (Windows) and choose **browser**, or run `./run.sh browser` (macOS, Linux): the app opens in your browser at <http://127.0.0.1:5500/>. Or run it yourself:
 
 ```sh
 bun apps/server/server.js

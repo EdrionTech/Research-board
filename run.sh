@@ -1,6 +1,6 @@
 #!/bin/sh
 # The one launcher (macOS, Linux). With no task, a menu (back after each task); or:  ./run.sh <task>   (./run.sh help lists them)
-#   ./run.sh open            the app here, in your browser
+#   ./run.sh browser         the app here, in your browser (dev browser: reloading as src/ changes)
 #   ./run.sh host            a server for other devices (--public, --start, --autostart, --no-autostart)
 #   ./run.sh build phone     ... build desktop, build server, build all, release, status, test
 # It finds Bun (installing it the first time) and hands over to apps/kit/kit.js, which reads apps/project.json.

@@ -3,7 +3,7 @@
 // Everything about the project itself is in project.json, beside the kit's folder; see kit/README.md.
 //
 //   run                  a menu (with which builds are older than the code), back after each task
-//   run <task> [...]     a task, e.g.  run open,  run host --public,  run build phone,  run release
+//   run <task> [...]     a task, e.g.  run browser,  run host --public,  run build phone,  run release
 //   run help             the tasks this project has
 
 if (!process.versions.bun) {
@@ -139,9 +139,11 @@ function help(p, list) {
 }
 
 // a task's words and options from the command line: "build phone" is two words, "open" one
+// a task's name is one or two words; a task can also answer to older names (aka)
 function parse(offered, args) {
     if (offered[`${args[0]} ${args[1]}`]) return [`${args[0]} ${args[1]}`, args.slice(2)];
-    return [args[0], args.slice(1)];
+    const old = Object.keys(offered).find(k => (offered[k].aka || []).includes(args[0]));
+    return [old || args[0], args.slice(1)];
 }
 
 async function perform(p, offered, key, args, { menu = false } = {}) {

@@ -1,12 +1,14 @@
 // A web app served by a Bun server (project.json "server"):
 //
-//   open            start the server here and open the app in the browser:  bun <dir>/<start> --open
+//   browser         start the server here and open the app in the browser:  bun <dir>/<start> --open
+//   dev browser     the same, reloading the page when the web folder changes:  bun <dir>/<start> --open <dev>
+//                   (offered when "dev" names the server's option for it, e.g. "dev": "--dev")
 //   host            the server for other devices (its own menu or control page):  bun <dir>/<host> [options]
 //   build server    the server version, ready to copy to another computer: builds/<name>-<version>-host.zip
 //
 // The server version keeps the project's own layout (the web folder, the server folder, the kit, run.bat / run.sh
-// and project.json, marked "bundle": true), so the server and the launcher work in it unchanged; only open and host
-// are offered there.
+// and project.json, marked "bundle": true), so the server and the launcher work in it unchanged; only browser and
+// host are offered there.
 // "health" is a path that answers once the server is up: the bundle is started once to check it.
 
 const fs = require('fs');
@@ -31,7 +33,7 @@ module.exports = p => {
         copy(p.cfg.web);
         copy(p.kit);
         for (const file of ['run.bat', 'run.sh']) copy(file);
-        // marked as a server version: the launcher there offers only open and host
+        // marked as a server version: the launcher there offers only browser and host
         fs.writeFileSync(path.join(out, p.config), JSON.stringify({ ...p.cfg, bundle: true }, null, 2) + '\n');
         const globs = s.bundle.map(g => new Bun.Glob(g));
         fs.mkdirSync(path.join(out, s.dir), { recursive: true });
@@ -67,7 +69,9 @@ module.exports = p => {
         }
     }
 
-    const tasks = { open: { label: 'Open the app here, in your browser', serves: true, run: args => handOver(bun, [path.join(dir, s.start), '--open', ...args], { cwd: p.root }) } };
+    const serve = extra => args => handOver(bun, [path.join(dir, s.start), '--open', ...extra, ...args], { cwd: p.root });
+    const tasks = { browser: { label: 'The app here, in your browser', serves: true, aka: ['open'], run: serve([]) } };
+    if (s.dev) tasks['dev browser'] = { label: 'The app in your browser, reloading as the code changes (development)', serves: true, dev: true, run: serve([].concat(s.dev)) };
     if (s.host && fs.existsSync(path.join(dir, s.host))) {
         tasks.host = { label: 'Host it for other devices', serves: true, run: args => handOver(bun, [path.join(dir, s.host), ...args], { cwd: p.root }) };
     }

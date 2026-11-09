@@ -1,6 +1,6 @@
 @echo off
 rem The one launcher. Double-click it for a menu (it comes back after each task), or:  run.bat <task>   (run.bat help lists them)
-rem   run.bat open            the app here, in your browser
+rem   run.bat browser         the app here, in your browser (dev browser: reloading as src\ changes)
 rem   run.bat host            a server for other devices (--public, --start, --autostart, --no-autostart)
 rem   run.bat build phone     ... build desktop, build server, build all, release, status, test
 rem It finds Bun (installing it the first time) and hands over to apps\kit\kit.js, which reads apps\project.json.

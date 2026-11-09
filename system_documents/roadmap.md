@@ -43,7 +43,8 @@ Everything still to do, by category. Details are in the linked plans. Done work 
 - [ ] **Full screen for reading and writing**, with optional small focus tools: a clock in the corner that can be ignored, and a timer / alarm (e.g. for reading sessions). For the material reader and the editors (notes, review, writing). Still to describe: the second option (only the start was written down)
 
 ## 5. Tidy-ups and known issues
-- [ ] `run open` opening the browser: the server side works (tested); confirm a tab opens
+- [ ] `run browser` opening the browser: the server side works (tested); confirm a tab opens
+- [x] `open` renamed `browser` (easier to find in the menu; `open` still works), and `dev browser` added: the page reloads itself when src/ changes (server.js --dev, this computer only) (2026-11-09)
 - [ ] Branch `feature/sqlite-and-apps` is pushed but not merged into `main` yet
 
 - [ ] PDF.js logs "the `--scale-factor` CSS-variable must be set" when a PDF's pages are first added (harmless; the text layer renders before the page size is set)

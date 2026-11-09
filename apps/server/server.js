@@ -7,8 +7,9 @@
 // The storage itself is shared with the desktop and phone apps: src/script/core/place/place.js, given Bun's
 // SQLite and the files folder by place-bun.js. This file is only the requests.
 //
-// Bun (https://bun.sh), no packages: `bun apps/server/server.js` (run.bat open / ./run.sh open add --open: the browser
-// opens on the app once the server is ready). Options (environment): PORT (5500), HOST (127.0.0.1: this computer
+// Bun (https://bun.sh), no packages: `bun apps/server/server.js` (run.bat browser / ./run.sh browser add --open: the
+// browser opens on the app once the server is ready; run dev browser adds --dev too: the page reloads itself when a
+// file in src/ changes, on this computer only). Options (environment): PORT (5500), HOST (127.0.0.1: this computer
 // only), DATA (the data folder), KEY (the server's access key: see "Access" below). The API below is all the app
 // needs (see README.md here).
 //
@@ -65,6 +66,7 @@ const DATA = path.resolve(process.env.DATA || path.join(APP, PUBLIC ? 'data-publ
 const MAX_UPLOAD = (Number(process.env.MAX_UPLOAD_MB) || 500) * 1048576;
 
 const LOCAL_ONLY = ['127.0.0.1', 'localhost', '::1'].includes(HOST) && !PROXIED;
+const DEV = process.argv.includes('--dev') && LOCAL_ONLY; // reload the page when src/ changes (developing)
 
 const ID = /^[A-Za-z0-9_-]{1,64}$/;
 const TYPES = {
@@ -300,12 +302,41 @@ async function serveStatic(req, res, pathname) {
     if (file !== ROOT && !file.startsWith(ROOT + path.sep)) return send(res, 403, 'Not allowed', 'text/plain');
     try {
         if ((await fsp.stat(file)).isDirectory()) file = path.join(file, 'index.html');
-        const body = await fsp.readFile(file);
+        let body = await fsp.readFile(file);
+        if (DEV && /\.html?$/i.test(file)) body = withReload(body);
         res.writeHead(200, { 'Content-Type': TYPES[path.extname(file).toLowerCase()] || 'application/octet-stream', 'Cache-Control': 'no-cache' });
         res.end(req.method === 'HEAD' ? undefined : body);
     } catch {
         send(res, 404, 'Not found', 'text/plain');
     }
+}
+
+// ---- --dev: each page listens on /dev/reload and reloads itself when a file in src/ changes ----
+
+const reloaders = new Set();
+
+function withReload(html) {
+    const script = '<script>new EventSource("/dev/reload").onmessage = () => location.reload();</script>';
+    const text = html.toString('utf8');
+    return Buffer.from(/<\/body>/i.test(text) ? text.replace(/<\/body>/i, script + '</body>') : text + script);
+}
+
+function reloadStream(req, res) {
+    res.writeHead(200, { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache, no-transform', Connection: 'keep-alive' });
+    res.write(': watching src/\n\n');
+    reloaders.add(res);
+    req.on('close', () => reloaders.delete(res));
+}
+
+function watchSources() {
+    let soon = null;
+    fs.watch(ROOT, { recursive: true }, (event, name) => {
+        clearTimeout(soon); // (an editor saving writes several times: one reload)
+        soon = setTimeout(() => {
+            console.log(`Changed: ${name || 'src/'} (reloading the page)`);
+            for (const res of reloaders) res.write('data: reload\n\n');
+        }, 150);
+    });
 }
 
 // ---- the control page's requests (src/page/server.html), with the main key ----
@@ -407,6 +438,7 @@ async function start() {
                 return await api(place, req, res, pathname.slice(5) + search);
             }
             if (req.method !== 'GET' && req.method !== 'HEAD') return send(res, 405, 'Not allowed', 'text/plain');
+            if (DEV && pathname === '/dev/reload') return reloadStream(req, res);
             return await serveStatic(req, res, pathname);
         } catch (err) {
             if (err instanceof TooBig) return send(res, 413, { error: `too big: this server takes up to ${MAX_UPLOAD / 1048576} MB at once` });
@@ -426,6 +458,10 @@ async function start() {
     server.listen(PORT, HOST, async () => {
         const address = `http://${HOST === '0.0.0.0' || HOST === '::' ? 'localhost' : HOST}:${PORT}/`;
         console.log(`Research Board: ${address}`);
+        if (DEV) {
+            watchSources();
+            console.log('Developing: the page reloads itself when a file in src/ changes.');
+        }
         if (HOST === '0.0.0.0' || HOST === '::') {
             const lan = await networkAddresses();
             addresses = lan.map(({ ip, name }) => ({ label: name, base: `http://${ip}:${PORT}` }));

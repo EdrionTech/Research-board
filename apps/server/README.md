@@ -6,8 +6,8 @@
 
 | | |
 | --- | --- |
-| Windows | Double-click `run.bat` in the project folder and choose **open** (or `run.bat open`) |
-| macOS, Linux | `./run.sh open` in the project folder |
+| Windows | Double-click `run.bat` in the project folder and choose **browser** (or `run.bat browser`) |
+| macOS, Linux | `./run.sh browser` in the project folder |
 | Anywhere | `bun apps/server/server.js` from the project folder (add `--open` to open the browser) |
 
 ### As a server for other devices
