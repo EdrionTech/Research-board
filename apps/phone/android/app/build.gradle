@@ -1,6 +1,6 @@
 apply plugin: 'com.android.application'
 
-// The release key (build.bat apk-release makes it once): apps/phone/keystore/, kept out of git. Back it up:
+// The release key (run build phone-release makes it once): apps/phone/keystore/, kept out of git. Back it up:
 // Android installs an update only when it's signed with the same key.
 def keystoreProperties = new Properties()
 def keystorePropertiesFile = rootProject.file('../keystore/keystore.properties')
@@ -13,9 +13,9 @@ android {
         applicationId "com.researchboard.phone"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        // from apps/build.ps1: the version in apps/desktop/src-tauri/tauri.conf.json (one version for every build)
-        versionCode((project.findProperty('rbVersionCode') ?: '1') as int)
-        versionName(project.findProperty('rbVersion') ?: '0.0.0')
+        // from the kit (kit/targets/capacitor.js): the version in project.json (one version for every build)
+        versionCode((project.findProperty('appVersionCode') ?: '1') as int)
+        versionName(project.findProperty('appVersion') ?: '0.0.0')
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.

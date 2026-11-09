@@ -3,18 +3,18 @@
 # your data (the local server keeps it here)
 /data
 /data-public
-# downloaded tools (cloudflared, for serve --public)
-/tools
+# what belongs to this computer only: the server's settings (serve.json), serve.log, downloaded tools (cloudflared)
+/local
 
 # the original design-system packs (reference only; the app uses its copies in src/style/themes)
 /design_document
 
-# finished builds (build.bat) and what the app projects make while building
-/builds
+# finished builds (run build ...) and what the app projects make while building
+/apps/builds
 /apps/desktop/src-tauri/target
 /apps/desktop/src-tauri/gen
 /apps/phone/node_modules
-# the phone app's release key and its passwords (build.bat apk-release): back it up, never commit it
+# the phone app's release key and its passwords (run build phone-release): back it up, never commit it
 /apps/phone/keystore
 
 # the tests' tools and screenshots
@@ -24,5 +24,3 @@
 .fake
 
 .github
-/serve.json
-/serve.log

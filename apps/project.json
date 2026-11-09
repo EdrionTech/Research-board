@@ -1,0 +1,27 @@
+{
+  "name": "Research Board",
+  "fileName": "ResearchBoard",
+  "root": "..",
+  "version": "0.2.0",
+  "web": "src",
+  "builds": "apps/builds",
+  "releaseNotes": "system_documents/releases",
+  "server": {
+    "dir": "apps/server",
+    "start": "server.js",
+    "host": "serve.js",
+    "health": "/api/health"
+  },
+  "desktop": {
+    "dir": "apps/desktop/src-tauri"
+  },
+  "phone": {
+    "dir": "apps/phone",
+    "key": "research-board",
+    "ios": { "team": "" }
+  },
+  "tests": {
+    "dir": "tests",
+    "run": "run.js"
+  }
+}
