@@ -58,7 +58,8 @@ const Survey = (() => {
     // The key papers, authors and venues: what the references of the papers you've had a first pass on have in
     // common. Works already in the project aren't suggested (their authors and venues still count). A survey paper
     // you chose to use (surveys: [sourceId]) gives all its references, even those only it cites.
-    // → { pool: [source], papers: [{ key, ref, title, citers, fromSurvey }], authors: [{ name, citers }],
+    // References you marked to follow up count too, cited by one paper or more.
+    // → { pool: [source], papers: [{ key, ref, title, citers, fromSurvey, followUp }], authors: [{ name, citers }],
     //     venues: [{ key, label, search, cites, citers }] }, most cited first; a work or author counts once per
     //     citing paper, a venue once per reference.
     function keyPapers(sources, records, surveys = []) {
@@ -77,6 +78,7 @@ const Survey = (() => {
                     const work = works.get(key) || { key, ref, title: parsed.title || ref.text.slice(0, 120), citers: new Set(), fromSurvey: false };
                     work.citers.add(source.id);
                     if (survey) work.fromSurvey = true;
+                    if (ref.followUp) work.followUp = true; // (you marked it on the paper: pass 2, or its References panel)
                     if (ref.text.length > work.ref.text.length || (!work.ref.doi && ref.doi)) work.ref = ref; // the fullest copy
                     works.set(key, work);
                 }
@@ -101,7 +103,7 @@ const Survey = (() => {
         const byCiters = (a, b) => b.citers.length - a.citers.length;
         return {
             pool,
-            papers: list(works).filter(w => w.citers.length >= 2 || w.fromSurvey).sort((a, b) => byCiters(a, b) || Number(b.fromSurvey) - Number(a.fromSurvey)),
+            papers: list(works).filter(w => w.citers.length >= 2 || w.fromSurvey || w.followUp).sort((a, b) => byCiters(a, b) || Number(b.fromSurvey) - Number(a.fromSurvey)),
             authors: list(authors).filter(a => a.citers.length >= 2).sort(byCiters),
             venues: list(venues).filter(v => v.cites >= 2).sort((a, b) => b.cites - a.cites || byCiters(a, b)),
         };

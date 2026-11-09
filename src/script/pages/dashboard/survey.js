@@ -20,6 +20,10 @@ const SurveyBoard = (() => {
 
     const seeds = () => project.surveySeeds || [];
     const surveysUsed = () => project.surveyFrom || [];
+    // "A. Vaswani" (from a reference) and Ashish Vaswani (a project paper's author): the same surname and initial
+    const plain = t => (t || '').normalize('NFKD').replace(/[̀-ͯ]/g, '').toLowerCase();
+    const sameAuthor = (author, cited) => plain(author.lastName) === plain(cited.lastName)
+        && (!cited.name.includes('.') || plain(author.firstName)[0] === plain(cited.name)[0]);
     const minutes = record => Object.values(record?.passes || {}).reduce((ms, p) => ms + (p.activeMs || 0), 0);
     const button = (cls, label, data = {}, title = '') => {
         const b = el('button', cls, label);
@@ -144,8 +148,9 @@ const SurveyBoard = (() => {
         for (const work of shown) {
             const li = el('li', 'survey_paper');
             const text = el('div', 'survey_paper_text');
-            const cited = work.citers.length > 1 || !work.fromSurvey
-                ? `Cited by ${work.citers.length}: ${work.citers.map(shortOf).join('; ')}` : `From the survey ${shortOf(work.citers[0])}`;
+            const cited = work.citers.length > 1 ? `Cited by ${work.citers.length}: ${work.citers.map(shortOf).join('; ')}`
+                : work.followUp ? `You marked it to follow up in ${shortOf(work.citers[0])}`
+                : `From the survey ${shortOf(work.citers[0])}`;
             text.append(el('strong', '', work.title), el('small', '', cited));
             const add = button('btn small', busy.has(work.key) ? 'Looking up…' : '+ Add', { add: work.key }, 'Add it to the project (its details are looked up)');
             add.disabled = busy.has(work.key);
@@ -161,11 +166,18 @@ const SurveyBoard = (() => {
             box.append(el('h4', 'survey_sub', 'Authors who keep coming up'));
             const chips = el('div', 'survey_chips');
             for (const a of keys.authors.slice(0, 16)) {
-                const chip = el('a', 'tag_chip survey_chip');
-                chip.href = 'https://scholar.google.com/scholar?q=' + encodeURIComponent('author:"' + a.name + '"');
-                chip.target = '_blank';
-                chip.rel = 'noopener';
-                chip.title = `Cited in ${a.citers.length} of the papers: ${a.citers.map(shortOf).join('; ')}. Their papers on Google Scholar`;
+                // with papers in the project: the Literature tab's own author filter; else their papers on Google Scholar
+                const theirs = all.filter(s => (s.authors || []).some(x => sameAuthor(x, a)));
+                let chip;
+                if (theirs.length) {
+                    chip = button('tag_chip survey_chip', '', { author: a.name }, `Cited in ${a.citers.length} of the papers. Show their ${theirs.length} paper${theirs.length === 1 ? '' : 's'} here`);
+                } else {
+                    chip = el('a', 'tag_chip survey_chip');
+                    chip.href = 'https://scholar.google.com/scholar?q=' + encodeURIComponent('author:"' + a.name + '"');
+                    chip.target = '_blank';
+                    chip.rel = 'noopener';
+                    chip.title = `Cited in ${a.citers.length} of the papers: ${a.citers.map(shortOf).join('; ')}. None of theirs in the project yet: their papers on Google Scholar`;
+                }
                 chip.append(el('span', '', a.name), el('small', '', String(a.citers.length)));
                 chips.append(chip);
             }
@@ -317,6 +329,12 @@ const SurveyBoard = (() => {
             if (b.dataset.seed) return toggleIn('surveySeeds', b.dataset.seed);
             if (b.dataset.survey) return toggleIn('surveyFrom', b.dataset.survey);
             if (b.dataset.add) return addKey(b.dataset.add);
+            if (b.dataset.author) {
+                const cited = lastKeys?.authors.find(a => a.name === b.dataset.author);
+                if (cited) authorFilter.selectWhere(author => sameAuthor(author, cited));
+                $('#author_filter').scrollIntoView({ behavior: 'smooth', block: 'center' });
+                return;
+            }
             if (b.dataset.venue) return openWorks('venue', lastKeys?.venues.find(v => v.key === b.dataset.venue));
             if (b.dataset.find !== undefined) return openWorks('seed');
             if (b.dataset.more !== undefined) { morePapers = !morePapers; render(); }

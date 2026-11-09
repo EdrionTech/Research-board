@@ -30,6 +30,8 @@ const PassMode = (() => {
 
     function setup() {
         record = Passes.of(source);
+        if (record) record = Passes.moveIntoSource(record); // (older records kept the summary and close-out themselves)
+        source = Store.getItem(source.id);
         Toc.hook({ extra: marksFor, decorate, changed: () => apply() });
         $('#passes_btn').onclick = () => (on() ? leave() : enter());
         $('#pass_bar').addEventListener('click', onBarClick);
@@ -54,11 +56,7 @@ const PassMode = (() => {
 
     async function enter() {
         record = Passes.of(source) ? Passes.save(Passes.of(source), { on: true }) : Passes.start(source);
-        if ((source.status || 'to_read') === 'to_read') {
-            Store.saveItem({ id: source.id, status: 'reading' });
-            source.status = 'reading';
-            $('#status_select').value = 'reading';
-        }
+        refresh(); // (its status follows the passes: Reading)
         // sections fold in read mode; the printed pages can only be dimmed
         if (currentView === 'pdf' && !readMode) await setReadMode(true);
         render();
@@ -81,6 +79,7 @@ const PassMode = (() => {
             renderBar();
             renderForm();
         }
+        renderSide();
         Toc.show(currentView); // the role on each row, your marked headings; then apply()
         timer.restart();
     }
@@ -399,7 +398,7 @@ const PassMode = (() => {
             const area = e.target.closest?.('.pass_card textarea');
             if (area) savePrediction(area.closest('.pass_card').dataset.key, { [area.dataset.predict]: area.value }, false);
         });
-        for (const type of ['pointerdown', 'keydown', 'wheel', 'scroll', 'touchstart']) doc.addEventListener(type, timer.touch, { capture: true, passive: true });
+        if (doc !== document) timer.watch(doc); // (the paper's frame: reading there counts too)
     }
     const watchFrame = doc => watchDoc(doc); // (material.js, once the HTML paper has loaded)
 
@@ -572,7 +571,7 @@ const PassMode = (() => {
         }
     }
 
-    // what you wrote in the passes before this one, to read back (not to edit here)
+    // what you wrote in the passes before this one, to read back (it's all on the material too: the side panel)
     function earlierPasses(n) {
         const rows = [];
         const one = passData(1);
@@ -584,10 +583,10 @@ const PassMode = (() => {
                 rows.push(el('h5', '', 'Pass 1 · the five Cs'), list);
             } else if (one.skipped) rows.push(el('p', 'hint', 'Pass 1 was skipped.'));
         }
-        const two = passData(2);
         if (n > 2) {
-            if (two.summary?.trim()) rows.push(el('h5', '', 'Pass 2 · the main argument'), el('p', 'pass_recall_text', two.summary));
-            else if (two.skipped) rows.push(el('p', 'hint', 'Pass 2 was skipped.'));
+            const summary = summaryNow();
+            if (summary.trim()) rows.push(el('h5', '', 'Pass 2 · the main argument (your Summary)'), el('p', 'pass_recall_text', summary));
+            else if (passData(2).skipped) rows.push(el('p', 'hint', 'Pass 2 was skipped.'));
         }
         if (!rows.length) return null;
         const box = el('details', 'pass_earlier');
@@ -596,109 +595,156 @@ const PassMode = (() => {
         return box;
     }
 
+    // ---- the material's own fields (sources/passes.js: the passes write into them) ----
+    const summaryNow = () => source.summary ?? source.body ?? '';
+    const assessmentNow = () => Passes.readAssessment(source.review || '');
+    const refsNow = () => source.references || [];
+
+    // a reference row: its words, a tick for the mark, "In project ↗" when it is
+    function refRow(ref, mark, sources) {
+        const li = el('li');
+        li.append(check(`[${ref.n}] ${ref.text}`, `ref:${mark}:${ref.n}`, ref[mark]));
+        const there = sources && ((ref.sourceId && sources.find(s => s.id === ref.sourceId)) || References.match(ref, sources));
+        if (there) {
+            const a = el('a', 'pass_in', 'In project ↗');
+            a.href = 'material.html?id=' + encodeURIComponent(there.id);
+            li.append(a);
+        }
+        return li;
+    }
+
     function formOne(data) {
-        const refs = source.references || [];
-        const known = new Set(data.refsKnown || []);
+        const refs = refsNow();
         let refsBox = el('p', 'hint', 'No reference list was found in this paper.');
         if (refs.length) {
             refsBox = el('details', 'pass_refs');
             refsBox.dataset.keep = 'known';
-            refsBox.append(el('summary', '', `${known.size} of ${refs.length} known`));
+            refsBox.append(el('summary', '', `${refs.filter(r => r.known).length} of ${refs.length} known`));
             const list = el('ol', 'pass_ref_list');
-            for (const ref of refs) {
-                const li = el('li');
-                li.append(check(`[${ref.n}] ${ref.text}`, 'refsKnown:' + ref.n, known.has(ref.n)));
-                list.append(li);
-            }
-            refsBox.append(list);
+            for (const ref of refs) list.append(refRow(ref, 'known'));
+            refsBox.append(list, el('small', 'hint', 'The same marks show in the References panel, beside your notes.'));
         }
         const cs = data.cs || {};
         const grid = el('div', 'pass_grid');
         for (const [key, label, hint] of Passes.FIVE_CS) grid.append(field(label, 'cs.' + key, cs[key], { hint }));
         return [
             step(1, 'Glance at the references', 'Tick the ones you already know: it tells you how close this paper is to what you know.', refsBox),
-            step(2, 'The five Cs', 'A line or two each is enough.', grid),
+            step(2, 'The five Cs', 'A line or two each is enough. They show at the top of the notes side, and beside the paper in your literature review.', grid),
             isSeed() && step(3, 'What the field has done', 'From its related work: who did what before, and what it says is still missing.',
                 field('', 'related', data.related, { rows: 3, placeholder: 'The work it builds on, the gaps it names…' })),
         ].filter(Boolean);
     }
 
+    // ---- pass 2's evidence: the highlights in the project's evidence colour ----
+
+    const evidenceColor = () => {
+        const colors = NoteColors.of(project);
+        return colors.find(c => c.id === project.evidenceColor)?.id || colors.find(c => /evidence/i.test(c.label))?.id || '';
+    };
+
+    function evidenceStep() {
+        const colors = NoteColors.of(project);
+        const color = evidenceColor();
+        const box = el('div', 'pass_evidence');
+        const pick = el('label', 'pass_color_pick');
+        pick.append('Evidence is the colour ');
+        const select = el('select');
+        select.dataset.act = 'evidence_color';
+        select.append(new Option('(choose one)', ''), ...colors.map(c => new Option(c.label, c.id)));
+        select.value = color;
+        pick.append(select);
+        const add = el('button', 'link', '+ an “Evidence” colour');
+        add.type = 'button';
+        add.dataset.act = 'evidence_add';
+        add.hidden = colors.some(c => /evidence/i.test(c.label));
+        box.append(pick, add);
+        if (!color) {
+            box.append(el('p', 'hint', 'Choose which highlight colour means evidence: what you highlight in it while reading shows here.'));
+            return box;
+        }
+        const marked = notes.filter(n => n.quote || n.body);
+        if (!marked.length) {
+            box.append(el('p', 'hint', `No highlights yet: highlight the passages that carry the argument in ${NoteColors.find(project, color).label}.`));
+            return box;
+        }
+        const list = el('ul', 'pass_list');
+        for (const note of [...marked].sort((a, b) => Number(b.color === color) - Number(a.color === color))) {
+            const li = el('li');
+            const words = (note.quote || note.body).replace(/\s+/g, ' ').trim();
+            const row = check((words.length > 140 ? words.slice(0, 140) + '…' : words) + (note.page ? ` (p. ${note.page})` : ''), 'evidence:' + note.id, note.color === color);
+            row.prepend(NoteColors.dot(NoteColors.hexOf(project, note.color)));
+            li.append(row);
+            list.append(li);
+        }
+        box.append(list, el('small', 'hint', 'Ticking one gives it the evidence colour (unticking puts its colour back).'));
+        return box;
+    }
+
+    // ---- pass 2's figures: checked once, on the figure itself when you captured it ----
+
+    // the project figures captured from this paper, by the number in their place or caption ("figure 2")
+    const figureKey = text => { const m = (text || '').match(/\b(fig(?:ure)?\.?|table)\s*(\d+)/i); return m ? (/^t/i.test(m[1]) ? 'table ' : 'figure ') + m[2] : ''; };
+    const capturedFigures = () => Store.getItems(project.id).filter(i => i.type === 'figure' && i.sourceId === source.id);
+
+    function figuresList(data) {
+        const found = figuresIn();
+        const captured = capturedFigures();
+        const rows = found.map(fig => ({ ...fig, item: captured.find(c => figureKey(c.locator) === fig.key || figureKey(c.caption) === fig.key) }));
+        for (const item of captured) {
+            if (rows.some(r => r.item === item)) continue;
+            rows.push({ key: 'item:' + item.id, label: item.locator || (item.kind === 'table' ? 'Table' : 'Figure'), caption: item.caption || '', item });
+        }
+        if (!rows.length) return [rows, el('p', 'hint', 'None found in this view. Check them as you go: labelled axes, error bars, results that mean something.')];
+        const list = el('ul', 'pass_list pass_figs');
+        for (const fig of rows) {
+            const c = fig.item?.checks || data.figures?.[fig.key] || {};
+            const li = el('li');
+            const top = el('div', 'pass_fig_top');
+            const go = el('button', 'link pass_fig_go', fig.label);
+            go.type = 'button';
+            if (fig.place) { go.dataset.go = JSON.stringify(fig.place); go.title = 'Go to it'; } else go.disabled = true;
+            top.append(go, el('span', 'pass_fig_caption', fig.caption));
+            if (fig.item) top.append(el('span', 'badge material', 'Captured'));
+            const path = fig.item ? `figitem:${fig.item.id}` : `fig:${fig.key}`;
+            const row = el('div', 'pass_fig_checks');
+            row.append(check('Axes labelled', `${path}:axes`, c.axes), check('Error bars', `${path}:errors`, c.errors), check('Meaningful', `${path}:significant`, c.significant));
+            const note = el('input', 'pass_fig_note');
+            note.dataset.path = `${path}:note`;
+            note.value = c.note || '';
+            note.placeholder = 'What it shows, what’s off…';
+            note.setAttribute('aria-label', `Note on ${fig.label}`);
+            li.append(top, row, note);
+            list.append(li);
+        }
+        return [rows, list];
+    }
+
     function formTwo(data) {
-        // ① the figures: looked at closely, as you meet them
-        const figures = figuresIn();
-        const checks = data.figures || {};
-        let figs = el('p', 'hint', 'None found in this view. Check them as you go: labelled axes, error bars, results that mean something.');
-        if (figures.length) {
-            figs = el('ul', 'pass_list pass_figs');
-            for (const fig of figures) {
-                const c = checks[fig.key] || {};
-                const li = el('li');
-                const top = el('div', 'pass_fig_top');
-                const go = el('button', 'link pass_fig_go', fig.label);
-                go.type = 'button';
-                go.dataset.go = JSON.stringify(fig.place);
-                go.title = 'Go to it';
-                top.append(go, el('span', 'pass_fig_caption', fig.caption));
-                const row = el('div', 'pass_fig_checks');
-                row.append(check('Axes labelled', `fig:${fig.key}:axes`, c.axes), check('Error bars', `fig:${fig.key}:errors`, c.errors),
-                    check('Meaningful', `fig:${fig.key}:significant`, c.significant));
-                const note = el('input', 'pass_fig_note');
-                note.dataset.path = `fig:${fig.key}:note`;
-                note.value = c.note || '';
-                note.placeholder = 'What it shows, what’s off…';
-                note.setAttribute('aria-label', `Note on ${fig.label}`);
-                li.append(top, row, note);
-                figs.append(li);
-            }
-        }
+        const [figures, figs] = figuresList(data);
 
-        // ② evidence: your highlights and notes on it, pinned
-        const pinned = new Set(data.evidence || []);
-        const marks = notes.filter(note => note.quote || note.body);
-        let evidence = el('p', 'hint', 'No highlights yet: the passages you highlight show here.');
-        if (marks.length) {
-            evidence = el('ul', 'pass_list');
-            for (const note of marks) {
-                const li = el('li');
-                const words = (note.quote || note.body).replace(/\s+/g, ' ').trim();
-                li.append(check((words.length > 140 ? words.slice(0, 140) + '…' : words) + (note.page ? ` (p. ${note.page})` : ''), 'evidence:' + note.id, pinned.has(note.id)));
-                evidence.append(li);
-            }
-        }
-
-        // ④ references to follow up (the ones not known already)
-        const refs = (source.references || []).filter(r => !(passData(1).refsKnown || []).includes(r.n));
-        let follow = el('p', 'hint', (source.references || []).length ? 'You know every reference already.' : 'No reference list was found in this paper.');
+        // ④ references to follow up (the ones not known already): marks on the paper's one reference list
+        const refs = refsNow().filter(r => !r.known);
+        let follow = el('p', 'hint', refsNow().length ? 'You know every reference already.' : 'No reference list was found in this paper.');
         if (refs.length) {
-            const chosen = new Set(data.followUp || []);
+            const chosen = refs.filter(r => r.followUp);
             const sources = Store.getItems(project.id).filter(i => i.type === 'source' && i.id !== source.id);
             follow = el('details', 'pass_refs');
             follow.dataset.keep = 'follow';
-            follow.append(el('summary', '', `${chosen.size} to follow up, of ${refs.length}`));
+            follow.append(el('summary', '', `${chosen.length} to follow up, of ${refs.length}`));
             const list = el('ol', 'pass_ref_list');
-            for (const ref of refs) {
-                const li = el('li');
-                const there = (ref.sourceId && sources.find(s => s.id === ref.sourceId)) || References.match(ref, sources);
-                li.append(check(`[${ref.n}] ${ref.text}`, 'followUp:' + ref.n, chosen.has(ref.n)));
-                if (there) {
-                    const a = el('a', 'pass_in', 'In project ↗');
-                    a.href = 'material.html?id=' + encodeURIComponent(there.id);
-                    li.append(a);
-                }
-                list.append(li);
-            }
-            const add = el('button', 'btn small', `Add ${chosen.size || 'them'} to the project`);
+            for (const ref of refs) list.append(refRow(ref, 'followUp', sources));
+            const add = el('button', 'btn small', `Add ${chosen.length || 'them'} to the project`);
             add.type = 'button';
             add.dataset.act = 'add_follow';
-            add.disabled = !chosen.size;
-            follow.append(list, add);
+            add.disabled = !chosen.length;
+            follow.append(list, add, el('small', 'hint', 'Marked here, they also show in the References panel, and as key papers on the survey board.'));
         }
 
         return [
-            step(1, `Figures and tables${figures.length ? ` (${figures.length})` : ''}`, 'Look closely as you meet each one.', figs),
-            step(2, `Key evidence${pinned.size ? ` (${pinned.size} pinned)` : ''}`, 'Pin the highlights that carry the argument.', evidence),
-            step(3, 'The main argument', 'Write it last, in your own words: you should be able to explain it to someone else.',
-                field('', 'summary', data.summary, { rows: 4, placeholder: 'What it claims, how, and what it found…' })),
+            step(1, `Figures and tables${figures.length ? ` (${figures.length})` : ''}`, 'Look closely as you meet each one. A figure you captured keeps its checks.', figs),
+            step(2, 'Key evidence', 'The passages that carry the argument, highlighted in the evidence colour.', evidenceStep()),
+            step(3, 'The main argument', 'Write it last, in your own words: you should be able to explain it to someone else. It is the paper’s Summary.',
+                field('', 'summary', summaryNow(), { rows: 4, placeholder: 'What it claims, how, and what it found…' })),
             step(4, 'References to follow up', 'The ones worth reading next. Added references are looked up for you.', follow),
         ];
     }
@@ -722,13 +768,9 @@ const PassMode = (() => {
             }
         }
         const done = top.filter(s => predictions[s.key]?.state).length;
+        const parts = assessmentNow();
         const grid = el('div', 'pass_grid');
-        grid.append(
-            field('Assumptions', 'assumptions', data.assumptions, { hint: 'Stated, and the ones it relies on without saying.' }),
-            field('Weak spots', 'weaknesses', data.weaknesses, { hint: 'In the experiments, the analysis, the claims.' }),
-            field('Missing citations', 'missing', data.missing, { hint: 'Work it should have compared with or credited.' }),
-            field('Ideas for future work', 'future', data.future, { hint: 'What you would do next, or differently.' }),
-        );
+        for (const [key, label, hint] of Passes.ASSESSMENT) grid.append(field(label, 'assess.' + key, parts[key], { hint }));
         const outline = el('details', 'pass_outline');
         outline.dataset.keep = 'outline';
         outline.open = !!data.outline;
@@ -739,8 +781,8 @@ const PassMode = (() => {
         outline.append(field('', 'outline', data.outline, { rows: 5, placeholder: 'Its sections and what each one says, without looking…' }), compare, el('ol', 'pass_compare'));
         return [
             step(1, `Your predictions${top.length ? ` (${done} of ${top.length})` : ''}`, 'Each main section waits behind a card in the paper: predict, reveal, compare.', list),
-            step(2, 'Close-out', 'Where the paper is strong, where it isn’t, and what comes next.',
-                field('Notes', 'notes', data.notes, { rows: 2, placeholder: 'Anything, as you go…' }), grid),
+            step(2, 'Assessment', 'Where the paper is strong, where it isn’t, and what comes next. It is the paper’s Assessment, in the notes side.',
+                field('Notes', 'assess.notes', parts.notes, { rows: 2, placeholder: 'Anything, as you go…' }), grid),
             step(3, 'The outline, from memory', 'Optional: rebuild the paper’s structure without looking, then compare.', outline),
         ];
     }
@@ -759,9 +801,9 @@ const PassMode = (() => {
             return b;
         };
         if (n < 3) choices.append(choice('next', 'Go deeper', `Start pass ${n + 1}: ${Passes.PASSES[n + 1].name.toLowerCase()}.`, true));
-        else choices.append(choice('enough', 'Finish', 'Read in three passes.', true));
-        if (n < 3) choices.append(choice('enough', 'Enough', 'I have what I need from it.'));
-        choices.append(choice('park', 'Park it', 'Not now: come back to it later.'));
+        else choices.append(choice('enough', 'Finish', 'Read in three passes: it’s Done.', true));
+        if (n < 3) choices.append(choice('enough', 'Enough', 'I have what I need from it: it’s Done.'));
+        choices.append(choice('park', 'Park it', 'Not now: it stays in Reading.'));
         const reason = el('input', 'pass_reason');
         reason.placeholder = 'Why? (optional)';
         reason.dataset.path = 'reason';
@@ -775,11 +817,24 @@ const PassMode = (() => {
         return box;
     }
 
-    // figures and tables in the view shown: { key, label, caption, place }
+    // ---- the five Cs at the top of the notes side, once written ----
+
+    function renderSide() {
+        const cs = Passes.FIVE_CS.filter(([key]) => record?.passes?.[1]?.cs?.[key]?.trim());
+        const panel = $('#five_cs_panel');
+        panel.hidden = !cs.length;
+        if (!cs.length) return;
+        const list = el('dl', 'pass_recall');
+        for (const [key, label] of cs) list.append(el('dt', '', label), el('dd', '', record.passes[1].cs[key]));
+        $('#five_cs_list').replaceChildren(list);
+        $('#five_cs_state').textContent = Passes.label(record);
+    }
+
+    // figures and tables in the view shown: { key ("figure 2"), label, caption, place }
     function figuresIn() {
         const found = new Map();
         const add = (label, caption, place) => {
-            const key = Passes.norm(label);
+            const key = figureKey(label);
             if (key && !found.has(key)) found.set(key, { key, label, caption: caption.slice(0, 160), place });
         };
         const CAPTION = /^((?:fig\.?|figure|table)\s*\d+)\s*[.:|]?\s*(.*)$/i;
@@ -804,23 +859,48 @@ const PassMode = (() => {
         return [...found.values()];
     }
 
-    // a box in the form changed: saved to the pass (text after a pause)
+    // ---- a box in the form changed: saved where it belongs (text after a pause) ----
+    // The pass's own: the five Cs, related work, outline, reason, figure checks not captured.
+    // The material's: the Summary, the Assessment, the reference marks. A note: its colour. A figure: its checks.
+
     let formTimer = null;
     let formChanges = {};
+    let sourceChanges = {};
     function onFormInput(e) {
         const input = e.target.closest('[data-path]');
         if (!input) return;
-        const n = pass();
-        const data = structuredClone(passData(n));
         const path = input.dataset.path;
         const value = input.type === 'checkbox' ? input.checked : input.value;
         let m;
+        if (path === 'summary') return sourceSoon({ summary: value });
+        if ((m = path.match(/^assess\.(\w+)$/))) {
+            const parts = assessmentNow();
+            parts[m[1]] = value;
+            return sourceSoon({ review: Passes.writeAssessment(parts) });
+        }
+        if ((m = path.match(/^ref:(known|followUp):(.+)$/))) {
+            source.references = Passes.markReference(source, m[2], m[1], value);
+            ReferencesPanel.render();
+            refresh();
+            return renderForm();
+        }
+        if ((m = path.match(/^evidence:(.+)$/))) {
+            const note = notes.find(n => n.id === m[1]);
+            if (!note) return;
+            const color = evidenceColor();
+            Store.saveItem(value ? { id: note.id, color, colorBefore: note.color || '' } : { id: note.id, color: note.colorBefore || '', colorBefore: '' });
+            refresh();
+            return renderForm();
+        }
+        if ((m = path.match(/^figitem:([^:]+):(\w+)$/))) {
+            const item = Store.getItem(m[1]);
+            if (item) Store.saveItem({ id: item.id, checks: { ...(item.checks || {}), [m[2]]: value } });
+            return;
+        }
+        const n = pass();
+        const data = structuredClone(passData(n));
         if ((m = path.match(/^cs\.(\w+)$/))) data.cs = { ...(data.cs || {}), [m[1]]: value };
-        else if ((m = path.match(/^(refsKnown|followUp|evidence):(.+)$/))) {
-            const list = new Set(data[m[1]] || []);
-            if (value) list.add(m[2]); else list.delete(m[2]);
-            data[m[1]] = [...list];
-        } else if ((m = path.match(/^fig:(.+):(\w+)$/))) {
+        else if ((m = path.match(/^fig:(.+):(\w+)$/))) {
             data.figures = { ...(data.figures || {}) };
             data.figures[m[1]] = { ...(data.figures[m[1]] || {}), [m[2]]: value };
         } else data[path] = value;
@@ -830,15 +910,40 @@ const PassMode = (() => {
         const write = () => {
             record = Passes.savePass(record, n, formChanges);
             formChanges = {};
-            if (input.type === 'checkbox') renderForm(); // (counts in the headings)
+            renderSide();
         };
         if (input.type === 'checkbox') write(); else formTimer = setTimeout(write, 600);
     }
+
+    // the material's fields: shown at once (source is this page's copy), saved after a pause
+    let sourceTimer = null;
+    function sourceSoon(changes) {
+        Object.assign(source, changes);
+        Object.assign(sourceChanges, changes);
+        clearTimeout(sourceTimer);
+        sourceTimer = setTimeout(flushSource, 600);
+    }
+    function flushSource() {
+        clearTimeout(sourceTimer);
+        if (!Object.keys(sourceChanges).length) return;
+        Store.saveItem({ id: source.id, ...sourceChanges });
+        sourceChanges = {};
+        refresh(); // (the side panel's Summary and Assessment)
+    }
     function flushForm() {
+        flushSource();
         if (!Object.keys(formChanges).length) return;
         clearTimeout(formTimer);
         record = Passes.savePass(record, pass(), formChanges);
         formChanges = {};
+    }
+
+    // the material changed elsewhere on the page (the side panel, a note): the pass's notes follow
+    function sourceChanged() {
+        renderSide();
+        const active = document.activeElement;
+        if (!on() || ($('#pass_form').contains(active) && active.matches('textarea, input:not([type="checkbox"])'))) return; // (not while you type)
+        renderForm();
     }
 
     async function onFormClick(e) {
@@ -851,22 +956,31 @@ const PassMode = (() => {
             const n = pass();
             const reason = $('#pass_form .pass_reason').value.trim();
             record = Passes.decide(record, decide.dataset.decide, reason);
+            refresh(); // (its status follows the passes)
             render();
             if (decide.dataset.decide === 'next') {
                 $('.reader').scrollIntoView({ behavior: 'smooth', block: 'start' });
                 toast(`Pass ${pass()}: ${Passes.PASSES[pass()].name.toLowerCase()}.`);
-            } else if (decide.dataset.decide === 'enough' && source.status !== 'done') {
-                toast(n === 3 ? 'Read in three passes.' : `Stopped after pass ${n}.`, {
-                    action: 'Mark as done', onAction: () => { Store.saveItem({ id: source.id, status: 'done' }); refresh(); },
-                });
-            } else toast(decide.dataset.decide === 'park' ? `Parked at pass ${n}: pick it up any time.` : `Stopped after pass ${n}.`);
+            } else if (decide.dataset.decide === 'park') toast(`Parked at pass ${n}: it stays in Reading.`);
+            else toast(n === 3 ? 'Read in three passes: marked Done.' : `Stopped after pass ${n}: marked Done.`);
             return;
         }
         const act = e.target.closest('[data-act]')?.dataset.act;
         if (act === 'add_follow') {
-            const numbers = passData(2).followUp || [];
-            await ReferencesPanel.add(numbers);
+            await ReferencesPanel.add(refsNow().filter(r => r.followUp && !r.known).map(r => r.n));
             source = Store.getItem(source.id);
+            renderForm();
+        }
+        if (act === 'evidence_add') {
+            const colors = NoteColors.of(project);
+            const added = { id: NoteColors.newId(), label: 'Evidence', hex: NoteColors.suggest(colors) };
+            NoteColors.save(project, [...colors, added]);
+            project.evidenceColor = added.id;
+            Store.saveProject({ id: project.id, evidenceColor: added.id });
+            NoteColors.applyCss(document, project);
+            if (paperDoc()) NoteColors.applyCss(paperDoc(), project);
+            renderColorPick(); // (material.js: the note form's colours)
+            refresh();
             renderForm();
         }
         if (act === 'compare') {
@@ -874,48 +988,34 @@ const PassMode = (() => {
             list.replaceChildren(...sections.filter(s => s.isTop).map(s => el('li', '', Passes.clean(s.title))));
         }
     }
+    $('#pass_form').addEventListener('change', e => {
+        if (e.target.dataset.act !== 'evidence_color') return;
+        project.evidenceColor = e.target.value;
+        Store.saveProject({ id: project.id, evidenceColor: e.target.value });
+        renderForm();
+    });
 
-    // ---- the gentle timer: active time only (the page shown, and you did something in the last two minutes) ----
+    // ---- the timer (reader/timer.js): the time on this pass, as a quiet clock ----
 
     const timer = (() => {
-        const IDLE = 120000;
-        let last = Date.now();
-        let pending = 0;
-        let tick = null;
         let nudged = false;
-        const touch = () => { last = Date.now(); };
+        const counter = ReadingTimer.create({
+            onTick: () => show(),
+            onFlush: ms => { if (record) record = Passes.savePass(record, pass(), { activeMs: (passData().activeMs || 0) + ms }); },
+        });
         const visible = () => Settings.read().passTimer !== false;
 
         function setup() {
-            addEventListener('visibilitychange', () => { if (document.hidden) flush(); });
-            addEventListener('pagehide', () => { flush(); flushForm(); });
+            addEventListener('pagehide', flushForm);
             addEventListener('settingssaved', show);
         }
         function restart() {
-            clearInterval(tick);
+            counter.stop();
             nudged = false;
-            if (on() && record.state === 'reading') tick = setInterval(step, 1000);
+            if (on() && record.state === 'reading') counter.start();
             show();
         }
-        function step() {
-            if (document.hidden || Date.now() - last > IDLE) return;
-            pending += 1000;
-            if (pending >= 30000) flush();
-            show();
-        }
-        function flush() {
-            if (!pending || !record) return;
-            const ms = (passData().activeMs || 0) + pending;
-            pending = 0;
-            record = Passes.savePass(record, pass(), { activeMs: ms });
-        }
-        const total = () => (passData().activeMs || 0) + pending;
-        // 4:05, 1:02:30
-        const clock = ms => {
-            const t = Math.floor(ms / 1000);
-            const h = Math.floor(t / 3600), m = Math.floor(t / 60) % 60, sec = String(t % 60).padStart(2, '0');
-            return h ? `${h}:${String(m).padStart(2, '0')}:${sec}` : `${m}:${sec}`;
-        };
+        const total = () => (passData().activeMs || 0) + counter.pending();
         function show() {
             const pill = $('#pass_timer');
             pill.hidden = !on() || !visible();
@@ -925,7 +1025,7 @@ const PassMode = (() => {
             const over = reading && target && total() >= target[1] * 60000;
             pill.classList.toggle('over', !!over);
             pill.classList.toggle('paused', !reading);
-            $('#pass_timer_text').textContent = clock(total())
+            $('#pass_timer_text').textContent = ReadingTimer.clock(total())
                 + (!reading ? ' · ' + (record.state === 'parked' ? 'parked' : 'stopped')
                     : over ? ' · time to decide?'
                     : target ? ` · aim ${target[1] >= 60 ? '~1 h' : `${target[0]}–${target[1]} min`}` : '');
@@ -933,8 +1033,8 @@ const PassMode = (() => {
                 + (over ? ' Click to go to the notes and decide.' : '');
             if (over && !nudged) { nudged = true; pill.classList.add('nudge'); setTimeout(() => pill.classList.remove('nudge'), 2400); }
         }
-        return { setup, restart, flush, show, touch };
+        return { setup, restart, flush: () => counter.flush(), show, watch: counter.watch };
     })();
 
-    return { setup, apply, watchFrame, canMark, markSection, on: () => on() };
+    return { setup, apply, watchFrame, canMark, markSection, sourceChanged, on: () => on() };
 })();

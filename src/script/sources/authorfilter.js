@@ -5,6 +5,7 @@
 //   const filter = AuthorFilter.create(row, onChange)   row: an empty element; onChange: draw the list again
 //   filter.render(sources)    the chips for these papers (before filtering with matches)
 //   filter.matches(source)    by a chosen author? (true while none is chosen)
+//   filter.selectWhere(fn)    choose just the authors fn(author) says yes to (the survey board's recurring authors)
 
 const AuthorFilter = (() => {
     const OTHER = '~other';
@@ -20,6 +21,7 @@ const AuthorFilter = (() => {
         let chipOf = new Map(); // author key -> the chip it's under (its own key, or OTHER)
 
         function render(sources) {
+            lastSources = sources;
             const papers = new Map();  // author key -> how many of the papers they're on
             const names = new Map();   // author key -> { spelling: count }
             const small = new Set();   // authors on a paper with fewer than MANY authors
@@ -61,6 +63,13 @@ const AuthorFilter = (() => {
             fillFilterRow(row, 'Authors', chips, [clear]);
         }
 
+        let lastSources = [];
+        function selectWhere(fn) {
+            active.clear();
+            for (const source of lastSources) for (const author of source.authors || []) if (fn(author)) active.add(chipOf.get(keyOf(author)) ?? OTHER);
+            onChange();
+        }
+
         const matches = source => !active.size || keysOf(source).some(key => active.has(chipOf.get(key) ?? OTHER));
 
         row.addEventListener('click', e => {
@@ -74,7 +83,7 @@ const AuthorFilter = (() => {
             onChange();
         });
 
-        return { render, matches };
+        return { render, matches, selectWhere };
     }
 
     return { create };

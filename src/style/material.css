@@ -837,6 +837,8 @@ body.reading_full .abstract { display: none; }
 .ref_n { color: var(--muted); font-variant-numeric: tabular-nums; }
 .ref_links { grid-column: 2; display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: .78rem; }
 .ref_links a { color: var(--accent); }
+.ref_links .ref_mark { font-size: inherit; }
+.ref_links .ref_mark[aria-pressed="true"] { color: var(--accent); font-weight: 600; }
 .ref.in_project .ref_text { color: var(--muted); }
 .ref_in { font-weight: 600; }
 .refs_actions { display: flex; align-items: center; gap: 8px; margin-top: 8px; }

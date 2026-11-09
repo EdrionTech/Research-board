@@ -235,6 +235,15 @@
                 </label>
                 <button type="button" class="btn small" id="hide_side">Hide notes ⟩</button>
             </div>
+            <!-- the five Cs from a first pass (material_passes.js): what kind of paper it is, at a glance -->
+            <section class="panel five_cs_panel" id="five_cs_panel" hidden>
+                <header>
+                    <h3>First look</h3>
+                    <small class="hint" id="five_cs_state"></small>
+                </header>
+                <div id="five_cs_list"></div>
+            </section>
+
             <section class="panel">
                 <h3 id="notes_heading">Notes</h3>
                 <!-- the note form sits here, or in the floating note box (#composer) while that is open -->
@@ -317,9 +326,10 @@
                 </div>
             </section>
 
+            <!-- your judgement of the paper (source.review): pass 3's close-out writes here (sources/passes.js) -->
             <section class="panel md_field" data-field="review" id="review_field">
                 <header>
-                    <h3>Review</h3>
+                    <h3>Assessment</h3>
                     <button type="button" class="btn small edit_md">Edit</button>
                 </header>
                 <div class="md"></div>
@@ -501,6 +511,7 @@
     <script data-src="../script/reader/reader.js"></script>
     <script data-src="../script/reader/video.js"></script>
     <script data-src="../script/reader/capture.js"></script>
+    <script data-src="../script/reader/timer.js"></script>
     <script data-src="../script/pages/material_places.js"></script>
     <script data-src="../script/pages/material_toc.js"></script>
     <script data-src="../script/pages/material_menu.js"></script>

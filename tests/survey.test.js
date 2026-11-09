@@ -1,7 +1,8 @@
 // The literature survey board (sources/survey.js, pages/dashboard/survey.js): materials in columns by how far
 // they've been read, the survey's steps, seed papers starred, the key papers and authors the references of
 // first-passed papers share, one added to the project; the venues they cite and a venue's recent papers, a survey
-// paper's references used, papers found to start from (OpenAlex faked); a seed paper's related work open in pass 1;
+// paper's references used, papers found to start from (OpenAlex faked); a reference marked to follow up as a key
+// paper; a recurring author opening the author filter; a seed paper's related work open in pass 1;
 // and the board at phone width.
 const { startServer, launchBrowser, tester, wait } = require('./helpers');
 
@@ -24,6 +25,7 @@ const { startServer, launchBrowser, tester, wait } = require('./helpers');
         source('c', 'Paper C', [ref(1, shared)]),
         source('d', 'Paper D', []),
         source('e', 'A survey of reading in passes', [ref(1, 'M. Adler. How to read a book. Simon and Schuster, 1972.')]),
+        source('g', 'Paper G', [], { authors: [{ firstName: 'Ashish', lastName: 'Vaswani' }] }),
         source('f', 'Paper F', [], { text: ['# Introduction', '', 'Why it matters.', '', '## Related work', '', 'Others did this before.', '', '## Method', '', 'What we did.'].join('\n') }),
         passes('pe', 'e', { pass: 1, state: 'stopped', passes: { 1: { doneAt: now } } }),
         passes('pa', 'a', { pass: 2, state: 'reading', passes: { 1: { doneAt: now, cs: { category: 'A measurement study' } }, 2: {} } }),
@@ -146,6 +148,31 @@ const { startServer, launchBrowser, tester, wait } = require('./helpers');
         if (!added) return 'not added';
         if (!data.projects.find(p => p.id === 'p1').surveySeeds.includes(added.id)) return 'not a seed';
         await tab.click('#works_modal [data-close]');
+    });
+
+    await t.test('a reference marked to follow up on its paper is a key paper, even cited once', async () => {
+        await tab.evaluate(() => {
+            Passes.markReference(Store.getItem('a'), '3', 'followUp', true);
+            window.render();
+        });
+        await wait(300);
+        const row = await tab.evaluate(() => [...document.querySelectorAll('.survey_papers .survey_paper')].find(p => /only A cites/i.test(p.textContent))?.textContent || '');
+        if (!/marked it to follow up/i.test(row)) return 'not a key paper: ' + row;
+    });
+
+    await t.test('a recurring author with papers here opens the author filter', async () => {
+        await tab.$eval('#survey', s => s.scrollIntoView());
+        const chip = await tab.evaluate(() => {
+            const b = [...document.querySelectorAll('button.survey_chip[data-author]')].find(x => x.textContent.includes('Vaswani'));
+            b?.click();
+            return !!b;
+        });
+        if (!chip) return 'Vaswani (who has a paper here) is not a filter chip';
+        await wait(400);
+        const cards = await tab.$$eval('.survey_card strong', s => s.map(x => x.textContent));
+        if (cards.join() !== 'Paper G') return 'the board shows ' + cards.join(', ');
+        await tab.evaluate(() => document.querySelector('#author_filter .author_clear')?.click());
+        await wait(300);
     });
 
     await t.test('the view is remembered; List brings the list back', async () => {

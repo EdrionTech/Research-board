@@ -32,6 +32,24 @@ A subsection takes its parent's role unless its own name says otherwise. A singl
 
 Sections fold in the views that flow as text: arXiv HTML, PDF read mode, pasted text. Turning passes on with a PDF's printed pages showing switches to read mode. In the printed pages, the pages with nothing to read in the pass are dimmed instead.
 
+### How the passes join the rest of the app
+
+The passes are a way *into* what a material already has, not a second copy of it:
+
+| What | Where it's kept | Also shown / set in |
+| --- | --- | --- |
+| How far you've read it | The material's **status**, set by the passes: in a pass or parked → Reading; stopped or finished → Done (without passes it's chosen by hand, as before) | The status picker, the Literature tab, the survey board's columns |
+| The five Cs | The passes record | **First look**, at the top of the notes side; each source card on the literature review page |
+| Pass 2's main argument | The material's **Summary** (`source.summary`) | The Summary box; "Insert summary" on the review page |
+| Pass 3's close-out | The material's **Assessment** (`source.review`, Markdown: your notes, then a `### ` section per part) | The Assessment box (written by hand, its sections fill the pass's boxes); "Insert assessment" on the review page |
+| References known / to follow up | Marks on the paper's one reference list (`ref.known`, `ref.followUp`) | The References panel (✓ Known, ✓ Follow up); a follow-up is a key paper on the survey board |
+| Key evidence | A highlight colour: the project's evidence colour (`project.evidenceColor`, or the colour called "Evidence") | Every highlight, in the paper and on the Literature tab |
+| A figure's checks | On the captured figure (`checks`) when there is one; otherwise on the passes record | The figure, wherever it's reused |
+| Recurring authors (survey) | — | The Literature tab's author filter when they have papers here; Google Scholar when not |
+| Time spent | The passes record, counted by the reader's one timer (`src/script/reader/timer.js`) | The pass bar; full-screen reading's clock is to use the same timer |
+
+"Review" now means only the literature review: a material's own judgement is its **Assessment**.
+
 ### Data
 
 One record per material, its own item (so typing in it never clashes with an edit to the material, and each collaborator can later have their own):
@@ -39,13 +57,12 @@ One record per material, its own item (so typing in it never clashes with an edi
 ```
 { type: 'passes', projectId, sourceId, on, pass: 1|2|3, state: 'reading'|'stopped'|'parked'|'finished',
   roles: { sectionKey: role }, marks: [{ title, level, place }],
-  passes: { 1: { cs, refsKnown }, 2: { summary, evidence, figures, followUp },
-            3: { predictions, notes, assumptions, weaknesses, missing, future, outline } } }
+  passes: { 1: { cs, related }, 2: { figures }, 3: { predictions, outline } } }
 ```
 
-Every pass also keeps `activeMs`, `startedAt`, `doneAt`, `decision`, `reason`, `skipped` and `peeks`. A section key is its heading, cleaned up, plus its level, so it's the same in every view of the paper.
+Every pass also keeps `activeMs`, `startedAt`, `doneAt`, `decision`, `reason`, `skipped` and `peeks`. A section key is its heading, cleaned up, plus its level, so it's the same in every view of the paper. Records from before the join (with a summary, close-out or reference lists of their own) are moved into the material's fields the first time the material opens (`Passes.moveIntoSource`).
 
-Code: `src/script/sources/passes.js` (the method, roles, the record), `src/script/pages/material_passes.js` (the material page), `src/style/passes.css`. Tests: `tests/passes.test.js`.
+Code: `src/script/sources/passes.js` (the method, roles, the record, the Assessment's sections, reference marks), `src/script/pages/material_passes.js` (the material page), `src/script/reader/timer.js` (active time), `src/style/passes.css`. Tests: `tests/passes.test.js`.
 
 ## The survey board (built)
 

@@ -160,3 +160,11 @@ button.toc_role { padding: 0 4px; }
     .pass_steps .pass_step:not([aria-checked="true"]) .pass_name { display: none; }
 }
 .pass_note { margin-top: 4px !important; padding: 6px 10px; border-left: 3px solid var(--accent); background: var(--surface); font-size: .85rem; }
+
+/* the notes side: the five Cs, once written */
+.five_cs_panel header { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin-bottom: 8px; }
+.five_cs_panel h3 { margin: 0; }
+.pass_evidence { display: grid; gap: 8px; }
+.pass_color_pick { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: .88rem; }
+.pass_evidence .link { justify-self: start; }
+.pass_list .check .dot, .pass_list .check > span:first-child:not(:only-child) { flex: none; }

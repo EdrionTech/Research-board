@@ -99,6 +99,15 @@ const ReferencesPanel = (() => {
             if (ref.doi) links.append(link('DOI', 'https://doi.org/' + ref.doi));
             if (ref.arxiv) links.append(link('arXiv', 'https://arxiv.org/abs/' + ref.arxiv));
             links.append(link('Scholar ↗', References.scholarUrl(ref)));
+            // your marks on it (the same ones reading in passes and the survey use: sources/passes.js)
+            for (const [mark, label, title] of [['known', 'Known', 'You know this work already'], ['followUp', 'Follow up', 'Worth reading next']]) {
+                const btn = el('button', 'link ref_mark', (ref[mark] ? '✓ ' : '') + label);
+                btn.type = 'button';
+                btn.dataset.mark = mark;
+                btn.title = title;
+                btn.setAttribute('aria-pressed', !!ref[mark]);
+                links.append(btn);
+            }
             li.append(box, text, links);
             return li;
         }));
@@ -264,6 +273,12 @@ const ReferencesPanel = (() => {
         if (!li) return;
         if (e.target.closest('.ref_add')) return add([li.dataset.n]);
         if (e.target.closest('.ref_text')) return openProfile(li.dataset.n);
+        const mark = e.target.closest('.ref_mark');
+        if (mark) {
+            source.references = Passes.markReference(source, li.dataset.n, mark.dataset.mark, mark.getAttribute('aria-pressed') !== 'true');
+            render();
+            return PassMode.sourceChanged();
+        }
         if (e.target.matches('.ref_pick')) {
             if (e.target.checked) selected.add(li.dataset.n);
             else selected.delete(li.dataset.n);

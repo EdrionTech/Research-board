@@ -1,6 +1,8 @@
 // Reading in passes (sources/passes.js, pages/material_passes.js): the sections each pass shows, peeking, the
 // five Cs saved, going on to the next pass, skipping one (recorded), predicting in pass 3, a section's role
-// changed in Contents, leaving and coming back; and the bar at phone width.
+// changed in Contents, leaving and coming back; what the passes write being the paper's own (its status, the five Cs
+// in the notes side, its Summary and Assessment, its reference marks, the evidence colour, a captured figure's
+// checks); and the bar at phone width.
 const { SAMPLE, startServer, launchBrowser, tester, wait } = require('./helpers');
 
 (async () => {
@@ -29,7 +31,11 @@ const { SAMPLE, startServer, launchBrowser, tester, wait } = require('./helpers'
         return line.classList.contains('pass_blur') ? 'blurred' : 'shown';
     }, words);
     const record = tab => tab.evaluate(() => Passes.of(source));
-    const saved = async () => (await (await server.api('GET', 'boot')).json()).data.items.find(i => i.type === 'passes');
+    const items = async () => (await (await server.api('GET', 'boot')).json()).data.items;
+    const saved = async (id) => (await items()).find(i => (id ? i.id === id : i.type === 'passes'));
+    // the sample paper gets a reference list (its References panel, the marks)
+    const s1 = (await items()).find(i => i.id === source.id);
+    await server.api('PUT', 'items/s1', { ...s1, references: [{ n: '1', text: 'S. Keshav. How to read a paper. 2007.' }, { n: '2', text: 'M. Adler. How to read a book. 1972.' }], updatedAt: Date.now() });
 
     await t.test('sections get their roles from their headings', async () => {
         const tab = await open();
@@ -82,6 +88,21 @@ const { SAMPLE, startServer, launchBrowser, tester, wait } = require('./helpers'
         if (kept?.passes?.[1]?.cs?.category !== 'A testing paper') return 'not on the server: ' + JSON.stringify(kept?.passes);
     });
 
+    await t.test('the five Cs show at the top of the notes side', async () => {
+        const panel = await tab.$eval('#five_cs_panel', p => ({ hidden: p.hidden, text: p.textContent }));
+        if (panel.hidden || !panel.text.includes('A testing paper')) return 'First look: ' + JSON.stringify(panel);
+    });
+
+    await t.test('a reference you know is marked on the paper itself, and in its References panel', async () => {
+        await tab.click('#pass_form details.pass_refs summary');
+        await tab.click('#pass_form [data-path="ref:known:1"]');
+        await wait(800);
+        const refs = (await saved('s1')).references;
+        if (!refs[0].known || refs[1].known) return 'marks: ' + JSON.stringify(refs);
+        const panel = await tab.$eval('#refs_list', l => l.textContent);
+        if (!panel.includes('✓ Known')) return 'not shown in the References panel';
+    });
+
     await t.test('Go to pass 2: everything shows, pass 1 is done', async () => {
         await tab.click('[data-decide="next"]');
         await wait(300);
@@ -89,6 +110,42 @@ const { SAMPLE, startServer, launchBrowser, tester, wait } = require('./helpers'
         if (r.pass !== 2 || !r.passes[1].doneAt) return 'pass ' + r.pass;
         if (await lineState(tab, 'A server with made-up data') !== 'shown') return 'method not shown';
         if (!(await tab.$('#pass_form [data-path="summary"]'))) return 'no summary box';
+    });
+
+    await t.test('pass 2: the main argument is the paper’s Summary', async () => {
+        await tab.type('#pass_form [data-path="summary"]', 'Tests keep projects honest.');
+        await wait(1500);
+        if ((await saved('s1')).summary !== 'Tests keep projects honest.') return 'not the Summary: ' + (await saved('s1')).summary;
+        const side = await tab.$eval('.md_field[data-field="summary"] .md', m => m.textContent);
+        if (!side.includes('Tests keep projects honest.')) return 'the side panel does not show it';
+    });
+
+    await t.test('pass 2: evidence is a highlight colour', async () => {
+        await tab.click('#pass_form [data-act="evidence_add"]');
+        await wait(600);
+        const project = (await (await server.api('GET', 'boot')).json()).data.projects.find(p => p.id === 'p1');
+        const evidence = (project.colors || []).find(c => c.label === 'Evidence');
+        if (!evidence || project.evidenceColor !== evidence.id) return 'no evidence colour: ' + JSON.stringify(project.colors);
+        await tab.click('#pass_form [data-path="evidence:n1"]');
+        await wait(800);
+        if ((await saved('n1')).color !== evidence.id) return 'the note did not take the colour';
+        await tab.click('#pass_form [data-path="evidence:n1"]');
+        await wait(800);
+        if ((await saved('n1')).color !== '') return 'unticking did not put its colour back';
+    });
+
+    await t.test('pass 2: a captured figure keeps its checks', async () => {
+        const id = await tab.evaluate(() => {
+            const id = Store.saveItem({ projectId: 'p1', type: 'figure', sourceId: 's1', kind: 'figure', locator: 'Figure 1', caption: 'A test figure' });
+            refresh();
+            return id;
+        });
+        await wait(300);
+        const box = `#pass_form [data-path="figitem:${id}:axes"]`;
+        if (!(await tab.$(box))) return 'the captured figure is not listed';
+        await tab.click(box);
+        await wait(800);
+        if (!(await saved(id)).checks?.axes) return 'the check is not on the figure';
     });
 
     await t.test('a section tagged in Contents changes what the pass shows', async () => {
@@ -125,6 +182,17 @@ const { SAMPLE, startServer, launchBrowser, tester, wait } = require('./helpers'
         if (!(await tab.$('.pass_card.done textarea[data-predict="differs"]'))) return 'no box for how it differs';
     });
 
+    await t.test('pass 3: the close-out is the paper’s Assessment', async () => {
+        await tab.type('#pass_form [data-path="assess.weaknesses"]', 'Only one server.');
+        await wait(1500);
+        const review = (await saved('s1')).review || '';
+        if (!/### Weak spots\nOnly one server\./.test(review)) return 'not in the Assessment: ' + JSON.stringify(review);
+        const side = await tab.$eval('#review_field .md', m => m.textContent);
+        if (!side.includes('Only one server.')) return 'the side panel does not show it';
+        const back = await tab.evaluate(r => Passes.readAssessment(r + '\n\n### Something else\nKept.').notes, review);
+        if (!back.includes('Kept.')) return 'a section it does not know is lost';
+    });
+
     await t.test('leaving folds nothing; coming back resumes the pass', async () => {
         await tab.click('#pass_leave');
         await wait(200);
@@ -143,6 +211,7 @@ const { SAMPLE, startServer, launchBrowser, tester, wait } = require('./helpers'
         await wait(300);
         const r = await record(tab);
         if (r.state !== 'finished') return 'state ' + r.state;
+        if ((await saved('s1')).status !== 'done') return 'the paper is not Done: ' + (await saved('s1')).status;
         if (!/three passes/.test(await tab.$eval('#pass_state', s => s.textContent))) return 'not shown as finished';
     });
     await tab.close();

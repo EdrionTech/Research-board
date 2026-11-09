@@ -148,12 +148,24 @@ const Passes = (() => {
             type: 'passes', projectId: source.projectId, sourceId: source.id, on: true, pass: 1, state: 'reading',
             roles: {}, marks: [], passes: { 1: { startedAt: Date.now(), activeMs: 0 } },
         });
-        return Store.getItem(id);
+        const record = Store.getItem(id);
+        syncStatus(record);
+        return record;
     }
 
+    // Saves the record. Where you are in the passes is the material's status too (one sense of progress):
+    // reading a pass (or parked, to come back to) is Reading, stopped or finished is Done.
     function save(record, changes) {
         Store.saveItem({ id: record.id, ...changes });
-        return Store.getItem(record.id);
+        const saved = Store.getItem(record.id);
+        if ('state' in changes || changes.on === true) syncStatus(saved);
+        return saved;
+    }
+
+    const statusOf = record => (record.state === 'stopped' || record.state === 'finished' ? 'done' : 'reading');
+    function syncStatus(record) {
+        const source = Store.getItem(record.sourceId);
+        if (source && record.on !== false && source.status !== statusOf(record)) Store.saveItem({ id: source.id, status: statusOf(record) });
     }
 
     // one pass's fields changed (merged in)
@@ -200,5 +212,77 @@ const Passes = (() => {
         return `${Math.floor(minutes / 60)} h ${String(minutes % 60).padStart(2, '0')}`;
     }
 
-    return { ROLES, PASSES, FIVE_CS, isSurvey, roleOf, keyOf, clean, norm, sections, shown, predicted, predictions, of, start, save, savePass, moveTo, decide, label, duration };
+    // ---- the material's own fields: the passes write into them, not beside them ----
+    // Pass 2's main argument is the material's Summary (source.summary). Pass 3's close-out is its Assessment
+    // (source.review, Markdown): your notes first, then a "### " section for each part you filled in. Written by
+    // hand in the side panel, the same sections are read back into the pass's boxes.
+
+    const ASSESSMENT = [
+        ['assumptions', 'Assumptions', 'Stated, and the ones it relies on without saying.'],
+        ['weaknesses', 'Weak spots', 'In the experiments, the analysis, the claims.'],
+        ['missing', 'Missing citations', 'Work it should have compared with or credited.'],
+        ['future', 'Ideas for future work', 'What you would do next, or differently.'],
+    ];
+
+    // "notes…\n\n### Assumptions\n…" → { notes, assumptions, … } (a section it doesn't know stays in the notes)
+    function readAssessment(markdown) {
+        const parts = { notes: '' };
+        const notes = [];
+        let current = null;
+        let lines = [];
+        const close = () => {
+            const text = lines.join('\n').trim();
+            const known = current && ASSESSMENT.find(([, label]) => label.toLowerCase() === current.toLowerCase());
+            if (known) parts[known[0]] = text;
+            else if (current) notes.push(`### ${current}\n${text}`.trim());
+            else if (text) notes.push(text);
+        };
+        for (const line of (markdown || '').split('\n')) {
+            const head = line.match(/^#{2,4}\s+(.+?)\s*$/);
+            if (head) { close(); current = head[1]; lines = []; } else lines.push(line);
+        }
+        close();
+        parts.notes = notes.join('\n\n');
+        return parts;
+    }
+
+    // { notes, assumptions, … } → the Markdown kept in source.review
+    function writeAssessment(parts) {
+        const blocks = [];
+        if (parts.notes?.trim()) blocks.push(parts.notes.trim());
+        for (const [key, label] of ASSESSMENT) if (parts[key]?.trim()) blocks.push(`### ${label}\n${parts[key].trim()}`);
+        return blocks.join('\n\n');
+    }
+
+    // A paper's references (source.references) carry your marks: known (pass 1: you know it already) and
+    // followUp (pass 2: worth reading next). The References panel, the passes and the survey all show the same ones.
+    function markReference(source, n, mark, on) {
+        const references = (source.references || []).map(r => (r.n === n ? { ...r, [mark]: on || undefined } : r));
+        Store.saveItem({ id: source.id, references });
+        return references;
+    }
+
+    // Earlier records kept these on the passes themselves: moved into the material's fields, once.
+    function moveIntoSource(record) {
+        const source = Store.getItem(record.sourceId);
+        if (!source || record.moved) return record;
+        const p = record.passes || {};
+        const changes = {};
+        if (p[2]?.summary && !(source.summary ?? source.body ?? '').trim()) changes.summary = p[2].summary;
+        const close = Object.fromEntries(['notes', ...ASSESSMENT.map(a => a[0])].map(k => [k, p[3]?.[k] || '']));
+        if (Object.values(close).some(v => v.trim()) && !(source.review || '').trim()) changes.review = writeAssessment(close);
+        const known = new Set(p[1]?.refsKnown || []), follow = new Set(p[2]?.followUp || []);
+        if ((known.size || follow.size) && source.references) {
+            changes.references = source.references.map(r => ({ ...r, ...(known.has(r.n) ? { known: true } : {}), ...(follow.has(r.n) ? { followUp: true } : {}) }));
+        }
+        if (Object.keys(changes).length) Store.saveItem({ id: source.id, ...changes });
+        Store.saveItem({ id: record.id, moved: true }, { touch: false });
+        return Store.getItem(record.id);
+    }
+
+    return {
+        ROLES, PASSES, FIVE_CS, ASSESSMENT, isSurvey, roleOf, keyOf, clean, norm, sections, shown, predicted, predictions,
+        of, start, save, savePass, moveTo, decide, label, duration, statusOf,
+        readAssessment, writeAssessment, markReference, moveIntoSource,
+    };
 })();

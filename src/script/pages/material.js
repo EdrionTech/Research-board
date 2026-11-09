@@ -115,6 +115,7 @@ function projectSources() {
 function refresh() {
     source = Store.getItem(sourceId);
     render();
+    PassMode.sourceChanged(); // (the pass's notes show the Summary, the Assessment, the reference marks)
 }
 
 let citeSources = []; // the project's papers, for showing citations in notes as links
@@ -2050,7 +2051,7 @@ function renderInNotes() {
         const li = el('li');
         const a = el('a', 'in_note');
         a.href = 'material.html?id=' + encodeURIComponent(on?.id || item.sourceId) + (kind === 'note' ? '#note=' + encodeURIComponent(item.id) : '');
-        a.append(el('strong', '', { note: 'A note on ', summary: 'The summary of ', review: 'The review of ' }[kind] + (on?.title || 'another paper')),
+        a.append(el('strong', '', { note: 'A note on ', summary: 'The summary of ', review: 'The assessment of ' }[kind] + (on?.title || 'another paper')),
             el('span', '', PaperLinks.preview(text, sources, style).slice(0, 160)));
         li.append(a);
         return li;

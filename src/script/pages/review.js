@@ -27,6 +27,7 @@ const TEMPLATE = '# Literature review\n\n## Introduction\n\n\n## Themes\n\n### T
 let sources = [];
 let byKey = new Map();
 let notesBySource = new Map();
+let passesBySource = new Map(); // sourceId -> its reading-in-passes record (the five Cs)
 let doc = null;          // the saved review item (null until you first type)
 let mode = 'markdown';
 let saveTimer = null;
@@ -80,6 +81,7 @@ function loadSources() {
     assignCitekeys(sources);
     byKey = new Map(sources.map(s => [s.citekey, s]));
     notesBySource = new Map(sources.map(s => [s.id, []]));
+    passesBySource = new Map(all.filter(i => i.type === 'passes').map(r => [r.sourceId, r]));
     for (const note of all.filter(i => i.type === 'source_note').sort((a, b) => a.createdAt - b.createdAt)) {
         notesBySource.get(note.sourceId)?.push(note);
     }
@@ -590,6 +592,9 @@ function sourceCard(source) {
     const card = el('details', 'source_card');
     const head = el('summary');
     head.append(el('strong', '', source.title), el('small', '', `@${source.citekey} · ${shortCitation(source) || 'no authors'}`));
+    // how far you've read it, in passes (sources/passes.js)
+    const record = passesBySource.get(source.id);
+    if (Passes.label(record)) head.append(el('span', 'badge material', Passes.label(record)));
     card.append(head);
 
     const actions = el('div', 'card_actions');
@@ -599,7 +604,17 @@ function sourceCard(source) {
     );
     const summary = summaryOf(source);
     if (summary) actions.append(button('Insert summary', 'Insert your summary of this source, cited', () => insertBlock(`${summary} [@${source.citekey}]`)));
+    const assessment = (source.review || '').trim();
+    if (assessment) actions.append(button('Insert assessment', 'Insert your assessment of this source (assumptions, weak spots…), cited', () => insertBlock(`${assessment.replace(/^#{2,4}\s+(.+)$/gm, '**$1.**')} [@${source.citekey}]`)));
     card.append(actions);
+
+    // the five Cs from its first pass: what kind of paper it is, its contributions…
+    const cs = Passes.FIVE_CS.filter(([key]) => record?.passes?.[1]?.cs?.[key]?.trim());
+    if (cs.length) {
+        const list = el('dl', 'card_cs');
+        for (const [key, label] of cs) list.append(el('dt', '', label), el('dd', '', record.passes[1].cs[key]));
+        card.append(list);
+    }
 
     if (tagsOf(source).length) {
         const tags = el('ul', 'tags');
@@ -609,6 +624,14 @@ function sourceCard(source) {
     if (summary) {
         const text = el('div', 'md card_summary');
         renderMarkdown(text, summary);
+        card.append(text);
+    }
+    if (assessment) {
+        const text = el('details', 'card_assessment');
+        text.append(el('summary', '', 'Assessment'));
+        const body = el('div', 'md');
+        renderMarkdown(body, assessment);
+        text.append(body);
         card.append(text);
     }
 
