@@ -1,10 +1,13 @@
-// How this computer hosts Research Board for other devices: the saved settings (serve.json) and starting with the
-// computer. Used by serve.js (which starts the server with them) and by the server's control page (server.js,
+// How this computer hosts Research Board for other devices: the saved settings (local/serve.json) and starting with
+// the computer. Used by serve.js (which starts the server with them) and by the server's control page (server.js,
 // /api/admin), which changes them.
 //
-//   serve.json   { mode: 'network' | 'public', port: 5500, data: '' }    data: '' = data/ (data-public/ for public)
+//   local/serve.json   { mode: 'network' | 'public', port: 5500, data: '' }    data: '' = data/ (data-public/ for public)
 //     network: devices on the same network, by this machine's address (http)
 //     public:  any network, through a temporary https://….trycloudflare.com address (server.js --public, tunnel.js)
+//
+// local/ holds what belongs to this computer only and is never in git: these settings, serve.log (macOS), and
+// tools/ (cloudflared, downloaded for --public).
 
 const fs = require('fs');
 const os = require('os');
@@ -12,9 +15,16 @@ const path = require('path');
 const { spawnSync, execSync } = require('child_process');
 
 const APP = path.resolve(__dirname, '..', '..');
-const SETTINGS = path.join(APP, 'serve.json');
+const LOCAL = path.join(APP, 'local');
+const SETTINGS = path.join(LOCAL, 'serve.json');
 const DEFAULTS = { mode: 'network', port: 5500, data: '' };
 const MODES = ['network', 'public'];
+
+// (earlier versions kept the settings at the top of the folder)
+const OLD_SETTINGS = path.join(APP, 'serve.json');
+if (!fs.existsSync(SETTINGS) && fs.existsSync(OLD_SETTINGS)) {
+    try { fs.mkdirSync(LOCAL, { recursive: true }); fs.renameSync(OLD_SETTINGS, SETTINGS); } catch { }
+}
 
 function loadSettings() {
     try { return { ...DEFAULTS, ...JSON.parse(fs.readFileSync(SETTINGS, 'utf8')) }; } catch { return { ...DEFAULTS }; }
@@ -28,6 +38,7 @@ function saveSettings(changes) {
     if (!Number.isInteger(port) || port < 1024 || port > 65535) throw new Error('the port is a whole number from 1024 to 65535');
     settings.port = port;
     settings.data = String(settings.data || '').trim();
+    fs.mkdirSync(LOCAL, { recursive: true });
     fs.writeFileSync(SETTINGS, JSON.stringify(settings, null, 2) + '\n');
     return settings;
 }
@@ -47,7 +58,7 @@ const autostart = {
     // a small launcher in your Startup folder (no administrator rights needed; remove it there by hand too)
     win32: {
         on: () => fs.writeFileSync(STARTUP, `@rem Starts the Research Board server when you sign in (its control page: "Start with the computer").\r\n`
-            + `@start "${NAME}" /min "${path.join(APP, 'serve.bat')}" --start\r\n`),
+            + `@cd /d "${APP}"\r\n@start "${NAME}" /min "${process.execPath}" "${SERVE}" --start\r\n`),
         off: () => fs.rmSync(STARTUP, { force: true }),
         is: () => fs.existsSync(STARTUP),
         when: 'each time you sign in to Windows, in a small window',
@@ -71,7 +82,8 @@ const autostart = {
     darwin: {
         on() {
             const esc = t => t.replace(/&/g, '&amp;').replace(/</g, '&lt;');
-            const log = path.join(APP, 'serve.log');
+            const log = path.join(LOCAL, 'serve.log');
+            fs.mkdirSync(LOCAL, { recursive: true });
             fs.mkdirSync(path.dirname(PLIST), { recursive: true });
             fs.writeFileSync(PLIST, `<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -89,7 +101,7 @@ const autostart = {
             fs.rmSync(PLIST, { force: true });
         },
         is: () => fs.existsSync(PLIST),
-        when: `when you sign in, in the background (its messages: ${path.join(APP, 'serve.log')})`,
+        when: `when you sign in, in the background (its messages: ${path.join(LOCAL, 'serve.log')})`,
     },
 }[process.platform];
 
@@ -101,4 +113,4 @@ function setStartsWithComputer(on) {
     return { on: autostart.is(), when: autostart.when };
 }
 
-module.exports = { APP, SETTINGS, DEFAULTS, loadSettings, saveSettings, dataDir, autostart, startsWithComputer, setStartsWithComputer };
+module.exports = { APP, LOCAL, SETTINGS, DEFAULTS, loadSettings, saveSettings, dataDir, autostart, startsWithComputer, setStartsWithComputer };

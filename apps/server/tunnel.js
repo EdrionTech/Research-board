@@ -4,7 +4,7 @@
 // network here; stopping the server closes the tunnel. No Cloudflare account is needed (the address changes each
 // time; a fixed one needs an account and a domain: https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/).
 //
-// cloudflared is used from PATH if it's installed, else downloaded once into tools/ (Cloudflare's own release on
+// cloudflared is used from PATH if it's installed, else downloaded once into local/tools/ (Cloudflare's own release on
 // GitHub) and kept there.
 
 const fs = require('fs');
