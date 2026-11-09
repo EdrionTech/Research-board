@@ -140,11 +140,11 @@ function render() {
     $('#settings_save').textContent = supervised ? 'Save and restart' : 'Save';
     $('#settings_hint').textContent = supervised
         ? 'Saving starts it again with these (a few seconds; from "any network" it gets a new address).'
-        : 'Saved for the next start (it was started without serve.bat / serve.sh: start it again yourself).';
+        : 'Saved for the next start (it was started without run host: start it again yourself).';
     $('#autostart').hidden = !autostart.available;
     $('#autostart').textContent = autostart.on ? 'Turn off' : 'Turn on';
     $('#autostart_hint').textContent = !autostart.available ? 'Not available on this system.'
-        : autostart.on ? 'On: it starts by itself with the saved settings.' : 'Off: start it with serve.bat (serve.sh) when you need it.';
+        : autostart.on ? 'On: it starts by itself with the saved settings.' : 'Off: start it with run.bat host (./run.sh host) when you need it.';
     $('#key_new').hidden = keyFromEnv;
 }
 

@@ -1,7 +1,7 @@
 # Research Board tests
 
 ```powershell
-build.bat test        # from the project folder: installs the test tools the first time, then runs them all
+run test             # from the project folder (run.bat test / ./run.sh test): installs the test tools the first time, then runs them all
 ```
 
 Or here: `bun install` once, then `bun run.js` (all), `bun run.js api` (only the files whose names include "api"), or `bun api.test.js` (one file). Needs Bun and Edge or Chrome (any other Chromium browser with `BROWSER=<path to it>`). Nothing is downloaded but `puppeteer-core` (not Playwright: it can't start a browser under Bun on Windows).

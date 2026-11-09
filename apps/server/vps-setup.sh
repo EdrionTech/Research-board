@@ -1,7 +1,7 @@
 #!/bin/sh
 # Research Board on a VPS (a rented server with its own public address), in one run. For Ubuntu or Debian.
 #
-#   1. Copy Research Board to the server: the server version (build.bat host → ResearchBoard-<version>-host.zip),
+#   1. Copy Research Board to the server: the server version (run build server → ResearchBoard-<version>-host.zip),
 #      e.g.  scp ResearchBoard-0.1.0-host.zip root@<server>:  then on the server:  unzip ResearchBoard-0.1.0-host.zip -d research-board
 #   2. sudo sh research-board/apps/server/vps-setup.sh [your.domain]
 #

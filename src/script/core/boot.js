@@ -109,7 +109,7 @@
         return server;
     }
 
-    // (Android already hands links that leave the app to the phone's browser)
+    // (Android and iOS already hand links that leave the app to the phone's browser)
     function phoneApp(server) {
         const fs = (method, options) => window.Capacitor.nativePromise('Filesystem', method, options);
         server.save = async (name, contents) => {
@@ -173,7 +173,7 @@
             document.body.innerHTML = `<main style="max-width:36rem;margin:12vh auto;padding:0 1.5rem;font:1rem/1.6 system-ui">
                 <h1 style="font-size:1.4rem">Start Research Board first</h1>
                 <p>Research Board keeps your work in its own data folder, so it runs from its own small server.
-                Double-click <b>start.bat</b> in the Research Board folder (on macOS or Linux, run <b>./start.sh</b>);
+                Double-click <b>run.bat</b> in the Research Board folder and choose <b>open</b> (on macOS or Linux, run <b>./run.sh open</b>);
                 it opens the app at <a href="http://127.0.0.1:5500/">http://127.0.0.1:5500/</a>.</p>
                 <p>Or use the Research Board app for your computer or phone.</p></main>`;
             return;
