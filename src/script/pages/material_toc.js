@@ -2,12 +2,17 @@
 // subsections (collapsible) to jump to, showing the section you're in; it stays in reach as you scroll.
 // From the PDF's own outline, or headings found in its text ("2.1 Method", "I. INTRODUCTION", "References"),
 // arXiv's sections in the HTML version, Markdown or numbered headings in pasted text.
-// An entry: { title, level (1, 2, 3…), place } — a place as in material_places.js. Loaded before material.js;
+// An entry: { title, level (1, 2, 3…), place, hint? } — a place as in material_places.js; hint: 'abstract',
+// 'appendix' or 'references' where the paper says so (arXiv HTML). Loaded before material.js;
 // material.js tells it what each view has (fromPdf / fromHtml / fromText) and which view is shown (show).
+// Reading in passes (material_passes.js) adds the headings you marked (extra), a role on each row (decorate),
+// and hears when the entries shown change (changed).
 
 const Toc = (() => {
     let byView = {};   // view -> entries
     let shown = [];    // entries of the view being read
+    let shownView = null;
+    const hooks = { extra: () => [], decorate: null, changed: () => { } };
 
     const KNOWN = /^(abstract|introduction|related work|background|preliminaries|method|methods|methodology|approach|experiments?|experimental (setup|results)|evaluation|results|discussion|limitations|conclusions?|future work|acknowledge?ments?|references|bibliography|appendix|appendices)$/i;
     const NUMBERED = /^((?:\d+\.){0,3}\d+)\.?\s+(\p{Lu}[\p{L}\p{N} ,:&'’()/-]{1,80})$/u;   // 2.1 Method
@@ -109,7 +114,9 @@ const Toc = (() => {
                 || (section.matches('.ltx_abstract') ? 'Abstract' : '');
             if (!title || !section.id) return null;
             const level = section.matches('.ltx_subsubsection') ? 3 : section.matches('.ltx_subsection') ? 2 : 1;
-            return { title, level, place: { view: 'html', anchor: section.id, y: 0, label: '' } };
+            const hint = section.matches('.ltx_abstract') ? 'abstract' : section.matches('.ltx_appendix') ? 'appendix'
+                : section.matches('.ltx_bibliography') ? 'references' : undefined;
+            return { title, level, hint, place: { view: 'html', anchor: section.id, y: 0, label: '' } };
         }).filter(Boolean);
         if (currentView === 'html') show('html');
     }
@@ -130,9 +137,24 @@ const Toc = (() => {
     // ---- showing it ----
 
     function show(view) {
-        shown = byView[view] || [];
+        shownView = view;
+        shown = withExtra(view, byView[view] || []);
         render();
+        hooks.changed(view, shown);
     }
+
+    // the headings you marked, in their place among the ones found
+    function withExtra(view, entries) {
+        const extra = hooks.extra(view).filter(e => e.place.view === view);
+        if (!extra.length) return entries;
+        const order = p => (p.view === 'pdf' ? p.page * 10 + (p.y || 0) : p.line || 0);
+        return [...entries, ...extra].sort((a, b) => order(a.place) - order(b.place));
+    }
+
+    // the entries a view has (with your marked headings), and the view they're shown for
+    const entries = (view = shownView) => withExtra(view, byView[view] || []);
+    const view = () => shownView;
+    const hook = given => Object.assign(hooks, given);
 
     // entries → a tree, by level
     function tree(entries) {
@@ -165,6 +187,7 @@ const Toc = (() => {
             go.append(el('span', '', node.title));
             if (node.place.label) go.append(el('small', '', node.place.label));
             row.append(go);
+            hooks.decorate?.(node, row);
             li.append(row);
             if (node.children.length) {
                 const sub = list(node.children, false);
@@ -230,6 +253,7 @@ const Toc = (() => {
     function onClick(e) {
         const item = e.target.closest('.toc_item');
         if (!item) return;
+        if (e.target.closest('.toc_role')) return; // (its own control: material_passes.js)
         if (e.target.closest('.toc_twist')) return setOpen(item, item.querySelector(':scope > .toc_list').hidden);
         if (e.target.closest('.toc_go')) {
             openDrop(false);
@@ -253,5 +277,5 @@ const Toc = (() => {
         doc.addEventListener('click', () => openDrop(false));
     }
 
-    return { setup, reset, fromPdf, fromHtml, fromText, show, watchFrame, headingsIn };
+    return { setup, reset, fromPdf, fromHtml, fromText, show, watchFrame, headingsIn, entries, view, hook };
 })();

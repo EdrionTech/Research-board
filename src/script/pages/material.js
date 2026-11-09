@@ -101,6 +101,7 @@ function init() {
     Toc.setup(); // the table of contents (material_toc.js)
     setupReader();
     Places.setup(); // continue where you left off, bookmarks, the summary pad (material_places.js)
+    PassMode.setup(); // reading in passes (material_passes.js)
 }
 
 // the project's papers, with their citation keys: what notes can cite (type @: citepicker.js)
@@ -419,6 +420,7 @@ async function loadHtml(load) {
     ReferencesPanel.fromHtml(doc);
     Toc.fromHtml(doc);
     Toc.watchFrame(doc);
+    PassMode.watchFrame(doc);
     markNoted();
     highlightFormTarget();
     Places.markBookmarks();
@@ -819,6 +821,7 @@ function buildRead() {
     box.style.setProperty('--zoom', zoomOf.read);
     markNoted();
     highlightFormTarget();
+    PassMode.apply(); // (its sections fold in read mode)
 }
 
 async function setReadMode(on) {
@@ -831,6 +834,7 @@ async function setReadMode(on) {
     updateZoomControl();
     markNoted();
     highlightFormTarget();
+    PassMode.apply();
     if (place?.view === 'pdf') Places.go(place, { smooth: false, mark: false });
 }
 

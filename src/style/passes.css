@@ -1,0 +1,140 @@
+/* Material page: reading in passes (material_passes.js). The pass bar under the reader's, what each pass does to
+   the paper (folded sections, dimmed pages, prediction cards), and the pass's form at the end of the reader.
+   Inside the arXiv HTML frame the same controls are styled by the frame's own sheet (frameCss). */
+
+#passes_btn { order: 32; }
+#passes_btn[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); background: color-mix(in srgb, var(--accent) 10%, var(--surface)); }
+
+/* the bar: stays in view under the reader's bar */
+.pass_bar {
+    position: sticky;
+    top: calc(var(--bar-h, 56px) + var(--inset-top, 0px) + var(--reader-bar-h, 0px));
+    z-index: 6;
+    margin: -12px -16px 12px;
+    padding: 8px 16px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--line);
+}
+.pass_bar[hidden] { display: none; }
+.pass_bar_row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.pass_bar .spacer { flex: 1; }
+.pass_steps { display: flex; gap: 4px; }
+.pass_step {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 3px 10px 3px 4px;
+    border: 1px solid var(--line); border-radius: 999px;
+    background: var(--surface); color: var(--text);
+    font: inherit; font-size: .82rem; cursor: pointer;
+}
+.pass_step:hover { border-color: var(--accent); }
+.pass_num {
+    display: inline-grid; place-items: center;
+    width: 1.5em; height: 1.5em; border-radius: 50%;
+    background: var(--bg); font-weight: 700; font-size: .78rem;
+}
+.pass_step[data-state="current"] { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 12%, var(--surface)); font-weight: 600; }
+.pass_step[data-state="current"] .pass_num { background: var(--accent); color: #fff; }
+.pass_step[data-state="done"] .pass_num { background: color-mix(in srgb, var(--accent) 22%, var(--surface)); color: var(--accent); }
+.pass_step[data-state="skipped"] { border-style: dashed; color: var(--muted); }
+.pass_state { color: var(--muted); font-size: .8rem; }
+.pass_state:empty { display: none; }
+.pass_hint { margin: 6px 0 0; font-size: .8rem; color: var(--muted); }
+.pass_leave { padding: 2px 6px; font-size: 1rem; color: var(--muted); }
+
+/* the gentle timer: quiet; a colour change (and one small pulse) once past the pass's range */
+.pass_timer {
+    padding: 3px 10px;
+    border: 1px solid var(--line); border-radius: 999px;
+    background: var(--bg); color: var(--muted);
+    font: inherit; font-size: .78rem; font-variant-numeric: tabular-nums; cursor: pointer;
+}
+.pass_timer[hidden] { display: none; }
+.pass_timer.over { border-color: #d9a441; color: #8a5a00; background: color-mix(in srgb, #ffc800 14%, var(--surface)); }
+:root[data-theme="dark"] .pass_timer.over { color: #f0c46a; }
+.pass_timer.nudge { animation: pass_nudge 1.2s ease-in-out 2; }
+@keyframes pass_nudge { 50% { transform: scale(1.06); } }
+
+/* in the paper: folded, peeked, blurred */
+.pass_folded { display: none !important; }
+.pass_head { opacity: .72; }
+.pass_blur { filter: blur(5px); opacity: .55; user-select: none; pointer-events: none; }
+.pass_peek {
+    display: block;
+    margin: 2px 0 14px;
+    padding: 3px 10px;
+    border: 1px dashed var(--line); border-radius: 6px;
+    background: var(--bg); color: var(--muted);
+    font: 600 .8rem system-ui, sans-serif; cursor: pointer;
+}
+.pass_peek:hover { border-style: solid; color: var(--text); }
+.pass_peek.open { border-style: solid; opacity: .8; }
+/* pasted text: the button on a line of its own, lined up with the text */
+.reader_text li.pass_line { list-style: none; padding-left: 3.2em; }
+.reader_text li.pass_line .pass_peek, .reader_text li.pass_line .pass_card { margin: 4px 0 10px; }
+.pdf_page.pass_dim { opacity: .28; transition: opacity .2s; }
+.pdf_page.pass_dim:hover { opacity: .6; }
+
+.pass_card {
+    display: grid; gap: 6px;
+    margin: 8px 0 16px; padding: 12px 14px;
+    border: 1px solid color-mix(in srgb, var(--accent) 40%, var(--line)); border-radius: 10px;
+    background: color-mix(in srgb, var(--accent) 6%, var(--surface));
+    font: .92rem/1.45 system-ui, sans-serif; color: var(--text);
+}
+.pass_card.done { background: var(--bg); border-color: var(--line); }
+.pass_card small { color: var(--muted); }
+.pass_card textarea { width: 100%; box-sizing: border-box; font: inherit; resize: vertical; }
+.pass_card .pass_expected { margin: 0; white-space: pre-wrap; }
+.pass_card_row { display: flex; gap: 6px; }
+.pass_btn { padding: 5px 12px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); color: var(--text); font: 600 .82rem system-ui, sans-serif; cursor: pointer; }
+.pass_btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+/* the Contents: each section's role */
+.toc_role { flex: none; margin-left: 4px; padding: 1px 4px; font-size: .72rem; color: var(--muted); max-width: 8.5em; }
+.toc_role.tagged { color: var(--accent); border-color: var(--accent); }
+button.toc_role { padding: 0 4px; }
+
+/* the form at the end of the reader */
+.pass_form {
+    display: grid; gap: 14px;
+    margin-top: 28px; padding-top: 18px;
+    border-top: 2px solid var(--line);
+}
+.pass_form[hidden] { display: none; }
+.pass_form_head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 10px; }
+.pass_form_head h3 { margin: 0; }
+.pass_form .hint { margin: 0; }
+.pass_banner { margin: 0; padding: 8px 12px; border-radius: 8px; background: var(--bg); font-size: .88rem; }
+.pass_cs { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; }
+.pass_field { display: grid; gap: 4px; }
+.pass_field small { color: var(--muted); font-size: .78rem; }
+.pass_field textarea { width: 100%; box-sizing: border-box; resize: vertical; }
+.pass_sub { display: grid; gap: 6px; }
+.pass_sub > summary, .pass_refs > summary { cursor: pointer; font-weight: 600; }
+.pass_list { margin: 0; padding: 0; list-style: none; display: grid; gap: 6px; }
+.pass_list li { padding: 6px 8px; border-radius: 6px; background: var(--bg); font-size: .88rem; }
+.pass_differs { margin: 4px 0 0; font-size: .85rem; white-space: pre-wrap; }
+.pass_figs li { display: grid; gap: 4px; }
+.pass_fig_go { justify-self: start; font-weight: 600; }
+.pass_fig_checks { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: .82rem; }
+.pass_fig_note { width: 100%; box-sizing: border-box; font-size: .85rem; }
+.pass_refs { display: grid; gap: 6px; }
+.pass_ref_list { margin: 6px 0; padding-left: 0; list-style: none; display: grid; gap: 4px; max-height: 320px; overflow: auto; font-size: .84rem; }
+.pass_ref_list li { display: flex; align-items: baseline; gap: 8px; }
+.pass_ref_list .check { flex: 1; min-width: 0; }
+.pass_in { flex: none; font-size: .78rem; }
+.pass_compare { margin: 6px 0 0; font-size: .85rem; }
+.pass_compare:empty { display: none; }
+.pass_decide { display: grid; gap: 8px; padding: 12px; border-radius: 10px; background: var(--bg); }
+.pass_decide_row { display: flex; flex-wrap: wrap; gap: 6px; }
+.pass_reason { max-width: 420px; }
+
+@media (max-width: 700px) {
+    .pass_bar { margin: -10px -12px 10px; padding: 6px 12px; }
+    .pass_name { display: none; }
+    .pass_step { padding: 3px; }
+    .pass_step[data-state="current"] .pass_name { display: inline; padding-right: 6px; }
+    /* one line, so the bar keeps the screen for reading; a tap shows it all */
+    .pass_hint { font-size: .76rem; display: -webkit-box; -webkit-line-clamp: 1; line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; cursor: pointer; }
+    .pass_hint.full { display: block; }
+}

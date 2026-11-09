@@ -11,6 +11,13 @@ Everything still to do, by category. Details are in the linked plans. Done work 
 - [ ] Your own app icon when it's ready: `run icons <logo>` (desktop, phone launcher and splash)
 
 
+**Reading in passes and literature surveys** ([reading_passes/reading_passes.md](reading_passes/reading_passes.md)). Built (2026-11-09): reading in three passes per material (Passes in the reader bar): sections folded by pass, peeks, dimmed pages in the printed PDF, the five Cs, pass 2's summary, evidence, figure checks and references to follow up, pass 3's predict-then-reveal cards and close-out, decisions (next / enough / park), skips recorded, roles changed in Contents, headings marked by right-click, the gentle timer (Settings → Reading), the pass badge on the Literature tab.
+- [ ] Try it on real papers (arXiv HTML, long PDFs with an outline, scans) and adjust the section roles
+- [ ] **Literature survey board** on the project dashboard: seed papers, columns Unread → Pass 1 → Pass 2 → Pass 3 / Stopped, time per paper
+- [ ] **Key papers:** the citations and authors your pass 1 papers share (the same work matched by DOI, arXiv id or cleaned-up title, in your project or not), the most cited suggested to add
+- [ ] **On the review page:** a side panel of the five Cs and pass 2 summaries, each a click from a `[@key]` citation
+- [ ] Smaller: assumptions linked to highlights; marking a heading in the arXiv HTML version; the figure checks beside each figure in the paper too; per person once collaborators have their own sign-in
+
 **Citation style creator and editor** ([citation_styles/citation_styles.md](citation_styles/citation_styles.md))
 - [ ] Styles as CSL, rendered by citeproc-js (kept in the app)
 - [ ] Built in: APA 7, MLA 9, Harvard, IEEE, Chicago, Vancouver (plus BibTeX export)

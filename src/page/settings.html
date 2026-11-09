@@ -27,6 +27,7 @@
     <!-- tabs (the shared .tabs): one part of Settings at a time; settings.html#sync opens that one -->
     <nav class="tabs" id="tabs" role="tablist">
         <button type="button" role="tab" data-tab="appearance" aria-selected="true">Appearance</button>
+        <button type="button" role="tab" data-tab="reading">Reading</button>
         <button type="button" role="tab" data-tab="sync">Sync</button>
         <button type="button" role="tab" data-tab="data">Your data</button>
     </nav>
@@ -35,6 +36,21 @@
         <!-- customization: how the app looks (core/appearance.js draws it; kept with your data, and a copy in this
              browser draws the page at once) -->
         <section class="settings_section customization" id="appearance" data-panel="appearance"></section>
+
+        <!-- reading: how the material page helps you read (pages/material_passes.js) -->
+        <section class="settings_section" data-panel="reading" hidden>
+            <header>
+                <h3>Reading</h3>
+            </header>
+            <div class="setting">
+                <div>
+                    <strong>Timer in reading passes</strong>
+                    <p class="hint">Shows how long you've spent on a pass against its usual time (5–10 minutes, about an
+                        hour), counting only while you're reading. Turn it off if it puts you off.</p>
+                </div>
+                <label class="check"><input type="checkbox" id="pass_timer_setting"> Show it</label>
+            </div>
+        </section>
 
         <!-- your data: in the server's data folder, or the app's own storage (settings.js) -->
         <section class="settings_section" data-panel="data" hidden>

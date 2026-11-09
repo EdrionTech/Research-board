@@ -88,6 +88,7 @@ const ReaderMenu = (() => {
         }
         if (text) parts.push(item('copy', 'Copy'), item('cite', 'Copy with citation'));
         if (img) parts.push(item('figure', 'Save picture as figure…'));
+        if (PassMode.canMark(target)) parts.push(item('section', 'Mark as a section heading'));
         parts.push(item('bookmark', 'Bookmark where I am', 'B'), item('capture', 'Capture part of the page…'));
         parts.push(el('p', 'menu_foot', "Shift + right-click: the browser's menu"));
         menu.replaceChildren(...parts);
@@ -138,6 +139,7 @@ const ReaderMenu = (() => {
         } else if (act === 'figure') saveFeature(img);
         else if (act === 'bookmark') Places.addBookmark();
         else if (act === 'capture') captureArea();
+        else if (act === 'section') PassMode.markSection(target);
     }
 
     // keys while it's open: Esc closes, arrows move, N adds a note

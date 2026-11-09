@@ -3,8 +3,9 @@
 // and the quote is kept too, so a note can find its exact words again later.
 
 const TextRange = (() => {
-    // never part of the readable text: hidden maths source, arXiv conversion errors, line numbers
-    const SKIP = 'annotation, annotation-xml, .ltx_ERROR.undefined, .num, script, style';
+    // never part of the readable text: hidden maths source, arXiv conversion errors, line numbers, and the
+    // app's own controls placed in the paper ([data-rb-ui]: reading in passes)
+    const SKIP = 'annotation, annotation-xml, .ltx_ERROR.undefined, .num, script, style, [data-rb-ui]';
 
     // { text, nodes: [{ node, start }] } for the text inside `container`
     function map(container) {

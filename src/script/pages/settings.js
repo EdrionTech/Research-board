@@ -324,7 +324,12 @@ addEventListener('storage', e => { if (e.key === 'research_board_projects') rend
 
 Appearance.mount($('#appearance'));
 
-// ---- tabs: Appearance, Sync, Your data (a link to settings.html#sync opens that one; the last one is kept) ----
+// ---- reading: the timer in reading passes (pages/material_passes.js) ----
+
+$('#pass_timer_setting').checked = Settings.read().passTimer !== false;
+$('#pass_timer_setting').addEventListener('change', e => Settings.save({ passTimer: e.target.checked }));
+
+// ---- tabs: Appearance, Reading, Sync, Your data (a link to settings.html#sync opens that one; the last one is kept) ----
 
 const TAB_KEY = 'research_board_settings_tab';
 function showTab(name) {

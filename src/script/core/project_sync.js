@@ -148,7 +148,7 @@ const ProjectSync = (() => {
     }
 
     // a record, in a few words: a material's title, a note's start…
-    const TYPES = { source: 'Material', source_note: 'Note', bookmark: 'Bookmark', figure: 'Figure', lit_review: 'Literature review' };
+    const TYPES = { source: 'Material', source_note: 'Note', bookmark: 'Bookmark', figure: 'Figure', lit_review: 'Literature review', passes: 'Reading passes' };
     function describe(record) {
         if (!record) return 'Something deleted';
         const name = record.title || record.quote || (record.body || record.text || '').replace(/[#*_>`[\]()!]/g, '').trim();

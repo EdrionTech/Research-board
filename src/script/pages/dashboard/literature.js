@@ -407,6 +407,9 @@ function sourceRow(source) {
     else if (hasMaterial(source)) badges.append(el('span', 'badge material', 'Full text'));
     const notes = notesOf(source).length;
     if (notes) badges.append(el('small', '', `${notes} note${notes > 1 ? 's' : ''}`));
+    // read in passes: which pass, or where you stopped (sources/passes.js)
+    const passes = Passes.label(items.find(i => i.type === 'passes' && i.sourceId === source.id));
+    if (passes) badges.append(el('span', 'badge material', passes));
     if (source.unverified) badges.append(el('span', 'badge check', 'Check details'));
     // where you are in it ("p. 5 · 38%"): it opens there
     if (Reading.inProgress(source)) badges.append(el('small', 'reading_at', '📖 ' + Reading.placeLabel(source)));

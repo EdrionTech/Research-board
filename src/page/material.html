@@ -9,6 +9,7 @@
     <link rel="stylesheet" href="../style/base.css">
     <link rel="stylesheet" href="../style/icons.css">
     <link rel="stylesheet" href="../style/material.css">
+    <link rel="stylesheet" href="../style/passes.css">
     <!-- theme + style, before the page draws -->
     <!-- where the data is (the server, or the app on this device); then it runs the page's scripts (data-src) -->
     <script src="../script/core/boot.js"></script>
@@ -98,6 +99,8 @@
                         <small class="hint">Press B to bookmark where you are.</small>
                     </div>
                 </div>
+                <!-- reading in passes: three passes, each deeper (material_passes.js) -->
+                <button type="button" class="btn small has_i" id="passes_btn" aria-pressed="false" title="Read in three passes: a bird's-eye view, then the content, then re-implementing it"><span class="i" data-i="layers" aria-hidden="true"></span><span class="lbl">Passes</span></button>
                 <span class="tool_sep" aria-hidden="true"></span>
                 <!-- taking notes -->
                 <!-- what a click in the paper picks for a note (keys 1–5); selecting words works in every mode -->
@@ -164,6 +167,18 @@
                 <button type="button" class="btn small has_i more_btn" id="more_btn" aria-expanded="false" title="More tools"><span class="i" data-i="ellipsis" aria-hidden="true"></span><span class="lbl">More</span></button>
             </div>
 
+            <!-- reading in passes: which pass, how long, the way to its form (material_passes.js) -->
+            <div class="pass_bar" id="pass_bar" hidden>
+                <div class="pass_bar_row">
+                    <div class="pass_steps" id="pass_steps" role="group" aria-label="Reading passes"></div>
+                    <small class="pass_state" id="pass_state"></small>
+                    <span class="spacer"></span>
+                    <button type="button" class="pass_timer" id="pass_timer" hidden></button>
+                    <button type="button" class="btn small" id="pass_form_btn">Five Cs ↓</button>
+                    <button type="button" class="link pass_leave" id="pass_leave" title="Stop reading in passes (what you wrote stays)" aria-label="Stop reading in passes">✕</button>
+                </div>
+                <p class="pass_hint" id="pass_hint"></p>
+            </div>
 
             <details class="abstract" id="abstract">
                 <summary>Abstract</summary>
@@ -210,6 +225,8 @@
             <div class="reader_read" id="reader_read" hidden></div>
             <!-- pasted text as numbered lines -->
             <div class="reader_text" id="reader_text" hidden></div>
+            <!-- the pass's form: the five Cs, the summary, the close-out (material_passes.js) -->
+            <section class="pass_form" id="pass_form" aria-label="This pass's notes" hidden></section>
         </section>
 
         <!-- your work on it: line notes, summary, review (can be hidden to read full width) -->
@@ -478,6 +495,7 @@
     <script data-src="../script/sources/links.js"></script>
     <script data-src="../script/sources/reading.js"></script>
     <script data-src="../script/sources/library.js"></script>
+    <script data-src="../script/sources/passes.js"></script>
     <script data-src="../script/reader/textrange.js"></script>
     <script data-src="../script/reader/citations.js"></script>
     <script data-src="../script/reader/pdfread.js"></script>
@@ -488,6 +506,7 @@
     <script data-src="../script/pages/material_places.js"></script>
     <script data-src="../script/pages/material_toc.js"></script>
     <script data-src="../script/pages/material_menu.js"></script>
+    <script data-src="../script/pages/material_passes.js"></script>
     <script data-src="../script/pages/material.js"></script>
     <script data-src="../script/pages/material_refs.js"></script>
 </body>
