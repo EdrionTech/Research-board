@@ -7,7 +7,7 @@
 // The storage itself is shared with the desktop and phone apps: src/script/core/place/place.js, given Bun's
 // SQLite and the files folder by place-bun.js. This file is only the requests.
 //
-// Bun (https://bun.sh), no packages: `bun apps/server/server.js` (start.bat / start.sh add --open: the browser
+// Bun (https://bun.sh), no packages: `bun apps/server/server.js` (run.bat open / ./run.sh open add --open: the browser
 // opens on the app once the server is ready). Options (environment): PORT (5500), HOST (127.0.0.1: this computer
 // only), DATA (the data folder), KEY (the server's access key: see "Access" below). The API below is all the app
 // needs (see README.md here).
@@ -346,7 +346,7 @@ async function admin(req, res, route) {
         if (kind === 'settings' && method === 'PUT') return send(res, 200, { settings: hosting.saveSettings({ mode: body.mode, port: body.port, data: body.data }) });
         if (kind === 'autostart' && method === 'PUT') return send(res, 200, hosting.setStartsWithComputer(!!body.on));
         if (kind === 'restart' && method === 'POST') {
-            if (!SUPERVISED) return send(res, 409, { error: 'started without serve.bat / serve.sh: stop it and start it again yourself' });
+            if (!SUPERVISED) return send(res, 409, { error: 'started without run host: stop it and start it again yourself' });
             send(res, 200, { ok: true });
             console.log('\nThe control page asked to start again with the saved settings.');
             return setTimeout(() => process.exit(75), 300); // serve.js starts it again
@@ -439,7 +439,7 @@ async function start() {
             try {
                 console.log('Opening a public address through Cloudflare: this takes 10 to 30 seconds…');
                 const waiting = setInterval(() => process.stdout.write('.'), 2000);
-                const { url, ready } = await require('./tunnel').startTunnel(PORT, path.join(APP, 'tools')).finally(() => { clearInterval(waiting); console.log(''); });
+                const { url, ready } = await require('./tunnel').startTunnel(PORT, path.join(hosting.LOCAL, 'tools')).finally(() => { clearInterval(waiting); console.log(''); });
                 if (!ready) console.log("(It isn't answering yet from here: it can take a minute to be known on the internet. Try it from the device.)");
                 addresses = [{ label: 'Any network (Cloudflare)', base: url }];
                 console.log('\nPUBLIC: reachable from any network while this window is open, at:');

@@ -1,12 +1,12 @@
-// Research Board as a server for other devices: the launcher behind serve.bat / serve.sh.
+// Research Board as a server for other devices: the launcher behind run host (run.bat host, ./run.sh host).
 //
-//   (nothing)        start it with the saved settings, and open its control page in your browser (double-clicking
-//                    serve.bat): addresses, invites (QR codes), devices, the key, the settings
+//   (nothing)        start it with the saved settings, and open its control page in your browser (run host
+//                    from a terminal): addresses, invites (QR codes), devices, the key, the settings
 //   --start          start it, without opening the page (what starting with the computer runs)
 //   --public         start it once from any network (a temporary https address), whatever is saved
 //   --autostart      start with the computer: on       --no-autostart   off
 //
-// The settings are kept in serve.json (hosting.js) and changed on the control page. When it saves new ones, the
+// The settings are kept in local/serve.json (hosting.js) and changed on the control page. When it saves new ones, the
 // server stops with code 75 and this starts it again with them.
 
 if (!process.versions.bun) {
