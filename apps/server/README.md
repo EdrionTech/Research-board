@@ -6,32 +6,32 @@
 
 | | |
 | --- | --- |
-| Windows | Double-click `start.bat` in the project folder |
-| macOS, Linux | `./start.sh` in the project folder |
+| Windows | Double-click `run.bat` in the project folder and choose **open** (or `run.bat open`) |
+| macOS, Linux | `./run.sh open` in the project folder |
 | Anywhere | `bun apps/server/server.js` from the project folder (add `--open` to open the browser) |
 
 ### As a server for other devices
 
-For a lab server, or your own phone and laptop syncing with one computer: copy the project there (or the server version, `build.bat host`, unzipped), then one run:
+For a lab server, or your own phone and laptop syncing with one computer: copy the project there (or the server version, `run build server`, unzipped), then one run:
 
 | | |
 | --- | --- |
-| Windows | Double-click `serve.bat` |
-| macOS, Linux | `./serve.sh` |
+| Windows | `run.bat host` (or double-click `run.bat` and choose **host**) |
+| macOS, Linux | `./run.sh host` |
 
-It installs Bun if it's missing, starts the server with the saved settings, and opens its **control page** in your browser (`page/server.html`, usable only with the server's main key, which the opening link carries). In tabs, while the server runs: **Overview** (running or not, the addresses with Copy, a QR code to add a device in one step, the projects on it); **Devices** (invites for one device or any number until they expire, the open ones, and the devices, each with its own key, when added and last seen, with **Remove**); **People** (accounts and sign-ups for a server open to the public: later work, shown so its place is clear); **Server** (reached from this network or any network, port, data folder, with **Save and restart**; **Start with the computer**; the **main key**). **Appearance** (the same controls as the app's Settings: theme, style, colours, your own CSS) sets the look of the page and of the app opened from this server, kept in the server's data. The settings are kept in `serve.json` (`hosting.js`). In the server's window: `i` + Enter for another invite, `a` + Enter to open the control page again. Options: `--start` (no page: what starting with the computer runs), `--public`, `--autostart` / `--no-autostart`. Starting with the computer: Windows, a launcher in your Startup folder (no administrator rights); Linux, a systemd user service; macOS, launchd (its messages in `serve.log`). Windows may ask whether Bun may use the network: allow it on private networks.
+It installs Bun if it's missing, starts the server with the saved settings, and opens its **control page** in your browser (`page/server.html`, usable only with the server's main key, which the opening link carries). In tabs, while the server runs: **Overview** (running or not, the addresses with Copy, a QR code to add a device in one step, the projects on it); **Devices** (invites for one device or any number until they expire, the open ones, and the devices, each with its own key, when added and last seen, with **Remove**); **People** (accounts and sign-ups for a server open to the public: later work, shown so its place is clear); **Server** (reached from this network or any network, port, data folder, with **Save and restart**; **Start with the computer**; the **main key**). **Appearance** (the same controls as the app's Settings: theme, style, colours, your own CSS) sets the look of the page and of the app opened from this server, kept in the server's data. The settings are kept in `local/serve.json` (`hosting.js`). In the server's window: `i` + Enter for another invite, `a` + Enter to open the control page again. Options: `--start` (no page: what starting with the computer runs), `--public`, `--autostart` / `--no-autostart`. Starting with the computer: Windows, a launcher in your Startup folder (no administrator rights); Linux, a systemd user service; macOS, launchd (its messages in `local/serve.log`). Windows may ask whether Bun may use the network: allow it on private networks.
 
 The addresses it prints work on the same network only. Many campus, office and guest Wi-Fi networks stop devices from reaching each other ("client isolation"), and a router won't pass connections from outside to this computer. For those, use one of the two below.
 
-### From any network, for testing: `serve.bat --public`
+### From any network, for testing: `run host --public`
 
-`serve.bat --public` (or `./serve.sh --public`) gives a temporary `https://<words>.trycloudflare.com` address that works from any network, mobile data included, through a free Cloudflare tunnel (`tunnel.js`; `cloudflared` is downloaded once into `tools/`). Nothing is opened on your router: the tunnel connects outwards, and closing the window closes it. It keeps its data in `data-public/`, apart from your own projects, and always asks for the key. The address changes each start.
+`run.bat host --public` (or `./run.sh host --public`) gives a temporary `https://<words>.trycloudflare.com` address that works from any network, mobile data included, through a free Cloudflare tunnel (`tunnel.js`; `cloudflared` is downloaded once into `local/tools/`). Nothing is opened on your router: the tunnel connects outwards, and closing the window closes it. It keeps its data in `data-public/`, apart from your own projects, and always asks for the key. The address changes each start.
 
 Only the Research Board server is reachable through it, nothing else on the computer. Someone with the address and the key could read and change that data folder; run it while testing, not around the clock.
 
 ### On a VPS: `vps-setup.sh`
 
-For a server that stays up, rent a small Ubuntu or Debian server, copy the server version to it (`build.bat host`, then `scp builds/ResearchBoard-<version>-host.zip root@<server>:`), unzip it there, and run once:
+For a server that stays up, rent a small Ubuntu or Debian server, copy the server version to it (`run build server`, then `scp apps/builds/ResearchBoard-<version>-host.zip root@<server>:`), unzip it there, and run once:
 
 ```sh
 unzip ResearchBoard-<version>-host.zip -d research-board
