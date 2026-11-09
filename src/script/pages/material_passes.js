@@ -20,6 +20,11 @@ const PassMode = (() => {
     const pass = () => record?.pass || 1;
     const passData = (n = pass()) => record?.passes?.[n] || {};
     const reflow = () => (currentView === 'pdf' ? (readMode ? 'read' : 'pages') : currentView);
+    // a seed paper of the project's literature survey (sources/survey.js)
+    const isSeed = () => (project.surveySeeds || []).includes(source.id);
+    // shown in this pass: the pass's own sections, and for a seed paper in pass 1 its background and related
+    // work too (Keshav: read the seed papers' related-work sections)
+    const shownNow = s => Passes.shown(s.role, pass()) || (pass() === 1 && isSeed() && s.role === 'context');
 
     // ---- turning it on and off ----
 
@@ -149,7 +154,7 @@ const PassMode = (() => {
         const n = pass();
         sections.forEach((s, i) => {
             const unit = units[i];
-            if (!unit || Passes.shown(s.role, n)) return;
+            if (!unit || shownNow(s)) return;
             if (peeked.has(s.key)) return markOpen(unit, s);
             fold(unit, s, view);
         });
@@ -259,7 +264,7 @@ const PassMode = (() => {
         const first = sections[0]?.place.page || 1;
         for (let p = 1; p <= first; p++) keep.add(p);
         sections.forEach((s, i) => {
-            if (!Passes.shown(s.role, pass()) && !peeked.has(s.key)) return;
+            if (!shownNow(s) && !peeked.has(s.key)) return;
             const next = sections[i + 1]?.place;
             const last = next ? (next.y < 0.06 ? next.page - 1 : next.page) : pages.length;
             for (let p = s.place.page; p <= Math.max(s.place.page, last); p++) keep.add(p);
@@ -539,6 +544,10 @@ const PassMode = (() => {
         const spent = data.activeMs ? Passes.duration(data.activeMs) : '';
         if (spent || target) kicker.append(el('span', 'pass_time', [spent && `${spent} spent`, target && `aim ${target}`].filter(Boolean).join(' · ')));
         head.append(kicker, el('h3', '', info.name), el('p', '', info.aim), el('p', 'pass_shows', info.shows));
+        if (n === 1 && isSeed()) head.append(el('p', 'pass_shows', 'A seed paper of your survey: its background and related work are open too.'));
+        if (Passes.isSurvey(source, record)) {
+            head.append(el('p', 'pass_note', 'This looks like a survey paper. After its first pass, its references can be your key papers: Literature → Survey.'));
+        }
         const parts = [head];
         if (record.state !== 'reading') {
             const why = passData().reason;
@@ -609,7 +618,9 @@ const PassMode = (() => {
         return [
             step(1, 'Glance at the references', 'Tick the ones you already know: it tells you how close this paper is to what you know.', refsBox),
             step(2, 'The five Cs', 'A line or two each is enough.', grid),
-        ];
+            isSeed() && step(3, 'What the field has done', 'From its related work: who did what before, and what it says is still missing.',
+                field('', 'related', data.related, { rows: 3, placeholder: 'The work it builds on, the gaps it names…' })),
+        ].filter(Boolean);
     }
 
     function formTwo(data) {

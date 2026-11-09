@@ -131,6 +131,11 @@ const Passes = (() => {
         });
     }
 
+    // a survey or review paper: its title says so, or you said so in its Category (pass 1). Its references can be
+    // a literature survey's key papers (sources/survey.js).
+    const SURVEY_WORDS = /\b(survey|review|overview|state of the art|tutorial|meta-analysis|systematic mapping)\b/i;
+    const isSurvey = (source, record) => SURVEY_WORDS.test(source?.title || '') || SURVEY_WORDS.test(record?.passes?.[1]?.cs?.category || '');
+
     // ---- the record ----
 
     const of = source => source && Store.getItems(source.projectId).find(i => i.type === 'passes' && i.sourceId === source.id) || null;
@@ -195,5 +200,5 @@ const Passes = (() => {
         return `${Math.floor(minutes / 60)} h ${String(minutes % 60).padStart(2, '0')}`;
     }
 
-    return { ROLES, PASSES, FIVE_CS, roleOf, keyOf, clean, norm, sections, shown, predicted, predictions, of, start, save, savePass, moveTo, decide, label, duration };
+    return { ROLES, PASSES, FIVE_CS, isSurvey, roleOf, keyOf, clean, norm, sections, shown, predicted, predictions, of, start, save, savePass, moveTo, decide, label, duration };
 })();

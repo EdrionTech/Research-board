@@ -4,8 +4,10 @@
 //   3 Find the key papers: the works the seeds' references share, and the authors who keep coming up
 //   4 Two passes on the key papers
 // The board puts each material in a column by how far it's been read; nothing is dragged, cards move as you read.
-// The seeds are kept on the project (surveySeeds: [sourceId]); a key paper added from here is a source with
-// surveyKey: true and citedIn: the papers that cite it.
+// The seeds are kept on the project (surveySeeds: [sourceId]), and the survey papers whose references you use
+// (surveyFrom: [sourceId]); a key paper added from here is a source with surveyKey: true and citedIn: the papers
+// that cite it. Beyond the references: the venues they cite most (each a click from its recent papers, OpenAlex),
+// and a search for papers to start from.
 
 const Survey = (() => {
     const COLUMNS = [
@@ -53,26 +55,32 @@ const Survey = (() => {
         return { list, current };
     }
 
-    // The key papers and authors: what the references of the papers you've had a first pass on have in common.
-    // Works already in the project aren't suggested. → { pool: [source], papers: [{ key, ref, title, citers }],
-    // authors: [{ name, citers }] }, most cited first; a work or author counts once per citing paper.
-    function keyPapers(sources, records) {
+    // The key papers, authors and venues: what the references of the papers you've had a first pass on have in
+    // common. Works already in the project aren't suggested (their authors and venues still count). A survey paper
+    // you chose to use (surveys: [sourceId]) gives all its references, even those only it cites.
+    // → { pool: [source], papers: [{ key, ref, title, citers, fromSurvey }], authors: [{ name, citers }],
+    //     venues: [{ key, label, search, cites, citers }] }, most cited first; a work or author counts once per
+    //     citing paper, a venue once per reference.
+    function keyPapers(sources, records, surveys = []) {
         const pool = sources.filter(s => (s.references || []).length && firstPassDone(records.get(s.id)));
         const works = new Map();
         const authors = new Map();
+        const venues = new Map();
         for (const source of pool) {
             const seenAuthors = new Set();
+            const survey = surveys.includes(source.id);
             for (const ref of source.references) {
-                // (a work already in the project isn't suggested; its authors still count)
+                const parsed = References.parse(ref.text);
                 const have = (ref.sourceId && sources.some(s => s.id === ref.sourceId)) || References.match(ref, sources);
                 const key = !have && References.identity(ref);
                 if (key) {
-                    const work = works.get(key) || { key, ref, title: References.titleOf(ref) || ref.text.slice(0, 120), citers: new Set() };
+                    const work = works.get(key) || { key, ref, title: parsed.title || ref.text.slice(0, 120), citers: new Set(), fromSurvey: false };
                     work.citers.add(source.id);
+                    if (survey) work.fromSurvey = true;
                     if (ref.text.length > work.ref.text.length || (!work.ref.doi && ref.doi)) work.ref = ref; // the fullest copy
                     works.set(key, work);
                 }
-                for (const a of References.parse(ref.text).authors) {
+                for (const a of parsed.authors) {
                     const name = [a.firstName?.[0] ? a.firstName[0] + '.' : '', a.lastName].filter(Boolean).join(' ');
                     if (!a.lastName || a.lastName.length < 2 || seenAuthors.has(name)) continue;
                     seenAuthors.add(name);
@@ -80,12 +88,117 @@ const Survey = (() => {
                     entry.citers.add(source.id);
                     authors.set(name, entry);
                 }
+                const venue = parsed.venue && venueOf(parsed.venue); // (only the venue part: a surname like Chi is no conference)
+                if (venue) {
+                    const entry = venues.get(venue.key) || { ...venue, cites: 0, citers: new Set() };
+                    entry.cites++;
+                    entry.citers.add(source.id);
+                    venues.set(venue.key, entry);
+                }
             }
         }
-        const ranked = map => [...map.values()].map(v => ({ ...v, citers: [...v.citers] }))
-            .filter(v => v.citers.length >= 2).sort((a, b) => b.citers.length - a.citers.length);
-        return { pool, papers: ranked(works), authors: ranked(authors) };
+        const list = map => [...map.values()].map(v => ({ ...v, citers: [...v.citers] }));
+        const byCiters = (a, b) => b.citers.length - a.citers.length;
+        return {
+            pool,
+            papers: list(works).filter(w => w.citers.length >= 2 || w.fromSurvey).sort((a, b) => byCiters(a, b) || Number(b.fromSurvey) - Number(a.fromSurvey)),
+            authors: list(authors).filter(a => a.citers.length >= 2).sort(byCiters),
+            venues: list(venues).filter(v => v.cites >= 2).sort((a, b) => b.cites - a.cites || byCiters(a, b)),
+        };
     }
 
-    return { COLUMNS, column, firstPassDone, twoPassesDone, recordsOf, steps, keyPapers };
+    // ---- venues: the same conference or journal however a reference writes it ----
+
+    // [pattern, short name, the name to search for it by]; the more specific first (EMNLP and NAACL before ACL)
+    const VENUES = [
+        [/neural information processing systems|\bneurips\b|\bnips\b/, 'NeurIPS', 'Neural Information Processing Systems'],
+        [/international conference on machine learning|\bicml\b/, 'ICML', 'International Conference on Machine Learning'],
+        [/international conference on learning representations|\biclr\b/, 'ICLR', 'International Conference on Learning Representations'],
+        [/computer vision and pattern recognition|\bcvpr\b/, 'CVPR', 'Computer Vision and Pattern Recognition'],
+        [/international conference on computer vision|\biccv\b/, 'ICCV', 'International Conference on Computer Vision'],
+        [/european conference on computer vision|\beccv\b/, 'ECCV', 'European Conference on Computer Vision'],
+        [/empirical methods in natural language processing|\bemnlp\b/, 'EMNLP', 'Empirical Methods in Natural Language Processing'],
+        [/north american chapter of the association for computational linguistics|\bnaacl\b/, 'NAACL', 'North American Chapter of the Association for Computational Linguistics'],
+        [/association for computational linguistics|\bacl\b/, 'ACL', 'Annual Meeting of the Association for Computational Linguistics'],
+        [/\baaai\b|association for the advancement of artificial intelligence/, 'AAAI', 'AAAI Conference on Artificial Intelligence'],
+        [/\bijcai\b|international joint conference on artificial intelligence/, 'IJCAI', 'International Joint Conference on Artificial Intelligence'],
+        [/knowledge discovery (and|&) data mining|\bkdd\b/, 'KDD', 'Knowledge Discovery and Data Mining'],
+        [/human factors in computing systems|\bchi\b/, 'CHI', 'Human Factors in Computing Systems'],
+        [/the web conference|world wide web conference|^(in )?www\s*'?\d{2}/, 'WWW', 'The Web Conference'],
+        [/\bsigcomm\b/, 'SIGCOMM', 'ACM SIGCOMM'],
+        [/\bsigmod\b/, 'SIGMOD', 'ACM SIGMOD'],
+        [/\bvldb\b|very large data bases/, 'VLDB', 'Very Large Data Bases'],
+        [/\bosdi\b/, 'OSDI', 'Operating Systems Design and Implementation'],
+        [/\bsosp\b/, 'SOSP', 'Symposium on Operating Systems Principles'],
+        [/\bnsdi\b/, 'NSDI', 'Networked Systems Design and Implementation'],
+        [/\bicse\b|international conference on software engineering/, 'ICSE', 'International Conference on Software Engineering'],
+        [/\bjmlr\b|journal of machine learning research/, 'JMLR', 'Journal of Machine Learning Research'],
+        [/\btpami\b|pattern analysis and machine intelligence/, 'TPAMI', 'IEEE Transactions on Pattern Analysis and Machine Intelligence'],
+        [/\bpnas\b|proceedings of the national academy of sciences/, 'PNAS', 'Proceedings of the National Academy of Sciences'],
+    ];
+    // not venues to scan: preprints, reports, the web
+    const NOT_VENUES = /^(arxiv|corr|preprint|technical report|tech rep|thesis|phd thesis|online|available|url|http|retrieved|in press|personal communication|unpublished)/;
+
+    // "In Proceedings of the 34th International Conference on Machine Learning (ICML), 2017" → { key: 'icml',
+    // label: 'ICML', search: 'International Conference on Machine Learning' }; null when it isn't a venue
+    function venueOf(text) {
+        const words = (text || '').toLowerCase().normalize('NFKD').replace(/[̀-ͯ]/g, '');
+        for (const [re, label, search] of VENUES) if (re.test(words)) return { key: label.toLowerCase(), label, search };
+        let name = (text || '').replace(/\s+/g, ' ')
+            .replace(/^\s*(in:?\s+)/i, '')
+            .replace(/\bproceedings of (the )?/i, '')
+            .replace(/\b\d+(st|nd|rd|th)\b\s*/gi, '')
+            .replace(/\b(19|20)\d{2}\b/g, '')
+            .replace(/\(.*?\)/g, '')
+            .replace(/,?\s*(vol|volume|no|issue|pp|pages)\b.*$/i, '')
+            .replace(/[\s,.:;]+[\d\s,.:;–-]*$/, '') // its volume, issue and pages ("…, 85(2), 123–130")
+            .replace(/[\s,.:;]+$/, '').replace(/^[\s,.:;]+/, '').trim();
+        const key = name.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+        if (key.length < 4 || NOT_VENUES.test(key) || /^\d/.test(key) || key.split(' ').length > 14) return null;
+        return { key, label: name, search: name };
+    }
+
+    // ---- OpenAlex: papers to start from, a venue's recent papers ----
+
+    const OPENALEX = 'https://api.openalex.org/';
+    const yearsAgo = n => `${new Date().getFullYear() - n}-01-01`;
+    async function getJson(url) {
+        const res = await fetch(url);
+        if (!res.ok) throw new Error(`OpenAlex answered ${res.status}`);
+        return res.json();
+    }
+    // a work → { fields (as a source's), cited, id }
+    const asResult = work => ({
+        id: work.id,
+        cited: work.cited_by_count || 0,
+        fields: { ...fieldsFromOpenAlex(work), url: work.doi || work.primary_location?.landing_page_url || '' },
+    });
+
+    // recent, much-cited papers on a subject (Keshav: 3 to 5 recent highly cited papers to start from)
+    async function searchWorks(query, { years = 5, count = 20 } = {}) {
+        // (the words in the title or abstract: a looser search sorted by citations brings famous papers on anything)
+        const words = query.replace(/[,|:]/g, ' ').trim();
+        const url = `${OPENALEX}works?filter=title_and_abstract.search:${encodeURIComponent(words)},from_publication_date:${yearsAgo(years)},type:article|preprint|review&sort=cited_by_count:desc&per-page=${count}`;
+        return ((await getJson(url)).results || []).map(asResult);
+    }
+
+    // the venue OpenAlex knows by that name (the one with the most works among the close matches), or null
+    async function findVenue(name) {
+        const results = (await getJson(`${OPENALEX}sources?search=${encodeURIComponent(name)}&per-page=8`)).results || [];
+        const want = new Set(name.toLowerCase().split(/\W+/).filter(w => w.length > 2));
+        const close = results.filter(r => {
+            const words = r.display_name.toLowerCase().split(/\W+/);
+            return [...want].filter(w => words.includes(w)).length >= Math.max(1, Math.ceil(want.size * 0.6));
+        });
+        const best = (close.length ? close : results.slice(0, 1)).sort((a, b) => (b.works_count || 0) - (a.works_count || 0))[0];
+        return best ? { id: best.id.replace(/^https?:\/\/openalex\.org\//, ''), name: best.display_name, type: best.type } : null;
+    }
+
+    // a venue's papers of the last years, most cited first (Keshav: scan the top venues' recent proceedings)
+    async function venueWorks(venueId, { years = 2, count = 25 } = {}) {
+        const url = `${OPENALEX}works?filter=primary_location.source.id:${venueId},from_publication_date:${yearsAgo(years)}&sort=cited_by_count:desc&per-page=${count}`;
+        return ((await getJson(url)).results || []).map(asResult);
+    }
+
+    return { COLUMNS, column, firstPassDone, twoPassesDone, recordsOf, steps, keyPapers, venueOf, searchWorks, findVenue, venueWorks };
 })();

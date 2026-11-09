@@ -165,6 +165,22 @@
     </template>
 
     <div class="modals" id="modals" hidden>
+        <!-- papers from OpenAlex: to start a survey from, or a venue's recent ones (pages/dashboard/survey.js) -->
+        <form class="modal wide works_modal" id="works_modal" hidden>
+            <h2 id="works_title">Find papers</h2>
+            <p class="hint" id="works_intro"></p>
+            <div class="works_search" id="works_search">
+                <input type="search" id="works_query" placeholder="Your subject, e.g. reading comprehension in children" aria-label="Your subject">
+                <button type="submit" class="btn primary">Search</button>
+            </div>
+            <p class="hint works_state" id="works_state" aria-live="polite"></p>
+            <ul class="works_list" id="works_list"></ul>
+            <div class="actions">
+                <a class="btn" id="works_elsewhere" target="_blank" rel="noopener" hidden>Search on Google Scholar ↗</a>
+                <span class="spacer"></span>
+                <button type="button" class="btn" data-close>Close</button>
+            </div>
+        </form>
         <!-- this project's settings: sync with a server, a separate copy (core/project_sync.js) -->
         <form class="project_settings_form modal" id="project_settings_form" hidden>
             <h2>Project settings</h2>

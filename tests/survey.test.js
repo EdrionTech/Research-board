@@ -1,6 +1,8 @@
 // The literature survey board (sources/survey.js, pages/dashboard/survey.js): materials in columns by how far
 // they've been read, the survey's steps, seed papers starred, the key papers and authors the references of
-// first-passed papers share, one added to the project; and the board at phone width.
+// first-passed papers share, one added to the project; the venues they cite and a venue's recent papers, a survey
+// paper's references used, papers found to start from (OpenAlex faked); a seed paper's related work open in pass 1;
+// and the board at phone width.
 const { startServer, launchBrowser, tester, wait } = require('./helpers');
 
 (async () => {
@@ -21,6 +23,9 @@ const { startServer, launchBrowser, tester, wait } = require('./helpers');
         source('b', 'Paper B', [ref(1, shared), ref(2, sharedDoi, { doi: '10.5555/ATTN' }), ref(3, 'K. Lee. Another single citation here. 2020.')]),
         source('c', 'Paper C', [ref(1, shared)]),
         source('d', 'Paper D', []),
+        source('e', 'A survey of reading in passes', [ref(1, 'M. Adler. How to read a book. Simon and Schuster, 1972.')]),
+        source('f', 'Paper F', [], { text: ['# Introduction', '', 'Why it matters.', '', '## Related work', '', 'Others did this before.', '', '## Method', '', 'What we did.'].join('\n') }),
+        passes('pe', 'e', { pass: 1, state: 'stopped', passes: { 1: { doneAt: now } } }),
         passes('pa', 'a', { pass: 2, state: 'reading', passes: { 1: { doneAt: now, cs: { category: 'A measurement study' } }, 2: {} } }),
         passes('pb', 'b', { pass: 1, state: 'stopped', passes: { 1: { doneAt: now } } }),
         passes('pc', 'c', { pass: 1, state: 'reading', passes: { 1: { activeMs: 120000 } } }),
@@ -61,11 +66,11 @@ const { startServer, launchBrowser, tester, wait } = require('./helpers');
     });
 
     await t.test('the key papers: works cited by two first-passed papers, the same DOI in any case', async () => {
-        const papers = await tab.$$eval('.survey_paper', list => list.map(p => p.querySelector('.survey_count').textContent + ' ' + p.querySelector('strong').textContent));
+        const papers = await tab.$$eval('.survey_papers .survey_paper', list => list.map(p => p.querySelector('.survey_count').textContent + ' ' + p.querySelector('strong').textContent));
         if (papers.length !== 2) return 'papers: ' + papers.join(' | ');
         if (!papers.some(p => p.startsWith('2 ') && /read a paper/i.test(p))) return 'the shared title is missing: ' + papers.join(' | ');
         if (!papers.some(p => /attention/i.test(p))) return 'the shared DOI is missing: ' + papers.join(' | ');
-        const authors = await tab.$$eval('.survey_author', a => a.map(x => x.textContent));
+        const authors = await tab.$$eval('a.survey_chip', a => a.map(x => x.textContent));
         if (!authors.some(a => a.includes('Keshav'))) return 'authors: ' + authors.join(', ');
     });
 
@@ -88,18 +93,87 @@ const { startServer, launchBrowser, tester, wait } = require('./helpers');
         if (await column(tab, 'How to read a paper') !== 'new') return 'not on the board';
         const left = await tab.$$eval('.survey_paper strong', s => s.map(x => x.textContent));
         if (left.some(x => /read a paper/i.test(x))) return 'still suggested after being added';
-        if (!(await tab.$$eval('.survey_author', a => a.some(x => x.textContent.includes('Keshav'))))) return 'its author no longer counted';
+        if (!(await tab.$$eval('a.survey_chip', a => a.some(x => x.textContent.includes('Keshav'))))) return 'its author no longer counted';
+    });
+
+    await t.test('the venues the references cite most, however they are written', async () => {
+        const venues = await tab.$$eval('button.survey_chip', b => b.map(x => x.textContent));
+        if (!venues.some(v => v.startsWith('NeurIPS')) || !venues.some(v => v.startsWith('SIGCOMM'))) return 'venues: ' + venues.join(', ');
+    });
+
+    await t.test('a survey paper lends its whole reference list', async () => {
+        const used = await tab.evaluate(() => {
+            const b = [...document.querySelectorAll('[data-survey]')].find(x => x.textContent === 'Use its references');
+            b?.click();
+            return !!b;
+        });
+        if (!used) return 'no survey paper offered';
+        await wait(500);
+        const papers = await tab.$$eval('.survey_papers strong', s => s.map(x => x.textContent));
+        if (!papers.some(p => /read a book/i.test(p))) return 'its references are not key papers: ' + papers.join(' | ');
+    });
+
+    await t.test('a venue: its recent papers, one added to the survey', async () => {
+        await tab.evaluate(() => {
+            Survey.findVenue = async () => ({ id: 'S1', name: 'Neural Information Processing Systems' });
+            Survey.venueWorks = async () => [{ id: 'W1', cited: 50, fields: { title: 'A recent NeurIPS paper', kind: 'article', authors: [{ firstName: 'Xu', lastName: 'Yi' }], venue: 'NeurIPS', published: '2025', doi: '10.1/recent', keywords: [], abstract: '', pdfUrl: '', url: '' } }];
+            [...document.querySelectorAll('button.survey_chip')].find(b => b.textContent.startsWith('NeurIPS')).click();
+        });
+        await wait(400);
+        if (await tab.$eval('#works_modal', m => m.hidden)) return 'no popup';
+        if (!/Neural Information Processing Systems/.test(await tab.$eval('#works_title', h => h.textContent))) return 'title';
+        await tab.click('#works_list [data-pick="0"]');
+        await wait(800);
+        const added = (await (await api('GET', 'boot')).json()).data.items.find(i => i.title === 'A recent NeurIPS paper');
+        if (!added?.surveyKey) return 'not added to the survey';
+        if (!/In the project/.test(await tab.$eval('#works_list', l => l.textContent))) return 'not shown as added';
+        await tab.click('#works_modal [data-close]');
+    });
+
+    await t.test('papers to start from: found, one added as a seed', async () => {
+        await tab.evaluate(() => {
+            Survey.searchWorks = async () => [{ id: 'W2', cited: 300, fields: { title: 'A much cited recent paper', kind: 'article', authors: [], venue: 'Nature', published: '2023', doi: '10.1/cited', keywords: [], abstract: '', pdfUrl: '', url: '' } }];
+        });
+        await tab.click('[data-find]');
+        await wait(200);
+        await tab.type('#works_query', 'reading');
+        await tab.keyboard.press('Enter');
+        await wait(400);
+        await tab.click('#works_list [data-pick="0"]');
+        await wait(800);
+        const data = (await (await api('GET', 'boot')).json()).data;
+        const added = data.items.find(i => i.title === 'A much cited recent paper');
+        if (!added) return 'not added';
+        if (!data.projects.find(p => p.id === 'p1').surveySeeds.includes(added.id)) return 'not a seed';
+        await tab.click('#works_modal [data-close]');
     });
 
     await t.test('the view is remembered; List brings the list back', async () => {
         await tab.reload({ waitUntil: 'networkidle0' });
         await wait(400);
         if (await tab.$eval('#survey', s => s.hidden)) return 'survey view not remembered';
+        await tab.$eval('#lit_view', b => b.scrollIntoView({ block: 'center' })); // (the page comes back scrolled: under the top bar)
         await tab.click('#lit_view [data-view="list"]');
         await wait(200);
         if (!(await tab.$eval('#survey', s => s.hidden))) return 'board still shown';
     });
     await tab.close();
+
+    await t.test('a seed paper in pass 1: its related work is open too, with a step for it', async () => {
+        await api('PUT', 'projects/p1', { ...(await (await api('GET', 'boot')).json()).data.projects.find(p => p.id === 'p1'), surveySeeds: ['a', 'b', 'f'] });
+        const page = await browser.newPage();
+        page.on('pageerror', e => errors.push('pageerror: ' + e.message));
+        await page.goto(base + 'page/material.html?id=f', { waitUntil: 'networkidle0' });
+        await wait(400);
+        await page.click('#passes_btn');
+        await wait(400);
+        const state = w => page.evaluate(x => { const l = [...document.querySelectorAll('#reader_text .line')].find(l => l.dataset.text.includes(x)); return l && !!l.offsetParent; }, w);
+        const problem = !(await state('Others did this before')) ? 'related work folded'
+            : (await state('What we did')) ? 'method not folded'
+            : !(await page.$('#pass_form [data-path="related"]')) ? 'no step for the related work' : null;
+        await page.close();
+        return problem;
+    });
 
     await t.test('phone width: nothing scrolls sideways', async () => {
         const phone = await open(360);

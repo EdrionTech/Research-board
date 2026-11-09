@@ -159,3 +159,4 @@ button.toc_role { padding: 0 4px; }
     /* the passes by number, the current one with its name */
     .pass_steps .pass_step:not([aria-checked="true"]) .pass_name { display: none; }
 }
+.pass_note { margin-top: 4px !important; padding: 6px 10px; border-left: 3px solid var(--accent); background: var(--surface); font-size: .85rem; }

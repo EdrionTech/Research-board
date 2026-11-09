@@ -49,13 +49,18 @@ Code: `src/script/sources/passes.js` (the method, roles, the record), `src/scrip
 
 ## The survey board (built)
 
-Literature tab → **List | Survey**. The search, status, tag and author filters apply to the board too.
+Literature tab → **List | Survey**. The search, status, tag and author filters apply to the board too. It follows section 3 of Keshav's paper, *Doing a literature survey*:
 
-- **The four steps** along the top, from Keshav's survey: ① Seed papers (starred) → ② A first pass on each → ③ Find the key papers → ④ Two passes on the key papers. Each shows how far along it is ("2 of 3"); the first not done is highlighted with a line on what to do.
-- **The board:** columns Not started · Pass 1 · Pass 2 · Pass 3 · Stopped or parked · Read in three passes. Cards move as you read (nothing is dragged). A card shows the title, author and year, your five-Cs *Category*, the time spent, and ★ to make it a seed. Seeds have a gold edge; key papers a badge.
-- **Key papers:** from the references of every paper that has had its first pass, the works cited by two or more of them (the same work matched by DOI, arXiv id or cleaned-up title; ones already in the project aren't suggested), most cited first, with **+ Add** (looked up like a reference on a paper's page; it arrives as a key paper, cited in those papers). Under them, **authors who keep coming up** across those reference lists, each linked to their papers on Google Scholar.
+| Keshav | On the board |
+| --- | --- |
+| Find 3–5 recent, highly cited papers; one pass on each; read their related work; look for a recent survey | ① **Seed papers** (★, or **Find papers…**: an OpenAlex search of the last five years, the words in the title or abstract, most cited first, each **+ Add as seed**). ② **A first pass on each**: a seed paper's pass 1 also opens its background and related work, with a step for what the field has done. A paper that looks like a survey (its title, or your Category) offers **Use its references**: its whole reference list joins the key papers |
+| Shared citations and repeated authors in their references are the key papers and researchers; find where the key researchers publish | ③ **Find the key papers**: works cited by two or more first-passed papers (matched by DOI, arXiv id or cleaned-up title), **+ Add**; **authors who keep coming up**, linked to Google Scholar; **where the field publishes**: the venues those references cite most (the same venue however it's written: NeurIPS, NIPS, Advances in Neural Information Processing Systems) |
+| Scan the top venues' recent proceedings; with the key papers, make two passes | Click a venue: its papers of the last two years from OpenAlex, most cited first, **+ Add** (a key paper of the survey). ④ **Two passes on the key papers** |
 
-Data: the seeds on the project (`surveySeeds: [sourceId]`); a key paper is a source with `surveyKey: true` and `citedIn`. Code: `src/script/sources/survey.js` (columns, steps, key papers), `src/script/pages/dashboard/survey.js` (the board), `References.identity` and `References.toSource` (shared with the material page). Tests: `tests/survey.test.js`.
+- **The board:** columns Not started · Pass 1 · Pass 2 · Pass 3 · Stopped or parked · Read in three passes. Cards move as you read (nothing is dragged). A card shows the title, author and year, your five-Cs *Category*, the time spent, *Key paper* / *Survey*, and ★ to make it a seed.
+- **Online:** Find papers and a venue's papers need the internet (OpenAlex); everything else works offline. When OpenAlex doesn't know a venue, or can't be reached, the popup says so and offers the same search on Google Scholar.
+
+Data: on the project, `surveySeeds` and `surveyFrom` (the survey papers whose references you use), both `[sourceId]`; a key paper is a source with `surveyKey: true` (and `citedIn` when it came from references). Code: `src/script/sources/survey.js` (columns, steps, key papers, venues, the OpenAlex searches), `src/script/pages/dashboard/survey.js` (the board and the papers popup), `References.identity` / `toSource` and `fieldsFromOpenAlex` (shared). Tests: `tests/survey.test.js` (OpenAlex faked).
 
 ## Still to build
 

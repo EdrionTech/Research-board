@@ -178,7 +178,11 @@ async function lookupMaterial(link) {
 async function fromOpenAlex(doi) {
     const res = await fetch('https://api.openalex.org/works/https://doi.org/' + encodeURI(doi));
     if (!res.ok) return null;
-    const work = await res.json();
+    return fieldsFromOpenAlex(await res.json(), doi);
+}
+
+// an OpenAlex work (from a lookup or a search) as source fields
+function fieldsFromOpenAlex(work, doi = '') {
     return {
         title: work.title || work.display_name || '',
         kind: OPENALEX_KINDS[work.type] || 'other',
