@@ -97,6 +97,7 @@ function init() {
     } catch { }
     $('#float_toggle').checked = floatingNotes;
 
+    SummaryPanel.setup(); // the Summary, section by section (material_summary.js)
     render();
     Toc.setup(); // the table of contents (material_toc.js)
     setupReader();
@@ -131,7 +132,8 @@ function render() {
     markNoted();
     renderTimeline();
     for (const field of $$('.md_field')) {
-        renderMarkdown($('.md', field), PaperLinks.withLinks(fieldValue(field.dataset.field), citeSources, project.citeStyle || 'apa'), 'Nothing written yet.');
+        if (field.dataset.field === 'summary') SummaryPanel.render($('.md', field)); // (in sections: material_summary.js)
+        else renderMarkdown($('.md', field), PaperLinks.withLinks(fieldValue(field.dataset.field), citeSources, project.citeStyle || 'apa'), 'Nothing written yet.');
         setMdEditing(field, false);
     }
 }

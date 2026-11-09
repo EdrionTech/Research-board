@@ -81,16 +81,27 @@ const { SAMPLE, startServer, launchBrowser, tester, wait } = require('./helpers'
         if (await lineState(tab, 'A server with made-up data') !== 'folded') return 'did not fold again';
     });
 
-    await t.test('the five Cs are saved', async () => {
-        await tab.type('#pass_form [data-path="cs.category"]', 'A testing paper');
+    await t.test('the five Cs are sections of the paper’s Summary', async () => {
+        await tab.type('#pass_form [data-path="sec:category"]', 'A testing paper');
         await wait(1500);
-        const kept = await saved();
-        if (kept?.passes?.[1]?.cs?.category !== 'A testing paper') return 'not on the server: ' + JSON.stringify(kept?.passes);
+        const summary = (await saved('s1')).summary || '';
+        if (!/### Category\nA testing paper/.test(summary)) return 'not in the Summary: ' + JSON.stringify(summary);
     });
 
-    await t.test('the five Cs show at the top of the notes side', async () => {
-        const panel = await tab.$eval('#five_cs_panel', p => ({ hidden: p.hidden, text: p.textContent }));
-        if (panel.hidden || !panel.text.includes('A testing paper')) return 'First look: ' + JSON.stringify(panel);
+    await t.test('the Summary in the notes side shows each section, with its own Edit', async () => {
+        const sections = await tab.$$eval('.md_field[data-field="summary"] .sum_sec', s => s.map(x => x.dataset.title + ': ' + x.querySelector('.md')?.textContent.trim()));
+        if (!sections.some(x => x === 'Category: A testing paper')) return 'sections: ' + sections.join(' | ');
+    });
+
+    await t.test('a section edited in the notes side shows in the pass', async () => {
+        await tab.evaluate(() => document.querySelector('.sum_sec[data-title="Category"] [data-edit]').click());
+        await wait(200);
+        await tab.evaluate(() => { const a = document.querySelector('.sum_sec[data-title="Category"] textarea'); a.value = 'A testing paper, edited'; });
+        await tab.evaluate(() => document.querySelector('.sum_sec[data-title="Category"] [data-save]').click());
+        await wait(600);
+        if (!/A testing paper, edited/.test((await saved('s1')).summary)) return 'not saved';
+        const box = await tab.$eval('#pass_form [data-path="sec:category"]', a => a.value);
+        if (box !== 'A testing paper, edited') return 'the pass shows ' + box;
     });
 
     await t.test('a reference you know is marked on the paper itself, and in its References panel', async () => {
@@ -109,15 +120,25 @@ const { SAMPLE, startServer, launchBrowser, tester, wait } = require('./helpers'
         const r = await record(tab);
         if (r.pass !== 2 || !r.passes[1].doneAt) return 'pass ' + r.pass;
         if (await lineState(tab, 'A server with made-up data') !== 'shown') return 'method not shown';
-        if (!(await tab.$('#pass_form [data-path="summary"]'))) return 'no summary box';
+        if (!(await tab.$('#pass_form [data-path="sec:argument"]'))) return 'no box for the main argument';
     });
 
-    await t.test('pass 2: the main argument is the paper’s Summary', async () => {
-        await tab.type('#pass_form [data-path="summary"]', 'Tests keep projects honest.');
+    await t.test('pass 2: the main argument is a section of the Summary, after the five Cs', async () => {
+        await tab.type('#pass_form [data-path="sec:argument"]', 'Tests keep projects honest.');
         await wait(1500);
-        if ((await saved('s1')).summary !== 'Tests keep projects honest.') return 'not the Summary: ' + (await saved('s1')).summary;
+        const summary = (await saved('s1')).summary || '';
+        if (!/### Category\nA testing paper, edited\n\n### The main argument\nTests keep projects honest\./.test(summary)) return 'the Summary: ' + JSON.stringify(summary);
         const side = await tab.$eval('.md_field[data-field="summary"] .md', m => m.textContent);
         if (!side.includes('Tests keep projects honest.')) return 'the side panel does not show it';
+    });
+
+    await t.test('pass 2: the five Cs are still there to edit', async () => {
+        await tab.evaluate(() => { document.querySelector('#pass_form .pass_earlier').open = true; });
+        const box = '#pass_form .pass_earlier [data-path="sec:contributions"]';
+        if (!(await tab.$(box))) return 'no box for an earlier pass';
+        await tab.type(box, 'Shows tests help');
+        await wait(1500);
+        if (!/### Contributions\nShows tests help/.test((await saved('s1')).summary)) return 'not saved from pass 2';
     });
 
     await t.test('pass 2: evidence is a highlight colour', async () => {
@@ -182,15 +203,16 @@ const { SAMPLE, startServer, launchBrowser, tester, wait } = require('./helpers'
         if (!(await tab.$('.pass_card.done textarea[data-predict="differs"]'))) return 'no box for how it differs';
     });
 
-    await t.test('pass 3: the close-out is the paper’s Assessment', async () => {
-        await tab.type('#pass_form [data-path="assess.weaknesses"]', 'Only one server.');
+    await t.test('pass 3: the close-out and the predictions are sections of the Summary', async () => {
+        await tab.type('#pass_form [data-path="sec:weaknesses"]', 'Only one server.');
         await wait(1500);
-        const review = (await saved('s1')).review || '';
-        if (!/### Weak spots\nOnly one server\./.test(review)) return 'not in the Assessment: ' + JSON.stringify(review);
-        const side = await tab.$eval('#review_field .md', m => m.textContent);
+        const summary = (await saved('s1')).summary || '';
+        if (!/### Weak spots\nOnly one server\./.test(summary)) return 'not in the Summary: ' + JSON.stringify(summary);
+        if (!/### Predictions vs the paper\n- \*\*Method\*\*: expected They will use a fake server/.test(summary)) return 'no predictions: ' + JSON.stringify(summary);
+        const side = await tab.$eval('.md_field[data-field="summary"] .md', m => m.textContent);
         if (!side.includes('Only one server.')) return 'the side panel does not show it';
-        const back = await tab.evaluate(r => Passes.readAssessment(r + '\n\n### Something else\nKept.').notes, review);
-        if (!back.includes('Kept.')) return 'a section it does not know is lost';
+        const kept = await tab.evaluate(md => Passes.setSection(md + '\n\n### Quotes\nKept.', 'weaknesses', 'Changed.'), summary);
+        if (!kept.includes('### Quotes\nKept.')) return 'a section of your own is lost';
     });
 
     await t.test('leaving folds nothing; coming back resumes the pass', async () => {
@@ -215,6 +237,20 @@ const { SAMPLE, startServer, launchBrowser, tester, wait } = require('./helpers'
         if (!/three passes/.test(await tab.$eval('#pass_state', s => s.textContent))) return 'not shown as finished';
     });
     await tab.close();
+
+    // (closing the page also checks the summary pad, never opened, doesn't save its empty box over the Summary)
+    await t.test('an older Review box: moved into the Summary, under its sections', async () => {
+        const all = await items();
+        const n1 = all.find(i => i.id === 's1');
+        await server.api('PUT', 'items/s9', { ...n1, id: 's9', title: 'An older paper', summary: 'My old summary.', review: 'It was fine.\n\n### Weak spots\nSmall sample.', sectioned: undefined, references: [], createdAt: Date.now(), updatedAt: Date.now() });
+        const page = await browser.newPage();
+        await page.goto(base + 'page/material.html?id=s9', { waitUntil: 'networkidle0' });
+        await wait(600);
+        await page.close();
+        const moved = await saved('s9');
+        if ((moved.review || '') !== '') return 'the Review box was not emptied';
+        if (!/^My old summary\./.test(moved.summary) || !/### Weak spots\nSmall sample\./.test(moved.summary) || !/### Other notes\nIt was fine\./.test(moved.summary)) return 'the Summary: ' + JSON.stringify(moved.summary);
+    });
 
     await t.test('phone width: the pass bar fits, nothing scrolls sideways', async () => {
         const phone = await open(360);

@@ -10,10 +10,10 @@
 //   roles: { sectionKey: role },                 – your own tags, over the ones read from the headings
 //   marks: [{ title, level, place }],            – headings you marked that weren't found
 //   passes: {
-//     1: { cs: { category, context, correctness, contributions, clarity }, refsKnown: [n] },
-//     2: { summary, evidence: [noteId], figures: { key: { axes, errors, significant, note } }, followUp: [n] },
-//     3: { predictions: { sectionKey: { predicted, differs, state: 'revealed' | 'skipped' } }, notes,
-//          assumptions, weaknesses, missing, future, outline },
+//     2: { figures: { key: { axes, errors, significant, note } } },   – figures not captured (else on the figure)
+//     3: { predictions: { sectionKey: { predicted, differs, state: 'revealed' | 'skipped' } } },
+//     – what you write (the five Cs, the main argument, the close-out, the outline…) is the material's Summary:
+//       one document in sections (below)
 //     // and on each: activeMs, startedAt, doneAt, decision ('next' | 'enough' | 'park'), reason, skipped, peeks: [key]
 //   } }
 // A section key is its heading, cleaned up, and its level ("introduction|1"): the same in every view of the paper.
@@ -134,7 +134,7 @@ const Passes = (() => {
     // a survey or review paper: its title says so, or you said so in its Category (pass 1). Its references can be
     // a literature survey's key papers (sources/survey.js).
     const SURVEY_WORDS = /\b(survey|review|overview|state of the art|tutorial|meta-analysis|systematic mapping)\b/i;
-    const isSurvey = (source, record) => SURVEY_WORDS.test(source?.title || '') || SURVEY_WORDS.test(record?.passes?.[1]?.cs?.category || '');
+    const isSurvey = source => SURVEY_WORDS.test(source?.title || '') || SURVEY_WORDS.test(section(source?.summary ?? source?.body ?? '', 'category'));
 
     // ---- the record ----
 
@@ -212,46 +212,118 @@ const Passes = (() => {
         return `${Math.floor(minutes / 60)} h ${String(minutes % 60).padStart(2, '0')}`;
     }
 
-    // ---- the material's own fields: the passes write into them, not beside them ----
-    // Pass 2's main argument is the material's Summary (source.summary). Pass 3's close-out is its Assessment
-    // (source.review, Markdown): your notes first, then a "### " section for each part you filled in. Written by
-    // hand in the side panel, the same sections are read back into the pass's boxes.
+    // ---- the material's Summary: one document, in sections ----
+    // Everything the passes ask for is a section of the material's Summary (source.summary, Markdown): a "### "
+    // heading per section, your own words before the first heading, and any section of your own ("### Quotes") kept
+    // where you put it. Each pass's boxes are its sections; the side panel shows each section with its own Edit, and
+    // the whole document can be edited at once. So nothing written in a pass is lost when you move on, and it is all
+    // where the rest of the app looks for a paper's summary (the review page, exports, links between notes).
 
-    const ASSESSMENT = [
-        ['assumptions', 'Assumptions', 'Stated, and the ones it relies on without saying.'],
-        ['weaknesses', 'Weak spots', 'In the experiments, the analysis, the claims.'],
-        ['missing', 'Missing citations', 'Work it should have compared with or credited.'],
-        ['future', 'Ideas for future work', 'What you would do next, or differently.'],
+    const SECTIONS = [
+        ...FIVE_CS.map(([key, title, hint]) => ({ key, title, hint, pass: 1, group: 'First look' })),
+        { key: 'field', title: 'What the field has done', pass: 1, hint: 'From its related work: who did what before, and what it says is still missing.' },
+        { key: 'argument', title: 'The main argument', pass: 2, hint: 'In your own words: you should be able to explain it to someone else.' },
+        { key: 'predictions', title: 'Predictions vs the paper', pass: 3, hint: 'Written from your prediction cards; edit it as you like.' },
+        { key: 'assumptions', title: 'Assumptions', pass: 3, hint: 'Stated, and the ones it relies on without saying.' },
+        { key: 'weaknesses', title: 'Weak spots', pass: 3, hint: 'In the experiments, the analysis, the claims.' },
+        { key: 'missing', title: 'Missing citations', pass: 3, hint: 'Work it should have compared with or credited.' },
+        { key: 'future', title: 'Ideas for future work', pass: 3, hint: 'What you would do next, or differently.' },
+        { key: 'other', title: 'Other notes', pass: 3, hint: 'Anything else, as you go.' },
+        { key: 'outline', title: 'Outline from memory', pass: 3, hint: 'Its sections and what each one says, without looking.' },
     ];
+    const sectionOf = key => SECTIONS.find(s => s.key === key);
+    const sameTitle = (a, b) => a.trim().toLowerCase() === b.trim().toLowerCase();
 
-    // "notes…\n\n### Assumptions\n…" → { notes, assumptions, … } (a section it doesn't know stays in the notes)
-    function readAssessment(markdown) {
-        const parts = { notes: '' };
-        const notes = [];
+    // "words…\n\n### Category\nA survey\n\n### Quotes\n…" → { intro: 'words…', sections: [{ title, text }] }
+    function parseSummary(markdown) {
+        const out = { intro: '', sections: [] };
         let current = null;
         let lines = [];
         const close = () => {
-            const text = lines.join('\n').trim();
-            const known = current && ASSESSMENT.find(([, label]) => label.toLowerCase() === current.toLowerCase());
-            if (known) parts[known[0]] = text;
-            else if (current) notes.push(`### ${current}\n${text}`.trim());
-            else if (text) notes.push(text);
+            const text = lines.join('\n').replace(/^\n+|\s+$/g, '');
+            if (current === null) out.intro = text;
+            else out.sections.push({ title: current, text });
         };
         for (const line of (markdown || '').split('\n')) {
-            const head = line.match(/^#{2,4}\s+(.+?)\s*$/);
+            const head = line.match(/^#{2,4}\s+(.+?)\s*#*\s*$/);
             if (head) { close(); current = head[1]; lines = []; } else lines.push(line);
         }
         close();
-        parts.notes = notes.join('\n\n');
-        return parts;
+        return out;
     }
 
-    // { notes, assumptions, … } → the Markdown kept in source.review
-    function writeAssessment(parts) {
+    function writeSummary({ intro, sections }) {
         const blocks = [];
-        if (parts.notes?.trim()) blocks.push(parts.notes.trim());
-        for (const [key, label] of ASSESSMENT) if (parts[key]?.trim()) blocks.push(`### ${label}\n${parts[key].trim()}`);
+        if (intro?.trim()) blocks.push(intro.trim());
+        for (const s of sections) blocks.push(`### ${s.title}${s.text.trim() ? '\n' + s.text.trim() : ''}`);
         return blocks.join('\n\n');
+    }
+
+    // a section's words (by its key, e.g. 'category', or its title)
+    function section(markdown, keyOrTitle) {
+        const title = sectionOf(keyOrTitle)?.title || keyOrTitle;
+        return parseSummary(markdown).sections.find(s => sameTitle(s.title, title))?.text || '';
+    }
+
+    // the Summary with one section's words changed: added in the usual order if it isn't there, gone when emptied
+    function setSection(markdown, keyOrTitle, text) {
+        const title = sectionOf(keyOrTitle)?.title || keyOrTitle;
+        const doc = parseSummary(markdown);
+        const at = doc.sections.findIndex(s => sameTitle(s.title, title));
+        if (at >= 0) {
+            if (text.trim()) doc.sections[at].text = text;
+            else doc.sections.splice(at, 1);
+        } else if (text.trim()) {
+            // before the first known section that comes after it; else at the end
+            const order = SECTIONS.findIndex(s => sameTitle(s.title, title));
+            const later = order < 0 ? -1 : doc.sections.findIndex(s => {
+                const i = SECTIONS.findIndex(k => sameTitle(k.title, s.title));
+                return i > order;
+            });
+            doc.sections.splice(later < 0 ? doc.sections.length : later, 0, { title, text });
+        }
+        return writeSummary(doc);
+    }
+
+    // the prediction cards as the "Predictions vs the paper" section
+    function predictionsText(list, predictions) {
+        return list.map(({ section: s }) => {
+            const p = predictions[s.key] || {};
+            if (!p.state) return '';
+            const name = clean(s.title);
+            if (p.state === 'skipped') return `- **${name}**: not predicted.`;
+            return `- **${name}**: expected ${p.predicted?.trim() || '(nothing written)'}${p.differs?.trim() ? `. Theirs: ${p.differs.trim()}` : ''}`;
+        }).filter(Boolean).join('\n');
+    }
+
+    // ---- an older material: what was kept elsewhere, into its Summary, once ----
+    // (records from before kept the five Cs, related work, outline and predictions themselves; the Assessment box —
+    // the Review box before that — held the close-out. All of it becomes the Summary's sections.)
+
+    const OLD_ASSESSMENT = { assumptions: 'Assumptions', weaknesses: 'Weak spots', missing: 'Missing citations', future: 'Ideas for future work' };
+    function intoSummary(source, record) {
+        if (!source || source.sectioned) return source;
+        let md = source.summary ?? source.body ?? '';
+        const put = (key, text) => { if (text?.trim() && !section(md, key).trim()) md = setSection(md, key, text); };
+        const p = record?.passes || {};
+        for (const [key] of FIVE_CS) put(key, p[1]?.cs?.[key]);
+        put('field', p[1]?.related);
+        put('outline', p[3]?.outline);
+        // the Review / Assessment box: its known sections where they belong, the rest as other notes
+        const review = parseSummary(source.review || '');
+        const others = [];
+        if (review.intro.trim()) others.push(review.intro.trim());
+        for (const s of review.sections) {
+            const key = Object.keys(OLD_ASSESSMENT).find(k => sameTitle(OLD_ASSESSMENT[k], s.title));
+            if (key) put(key, s.text);
+            else others.push(`**${s.title}.** ${s.text}`.trim());
+        }
+        put('other', others.join('\n\n'));
+        const changes = { sectioned: true };
+        if (md !== (source.summary ?? source.body ?? '')) changes.summary = md;
+        if ((source.review || '').trim()) changes.review = '';
+        Store.saveItem({ id: source.id, ...changes });
+        return Store.getItem(source.id);
     }
 
     // A paper's references (source.references) carry your marks: known (pass 1: you know it already) and
@@ -262,27 +334,25 @@ const Passes = (() => {
         return references;
     }
 
-    // Earlier records kept these on the passes themselves: moved into the material's fields, once.
+    // Earlier records kept reference ticks themselves: moved onto the paper's reference list, once.
     function moveIntoSource(record) {
         const source = Store.getItem(record.sourceId);
         if (!source || record.moved) return record;
         const p = record.passes || {};
-        const changes = {};
-        if (p[2]?.summary && !(source.summary ?? source.body ?? '').trim()) changes.summary = p[2].summary;
-        const close = Object.fromEntries(['notes', ...ASSESSMENT.map(a => a[0])].map(k => [k, p[3]?.[k] || '']));
-        if (Object.values(close).some(v => v.trim()) && !(source.review || '').trim()) changes.review = writeAssessment(close);
         const known = new Set(p[1]?.refsKnown || []), follow = new Set(p[2]?.followUp || []);
         if ((known.size || follow.size) && source.references) {
-            changes.references = source.references.map(r => ({ ...r, ...(known.has(r.n) ? { known: true } : {}), ...(follow.has(r.n) ? { followUp: true } : {}) }));
+            Store.saveItem({ id: source.id, references: source.references.map(r => ({ ...r, ...(known.has(r.n) ? { known: true } : {}), ...(follow.has(r.n) ? { followUp: true } : {}) })) });
         }
-        if (Object.keys(changes).length) Store.saveItem({ id: source.id, ...changes });
+        if (p[2]?.summary && !section(source.summary ?? source.body ?? '', 'argument').trim()) {
+            Store.saveItem({ id: source.id, summary: setSection(source.summary ?? source.body ?? '', 'argument', p[2].summary) });
+        }
         Store.saveItem({ id: record.id, moved: true }, { touch: false });
         return Store.getItem(record.id);
     }
 
     return {
-        ROLES, PASSES, FIVE_CS, ASSESSMENT, isSurvey, roleOf, keyOf, clean, norm, sections, shown, predicted, predictions,
+        ROLES, PASSES, FIVE_CS, SECTIONS, isSurvey, roleOf, keyOf, clean, norm, sections, shown, predicted, predictions,
         of, start, save, savePass, moveTo, decide, label, duration, statusOf,
-        readAssessment, writeAssessment, markReference, moveIntoSource,
+        parseSummary, writeSummary, section, setSection, predictionsText, intoSummary, markReference, moveIntoSource,
     };
 })();

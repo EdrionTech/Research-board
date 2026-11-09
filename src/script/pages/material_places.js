@@ -301,11 +301,19 @@ const Places = (() => {
     // ---- 📝 summary pad ----
 
     let padTimer = null;
+    // the pad saves only what you wrote in it while it was open: closed, or never opened, it has nothing to save
+    // (its box would be empty or older than the Summary, and saving it would wipe what's there)
+    let padOpen = false;
     function openPad(open = true) {
         const pad = $('#summary_pad');
         pad.hidden = !open;
         $('#summary_btn').setAttribute('aria-pressed', open);
-        if (!open) return savePad();
+        if (!open) {
+            savePad();
+            padOpen = false;
+            return;
+        }
+        padOpen = true;
         $('#summary_pad_text').value = summaryOf(source);
         $('#summary_pad_state').textContent = '';
         $('#summary_pad_text').focus();
@@ -313,6 +321,7 @@ const Places = (() => {
 
     function savePad() {
         clearTimeout(padTimer);
+        if (!padOpen) return;
         MdBar.flush($('#summary_pad_text')); // (what was just typed on the formatted text)
         const text = $('#summary_pad_text').value.trim();
         if (text === summaryOf(source).trim()) return;
@@ -321,7 +330,7 @@ const Places = (() => {
         $('#summary_pad_state').textContent = 'Saved';
         // the summary on the side shows it too (unless you're editing it there)
         const field = $('.md_field[data-field="summary"]');
-        if ($('.md_edit', field).hidden) renderMarkdown($('.md', field), PaperLinks.withLinks(text, projectSources(), project.citeStyle || 'apa'), 'Nothing written yet.');
+        if ($('.md_edit', field).hidden) SummaryPanel.render($('.md', field)); // (in sections: material_summary.js)
     }
 
     // where you are, or the words you selected, into the summary

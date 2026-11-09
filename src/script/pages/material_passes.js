@@ -30,8 +30,10 @@ const PassMode = (() => {
 
     function setup() {
         record = Passes.of(source);
-        if (record) record = Passes.moveIntoSource(record); // (older records kept the summary and close-out themselves)
-        source = Store.getItem(source.id);
+        if (record) record = Passes.moveIntoSource(record); // (older records kept reference ticks themselves)
+        const before = JSON.stringify(Store.getItem(source.id));
+        source = Passes.intoSummary(Store.getItem(source.id), record); // (and the five Cs, the close-out… beside the Summary)
+        if (JSON.stringify(source) !== before) refresh();
         Toc.hook({ extra: marksFor, decorate, changed: () => apply() });
         $('#passes_btn').onclick = () => (on() ? leave() : enter());
         $('#pass_bar').addEventListener('click', onBarClick);
@@ -79,7 +81,6 @@ const PassMode = (() => {
             renderBar();
             renderForm();
         }
-        renderSide();
         Toc.show(currentView); // the role on each row, your marked headings; then apply()
         timer.restart();
     }
@@ -436,7 +437,11 @@ const PassMode = (() => {
         predictions[key] = { ...(predictions[key] || {}), ...changes };
         record = { ...record, passes: { ...record.passes, 3: { ...passData(3), predictions } } }; // (shown at once)
         clearTimeout(predictTimer);
-        const write = () => { record = Passes.savePass(record, 3, { predictions: record.passes[3].predictions }); renderForm(); };
+        const write = () => {
+            record = Passes.savePass(record, 3, { predictions: record.passes[3].predictions });
+            sectionSoon('predictions', Passes.predictionsText(Passes.predictions(sections), record.passes[3].predictions));
+            renderForm();
+        };
         if (now) { write(); apply(); } else predictTimer = setTimeout(write, 600);
     }
 
@@ -571,33 +576,24 @@ const PassMode = (() => {
         }
     }
 
-    // what you wrote in the passes before this one, to read back (it's all on the material too: the side panel)
+    // the boxes of the passes before this one: still there to change (each is a section of the Summary)
     function earlierPasses(n) {
-        const rows = [];
-        const one = passData(1);
-        if (n > 1) {
-            const cs = Passes.FIVE_CS.filter(([key]) => one.cs?.[key]?.trim());
-            if (cs.length) {
-                const list = el('dl', 'pass_recall');
-                for (const [key, label] of cs) list.append(el('dt', '', label), el('dd', '', one.cs[key]));
-                rows.push(el('h5', '', 'Pass 1 · the five Cs'), list);
-            } else if (one.skipped) rows.push(el('p', 'hint', 'Pass 1 was skipped.'));
-        }
-        if (n > 2) {
-            const summary = summaryNow();
-            if (summary.trim()) rows.push(el('h5', '', 'Pass 2 · the main argument (your Summary)'), el('p', 'pass_recall_text', summary));
-            else if (passData(2).skipped) rows.push(el('p', 'hint', 'Pass 2 was skipped.'));
-        }
-        if (!rows.length) return null;
+        if (n === 1) return null;
         const box = el('details', 'pass_earlier');
         box.dataset.keep = 'earlier';
-        box.append(el('summary', '', 'Your earlier passes'), ...rows);
+        box.append(el('summary', '', n === 2 ? 'Pass 1: the five Cs' : 'Passes 1 and 2: the five Cs, the main argument'));
+        const grid = el('div', 'pass_grid');
+        for (const s of Passes.SECTIONS.filter(s => s.pass < n && (s.key !== 'field' || isSeed() || sec('field')))) grid.append(secField(s));
+        box.append(grid, el('small', 'hint', 'Each box is a section of the paper’s Summary, in the notes side: change it here or there.'));
         return box;
     }
 
-    // ---- the material's own fields (sources/passes.js: the passes write into them) ----
+    // ---- what you write is the material's Summary, in sections (sources/passes.js) ----
     const summaryNow = () => source.summary ?? source.body ?? '';
-    const assessmentNow = () => Passes.readAssessment(source.review || '');
+    const sec = key => Passes.section(summaryNow(), key);
+    const secOf = key => Passes.SECTIONS.find(s => s.key === key);
+    // a box for one section of the Summary
+    const secField = (s, { label = s.title, rows = 2, placeholder = '' } = {}) => field(label, 'sec:' + s.key, sec(s.key), { rows, hint: label ? s.hint : '', placeholder });
     const refsNow = () => source.references || [];
 
     // a reference row: its words, a tick for the mark, "In project ↗" when it is
@@ -624,14 +620,13 @@ const PassMode = (() => {
             for (const ref of refs) list.append(refRow(ref, 'known'));
             refsBox.append(list, el('small', 'hint', 'The same marks show in the References panel, beside your notes.'));
         }
-        const cs = data.cs || {};
         const grid = el('div', 'pass_grid');
-        for (const [key, label, hint] of Passes.FIVE_CS) grid.append(field(label, 'cs.' + key, cs[key], { hint }));
+        for (const [key] of Passes.FIVE_CS) grid.append(secField(secOf(key)));
         return [
             step(1, 'Glance at the references', 'Tick the ones you already know: it tells you how close this paper is to what you know.', refsBox),
-            step(2, 'The five Cs', 'A line or two each is enough. They show at the top of the notes side, and beside the paper in your literature review.', grid),
-            isSeed() && step(3, 'What the field has done', 'From its related work: who did what before, and what it says is still missing.',
-                field('', 'related', data.related, { rows: 3, placeholder: 'The work it builds on, the gaps it names…' })),
+            step(2, 'The five Cs', 'A line or two each is enough. Each is a section of the paper’s Summary.', grid),
+            (isSeed() || sec('field')) && step(3, 'What the field has done', secOf('field').hint,
+                secField(secOf('field'), { label: '', rows: 3, placeholder: 'The work it builds on, the gaps it names…' })),
         ].filter(Boolean);
     }
 
@@ -743,8 +738,8 @@ const PassMode = (() => {
         return [
             step(1, `Figures and tables${figures.length ? ` (${figures.length})` : ''}`, 'Look closely as you meet each one. A figure you captured keeps its checks.', figs),
             step(2, 'Key evidence', 'The passages that carry the argument, highlighted in the evidence colour.', evidenceStep()),
-            step(3, 'The main argument', 'Write it last, in your own words: you should be able to explain it to someone else. It is the paper’s Summary.',
-                field('', 'summary', summaryNow(), { rows: 4, placeholder: 'What it claims, how, and what it found…' })),
+            step(3, 'The main argument', 'Write it last, in your own words: you should be able to explain it to someone else. It is the heart of the paper’s Summary.',
+                secField(secOf('argument'), { label: '', rows: 4, placeholder: 'What it claims, how, and what it found…' })),
             step(4, 'References to follow up', 'The ones worth reading next. Added references are looked up for you.', follow),
         ];
     }
@@ -768,21 +763,20 @@ const PassMode = (() => {
             }
         }
         const done = top.filter(s => predictions[s.key]?.state).length;
-        const parts = assessmentNow();
         const grid = el('div', 'pass_grid');
-        for (const [key, label, hint] of Passes.ASSESSMENT) grid.append(field(label, 'assess.' + key, parts[key], { hint }));
+        for (const key of ['assumptions', 'weaknesses', 'missing', 'future']) grid.append(secField(secOf(key)));
         const outline = el('details', 'pass_outline');
         outline.dataset.keep = 'outline';
-        outline.open = !!data.outline;
+        outline.open = !!sec('outline');
         outline.append(el('summary', '', 'Write it'));
         const compare = el('button', 'btn small', 'Compare with the contents');
         compare.type = 'button';
         compare.dataset.act = 'compare';
-        outline.append(field('', 'outline', data.outline, { rows: 5, placeholder: 'Its sections and what each one says, without looking…' }), compare, el('ol', 'pass_compare'));
+        outline.append(secField(secOf('outline'), { label: '', rows: 5, placeholder: 'Its sections and what each one says, without looking…' }), compare, el('ol', 'pass_compare'));
         return [
-            step(1, `Your predictions${top.length ? ` (${done} of ${top.length})` : ''}`, 'Each main section waits behind a card in the paper: predict, reveal, compare.', list),
-            step(2, 'Assessment', 'Where the paper is strong, where it isn’t, and what comes next. It is the paper’s Assessment, in the notes side.',
-                field('Notes', 'assess.notes', parts.notes, { rows: 2, placeholder: 'Anything, as you go…' }), grid),
+            step(1, `Your predictions${top.length ? ` (${done} of ${top.length})` : ''}`, 'Each main section waits behind a card in the paper: predict, reveal, compare. They are written into the Summary as “Predictions vs the paper”.', list),
+            step(2, 'Close-out', 'Where the paper is strong, where it isn’t, and what comes next: sections of the paper’s Summary.',
+                grid, secField(secOf('other'), { rows: 2, placeholder: 'Anything, as you go…' })),
             step(3, 'The outline, from memory', 'Optional: rebuild the paper’s structure without looking, then compare.', outline),
         ];
     }
@@ -817,19 +811,6 @@ const PassMode = (() => {
         return box;
     }
 
-    // ---- the five Cs at the top of the notes side, once written ----
-
-    function renderSide() {
-        const cs = Passes.FIVE_CS.filter(([key]) => record?.passes?.[1]?.cs?.[key]?.trim());
-        const panel = $('#five_cs_panel');
-        panel.hidden = !cs.length;
-        if (!cs.length) return;
-        const list = el('dl', 'pass_recall');
-        for (const [key, label] of cs) list.append(el('dt', '', label), el('dd', '', record.passes[1].cs[key]));
-        $('#five_cs_list').replaceChildren(list);
-        $('#five_cs_state').textContent = Passes.label(record);
-    }
-
     // figures and tables in the view shown: { key ("figure 2"), label, caption, place }
     function figuresIn() {
         const found = new Map();
@@ -860,24 +841,22 @@ const PassMode = (() => {
     }
 
     // ---- a box in the form changed: saved where it belongs (text after a pause) ----
-    // The pass's own: the five Cs, related work, outline, reason, figure checks not captured.
-    // The material's: the Summary, the Assessment, the reference marks. A note: its colour. A figure: its checks.
+    // The material's: its Summary's sections, its reference marks. A note: its colour. A figure: its checks.
+    // The pass's own: the reason for a decision, the checks of a figure not captured.
 
     let formTimer = null;
     let formChanges = {};
-    let sourceChanges = {};
     function onFormInput(e) {
         const input = e.target.closest('[data-path]');
         if (!input) return;
+        // a text box sends "change" again when you leave it: what it had is saved already (and may be older than
+        // what you've since written elsewhere, e.g. in the notes side)
+        if (e.type === 'change' && input.type !== 'checkbox' && input.tagName !== 'SELECT') return;
         const path = input.dataset.path;
         const value = input.type === 'checkbox' ? input.checked : input.value;
         let m;
-        if (path === 'summary') return sourceSoon({ summary: value });
-        if ((m = path.match(/^assess\.(\w+)$/))) {
-            const parts = assessmentNow();
-            parts[m[1]] = value;
-            return sourceSoon({ review: Passes.writeAssessment(parts) });
-        }
+        // a section of the Summary
+        if ((m = path.match(/^sec:(\w+)$/))) return sectionSoon(m[1], value);
         if ((m = path.match(/^ref:(known|followUp):(.+)$/))) {
             source.references = Passes.markReference(source, m[2], m[1], value);
             ReferencesPanel.render();
@@ -899,8 +878,7 @@ const PassMode = (() => {
         }
         const n = pass();
         const data = structuredClone(passData(n));
-        if ((m = path.match(/^cs\.(\w+)$/))) data.cs = { ...(data.cs || {}), [m[1]]: value };
-        else if ((m = path.match(/^fig:(.+):(\w+)$/))) {
+        if ((m = path.match(/^fig:(.+):(\w+)$/))) {
             data.figures = { ...(data.figures || {}) };
             data.figures[m[1]] = { ...(data.figures[m[1]] || {}), [m[2]]: value };
         } else data[path] = value;
@@ -910,25 +888,29 @@ const PassMode = (() => {
         const write = () => {
             record = Passes.savePass(record, n, formChanges);
             formChanges = {};
-            renderSide();
         };
         if (input.type === 'checkbox') write(); else formTimer = setTimeout(write, 600);
     }
 
-    // the material's fields: shown at once (source is this page's copy), saved after a pause
+    // a section of the Summary: shown at once (source is this page's copy), saved after a pause, onto the Summary as
+    // it is then (so an edit made meanwhile in the notes side, or another tab, is kept)
     let sourceTimer = null;
-    function sourceSoon(changes) {
-        Object.assign(source, changes);
-        Object.assign(sourceChanges, changes);
+    let pendingSections = {};
+    function sectionSoon(key, text) {
+        pendingSections[key] = text;
+        source.summary = Passes.setSection(summaryNow(), key, text);
         clearTimeout(sourceTimer);
         sourceTimer = setTimeout(flushSource, 600);
     }
     function flushSource() {
         clearTimeout(sourceTimer);
-        if (!Object.keys(sourceChanges).length) return;
-        Store.saveItem({ id: source.id, ...sourceChanges });
-        sourceChanges = {};
-        refresh(); // (the side panel's Summary and Assessment)
+        if (!Object.keys(pendingSections).length) return;
+        const latest = Store.getItem(source.id);
+        let summary = latest.summary ?? latest.body ?? '';
+        for (const [key, text] of Object.entries(pendingSections)) summary = Passes.setSection(summary, key, text);
+        pendingSections = {};
+        Store.saveItem({ id: source.id, summary });
+        refresh(); // (the side panel's Summary)
     }
     function flushForm() {
         flushSource();
@@ -940,7 +922,6 @@ const PassMode = (() => {
 
     // the material changed elsewhere on the page (the side panel, a note): the pass's notes follow
     function sourceChanged() {
-        renderSide();
         const active = document.activeElement;
         if (!on() || ($('#pass_form').contains(active) && active.matches('textarea, input:not([type="checkbox"])'))) return; // (not while you type)
         renderForm();

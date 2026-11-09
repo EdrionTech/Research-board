@@ -235,15 +235,6 @@
                 </label>
                 <button type="button" class="btn small" id="hide_side">Hide notes ⟩</button>
             </div>
-            <!-- the five Cs from a first pass (material_passes.js): what kind of paper it is, at a glance -->
-            <section class="panel five_cs_panel" id="five_cs_panel" hidden>
-                <header>
-                    <h3>First look</h3>
-                    <small class="hint" id="five_cs_state"></small>
-                </header>
-                <div id="five_cs_list"></div>
-            </section>
-
             <section class="panel">
                 <h3 id="notes_heading">Notes</h3>
                 <!-- the note form sits here, or in the floating note box (#composer) while that is open -->
@@ -311,10 +302,12 @@
                 <ul class="source_notes" id="source_notes"></ul>
             </section>
 
+            <!-- the Summary: one document in sections (the five Cs, the main argument, the close-out… and your own);
+                 each section has its own Edit, "Edit all" the whole Markdown (material_summary.js) -->
             <section class="panel md_field" data-field="summary">
                 <header>
                     <h3>Summary</h3>
-                    <button type="button" class="btn small edit_md">Edit</button>
+                    <button type="button" class="btn small edit_md" title="Edit the whole summary at once">Edit all</button>
                 </header>
                 <div class="md"></div>
                 <div class="md_edit" hidden>
@@ -326,21 +319,6 @@
                 </div>
             </section>
 
-            <!-- your judgement of the paper (source.review): pass 3's close-out writes here (sources/passes.js) -->
-            <section class="panel md_field" data-field="review" id="review_field">
-                <header>
-                    <h3>Assessment</h3>
-                    <button type="button" class="btn small edit_md">Edit</button>
-                </header>
-                <div class="md"></div>
-                <div class="md_edit" hidden>
-                    <textarea rows="8"></textarea>
-                    <div class="actions">
-                        <button type="button" class="btn small cancel_md">Cancel</button>
-                        <button type="button" class="btn small primary save_md">Save</button>
-                    </div>
-                </div>
-            </section>
             <!-- your general notes about this paper (linked or cited there: sources/links.js) -->
             <section class="panel in_notes" id="in_notes" hidden>
                 <h3>In your notes <small id="in_notes_count"></small></h3>
@@ -516,6 +494,7 @@
     <script data-src="../script/pages/material_toc.js"></script>
     <script data-src="../script/pages/material_menu.js"></script>
     <script data-src="../script/pages/material_passes.js"></script>
+    <script data-src="../script/pages/material_summary.js"></script>
     <script data-src="../script/pages/material.js"></script>
     <script data-src="../script/pages/material_refs.js"></script>
 </body>

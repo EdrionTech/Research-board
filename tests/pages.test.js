@@ -98,6 +98,8 @@ const { REPO, SAMPLE, startServer, launchBrowser, tester, wait, text } = require
     });
     await page('the Cite button puts in Author (year) or (Author, year)', base + 'page/material.html?id=' + source.id, async tab => {
         const field = '[data-field="summary"]';
+        // (starts from an empty summary: the test before left one)
+        await tab.evaluate(() => { Store.saveItem({ id: source.id, summary: '' }); refresh(); });
         await tab.click(`${field} .edit_md`);
         await tab.click(`${field} .md_visual`);
         await tab.keyboard.type('As ');

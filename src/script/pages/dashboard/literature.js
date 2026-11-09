@@ -493,7 +493,6 @@ function digestMarkdown(list, options) {
         if (options.citation) lines.push(`_${Cite.format(source, 'apa')}_`, '');
         else if (shortCitation(source)) lines.push(`_${shortCitation(source)}_`, '');
         lines.push(...section('Summary', summaryOf(source), options.layout), '');
-        if (options.review) lines.push(...section('Assessment', source.review, options.layout), '');
         if (options.notes) {
             const notes = notesOf(source).sort((a, b) => a.createdAt - b.createdAt);
             if (notes.length) lines.push('**Notes**', '', ...notes.map(noteLine), '');
@@ -511,7 +510,6 @@ function updateDigest() {
     digestText = digestMarkdown(list, {
         layout: f.layout.value,
         citation: f.citation.checked,
-        review: f.review.checked,
         notes: f.notes.checked,
     });
     renderMarkdown($('#digest_preview'), digestText);

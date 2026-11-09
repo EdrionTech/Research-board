@@ -20,7 +20,7 @@ const { startServer, launchBrowser, tester, wait } = require('./helpers');
     });
     const passes = (id, sourceId, extra) => ({ id, projectId: 'p1', type: 'passes', sourceId, on: true, roles: {}, marks: [], createdAt: now, updatedAt: now, ...extra });
     for (const item of [
-        source('a', 'Paper A', [ref(1, shared), ref(2, sharedDoi, { doi: '10.5555/attn' }), ref(3, 'J. Doe. Something only A cites. 2019.')]),
+        source('a', 'Paper A', [ref(1, shared), ref(2, sharedDoi, { doi: '10.5555/attn' }), ref(3, 'J. Doe. Something only A cites. 2019.')], { summary: '### Category\nA measurement study', sectioned: true }),
         source('b', 'Paper B', [ref(1, shared), ref(2, sharedDoi, { doi: '10.5555/ATTN' }), ref(3, 'K. Lee. Another single citation here. 2020.')]),
         source('c', 'Paper C', [ref(1, shared)]),
         source('d', 'Paper D', []),
@@ -28,7 +28,7 @@ const { startServer, launchBrowser, tester, wait } = require('./helpers');
         source('g', 'Paper G', [], { authors: [{ firstName: 'Ashish', lastName: 'Vaswani' }] }),
         source('f', 'Paper F', [], { text: ['# Introduction', '', 'Why it matters.', '', '## Related work', '', 'Others did this before.', '', '## Method', '', 'What we did.'].join('\n') }),
         passes('pe', 'e', { pass: 1, state: 'stopped', passes: { 1: { doneAt: now } } }),
-        passes('pa', 'a', { pass: 2, state: 'reading', passes: { 1: { doneAt: now, cs: { category: 'A measurement study' } }, 2: {} } }),
+        passes('pa', 'a', { pass: 2, state: 'reading', passes: { 1: { doneAt: now }, 2: {} } }),
         passes('pb', 'b', { pass: 1, state: 'stopped', passes: { 1: { doneAt: now } } }),
         passes('pc', 'c', { pass: 1, state: 'reading', passes: { 1: { activeMs: 120000 } } }),
     ]) await api('PUT', 'items/' + item.id, item);
@@ -197,7 +197,7 @@ const { startServer, launchBrowser, tester, wait } = require('./helpers');
         const state = w => page.evaluate(x => { const l = [...document.querySelectorAll('#reader_text .line')].find(l => l.dataset.text.includes(x)); return l && !!l.offsetParent; }, w);
         const problem = !(await state('Others did this before')) ? 'related work folded'
             : (await state('What we did')) ? 'method not folded'
-            : !(await page.$('#pass_form [data-path="related"]')) ? 'no step for the related work' : null;
+            : !(await page.$('#pass_form [data-path="sec:field"]')) ? 'no step for the related work' : null;
         await page.close();
         return problem;
     });

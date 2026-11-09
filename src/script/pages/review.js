@@ -603,36 +603,32 @@ function sourceCard(source) {
         button('Cite by name', 'Insert the authors as part of your sentence: Author (year)', () => insertInline(`@${source.citekey}`)),
     );
     const summary = summaryOf(source);
-    if (summary) actions.append(button('Insert summary', 'Insert your summary of this source, cited', () => insertBlock(`${summary} [@${source.citekey}]`)));
-    const assessment = (source.review || '').trim();
-    if (assessment) actions.append(button('Insert assessment', 'Insert your assessment of this source (assumptions, weak spots…), cited', () => insertBlock(`${assessment.replace(/^#{2,4}\s+(.+)$/gm, '**$1.**')} [@${source.citekey}]`)));
+    if (summary) actions.append(button('Insert summary', 'Insert your whole summary of this source, cited', () => insertBlock(`${summary.replace(/^#{2,4}\s+(.+)$/gm, '**$1.**')} [@${source.citekey}]`)));
     card.append(actions);
-
-    // the five Cs from its first pass: what kind of paper it is, its contributions…
-    const cs = Passes.FIVE_CS.filter(([key]) => record?.passes?.[1]?.cs?.[key]?.trim());
-    if (cs.length) {
-        const list = el('dl', 'card_cs');
-        for (const [key, label] of cs) list.append(el('dt', '', label), el('dd', '', record.passes[1].cs[key]));
-        card.append(list);
-    }
 
     if (tagsOf(source).length) {
         const tags = el('ul', 'tags');
         tags.append(...tagsOf(source).map(tag => el('li', 'tag', tag)));
         card.append(tags);
     }
+    // the summary in its sections (the five Cs, the main argument, weak spots… from reading in passes, or your
+    // own): each one a click from your writing
     if (summary) {
-        const text = el('div', 'md card_summary');
-        renderMarkdown(text, summary);
-        card.append(text);
-    }
-    if (assessment) {
-        const text = el('details', 'card_assessment');
-        text.append(el('summary', '', 'Assessment'));
-        const body = el('div', 'md');
-        renderMarkdown(body, assessment);
-        text.append(body);
-        card.append(text);
+        const doc = Passes.parseSummary(summary);
+        if (doc.intro.trim()) {
+            const text = el('div', 'md card_summary');
+            renderMarkdown(text, doc.intro);
+            card.append(text);
+        }
+        for (const part of doc.sections.filter(p => p.text.trim())) {
+            const box = el('div', 'card_section');
+            const head = el('div', 'card_section_head');
+            head.append(el('strong', '', part.title), button('Insert', `Insert “${part.title}”, cited`, () => insertBlock(`${part.text} [@${source.citekey}]`)));
+            const text = el('div', 'md');
+            renderMarkdown(text, part.text);
+            box.append(head, text);
+            card.append(box);
+        }
     }
 
     const notes = notesBySource.get(source.id) || [];

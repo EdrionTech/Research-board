@@ -91,7 +91,7 @@ const SurveyBoard = (() => {
         const open = el('a', 'source_row survey_open');
         open.href = materialUrl(source.id);
         open.append(el('strong', '', source.title), el('small', '', shortCitation(source) || 'No authors yet'));
-        const category = record?.passes?.[1]?.cs?.category?.trim();
+        const category = Passes.section(summaryOf(source), 'category').trim();
         if (category) open.append(el('p', 'survey_cat', category));
         const meta = el('div', 'survey_meta');
         if (source.surveyKey) meta.append(el('span', 'badge material', 'Key paper'));
