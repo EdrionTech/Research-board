@@ -167,17 +167,15 @@
                 <button type="button" class="btn small has_i more_btn" id="more_btn" aria-expanded="false" title="More tools"><span class="i" data-i="ellipsis" aria-hidden="true"></span><span class="lbl">More</span></button>
             </div>
 
-            <!-- reading in passes: which pass, how long, the way to its form (material_passes.js) -->
+            <!-- reading in passes: the three passes as steps, the time, the way to the pass's notes (material_passes.js) -->
             <div class="pass_bar" id="pass_bar" hidden>
-                <div class="pass_bar_row">
-                    <div class="pass_steps" id="pass_steps" role="group" aria-label="Reading passes"></div>
-                    <small class="pass_state" id="pass_state"></small>
-                    <span class="spacer"></span>
-                    <button type="button" class="pass_timer" id="pass_timer" hidden></button>
-                    <button type="button" class="btn small" id="pass_form_btn">Five Cs ↓</button>
-                    <button type="button" class="link pass_leave" id="pass_leave" title="Stop reading in passes (what you wrote stays)" aria-label="Stop reading in passes">✕</button>
-                </div>
-                <p class="pass_hint" id="pass_hint"></p>
+                <ol class="pass_stepper" id="pass_steps" aria-label="Reading passes"></ol>
+                <small class="pass_state" id="pass_state"></small>
+                <span class="spacer"></span>
+                <button type="button" class="pass_timer" id="pass_timer" hidden></button>
+                <button type="button" class="pass_icon" id="pass_form_btn" title="This pass's notes, at the end of the paper" aria-label="Go to this pass's notes"><span class="i" data-i="notebook-pen" aria-hidden="true"></span></button>
+                <button type="button" class="pass_icon" id="pass_leave" title="Stop reading in passes (what you wrote stays)" aria-label="Stop reading in passes">✕</button>
+                <p class="pass_notice" id="pass_hint" hidden></p>
             </div>
 
             <details class="abstract" id="abstract">

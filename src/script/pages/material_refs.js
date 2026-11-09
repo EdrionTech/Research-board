@@ -145,27 +145,8 @@ const ReferencesPanel = (() => {
         render();
     }
 
-    // a source made from a reference and what was found about it
-    function sourceFields(ref, fields, found) {
-        return {
-                    type: 'source',
-                    title: fields.title || ref.text.slice(0, 120),
-                    kind: fields.kind || 'article',
-                    published: fields.published || '',
-                    venue: fields.venue || '',
-                    authors: fields.authors || [],
-                    doi: fields.doi || '',
-                    url: fields.url || '',
-                    pdfUrl: fields.pdfUrl || '',
-                    abstract: fields.abstract || '',
-                    keywords: fields.keywords || [],
-                    tags: [],
-                    status: 'to_read',
-                    citedIn: [source.id],          // the paper whose references it came from
-                    reference: ref.text,           // as that paper cites it
-                    ...(found ? {} : { unverified: true }), // details from the reference text only: worth a check
-        };
-    }
+    // a source made from a reference and what was found about it (sources/references.js)
+    const sourceFields = (ref, fields, found) => References.toSource(ref, fields, found, [source.id]);
 
     // ---- into your Library (no project): from a reference's profile ----
 

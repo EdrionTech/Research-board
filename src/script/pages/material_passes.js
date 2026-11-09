@@ -80,39 +80,41 @@ const PassMode = (() => {
         timer.restart();
     }
 
-    // ---- the bar: the passes, the timer, the form ----
+    // ---- the bar: the passes as steps, the timer, the way to the notes ----
 
     function renderBar() {
         const steps = [1, 2, 3].map(n => {
             const data = passData(n);
+            const li = el('li', 'pass_stage');
+            const state = n === pass() ? 'current' : data.doneAt ? 'done' : data.skipped ? 'skipped' : '';
+            if (state) li.dataset.state = state;
             const btn = el('button', 'pass_step');
             btn.type = 'button';
             btn.dataset.pass = n;
-            const state = n === pass() ? 'current' : data.doneAt ? 'done' : data.skipped ? 'skipped' : '';
-            if (state) btn.dataset.state = state;
             btn.setAttribute('aria-current', n === pass() ? 'step' : 'false');
             btn.title = `Pass ${n}: ${Passes.PASSES[n].name}` + (state === 'done' ? ' (done)' : state === 'skipped' ? ' (skipped)' : '')
-                + (n > pass() ? '. Skip to it' : '');
+                + (n > pass() ? '. Skip to it' : n < pass() ? '. Read it again' : '');
             btn.append(el('span', 'pass_num', state === 'done' ? '✓' : state === 'skipped' ? '↷' : String(n)), el('span', 'pass_name', Passes.PASSES[n].short));
-            return btn;
+            li.append(btn);
+            return li;
         });
         $('#pass_steps').replaceChildren(...steps);
-        $('#pass_form_btn').textContent = Passes.PASSES[pass()].form + ' ↓';
         $('#pass_state').textContent = record.state !== 'reading' ? Passes.label(record) : '';
         renderHint();
         timer.show();
     }
 
+    // a line under the bar only when this view needs saying something (what a pass is for is in its notes)
     function renderHint() {
         const view = reflow();
-        let hint = Passes.PASSES[pass()].shows;
+        let hint = '';
         if (view === 'video') hint = 'Reading in passes is for papers: a video has no sections to fold.';
         else if (view === 'pages') hint = pass() === 3
-            ? 'In the printed pages nothing can be hidden: switch to Read (⋯ View) to predict each section before you read it.'
-            : 'Printed pages: the ones you can skip are dimmed. Read (⋯ View) folds the sections instead.';
-        else if (!sections.length) hint = 'No sections found here. Mark headings with a right-click (Mark as a section heading), and they fold like any other.';
+            ? 'Printed pages can’t hide anything: switch to Read (View) to predict each section before reading it.'
+            : 'Printed pages: the ones you can skip are dimmed. Read (View) folds the sections instead.';
+        else if (view && !sections.length) hint = 'No sections found. Right-click a heading → Mark as a section heading.';
         $('#pass_hint').textContent = hint;
-        $('#pass_hint').title = hint;
+        $('#pass_hint').hidden = !hint;
     }
 
     async function onBarClick(e) {
@@ -120,7 +122,6 @@ const PassMode = (() => {
         if (step) return goTo(Number(step.dataset.pass));
         if (e.target.closest('#pass_form_btn, #pass_timer')) return $('#pass_form').scrollIntoView({ behavior: 'smooth', block: 'start' });
         if (e.target.closest('#pass_leave')) return leave();
-        if (e.target.closest('#pass_hint')) $('#pass_hint').classList.toggle('full'); // (phones show one line)
     }
 
     // to another pass: later ones skip what's between (recorded), earlier ones are a re-read
@@ -221,25 +222,25 @@ const PassMode = (() => {
     }
     const docOf = unit => unit.head.ownerDocument;
 
-    // folded: the heading, and a button saying what's under it
+    // folded: the heading stays (greyed), with a chip saying what's under it; a click opens it
     function fold(unit, s, view) {
         unit.head.classList.add('pass_head');
         for (const node of unit.body) node.classList.add('pass_folded');
         const count = unit.body.length;
-        const what = view === 'text' ? (count === 1 ? 'line' : 'lines') : count === 1 ? 'paragraph' : 'paragraphs';
-        const btn = ui(docOf(unit), 'button', 'pass_peek', count ? `▸ ${count} ${what} · open` : '▸ open');
-        btn.type = 'button';
-        btn.dataset.peek = s.key;
-        btn.title = `Not part of pass ${pass()} (${Passes.ROLES[s.role].toLowerCase()}). Open it if you need to.`;
-        place(unit, btn);
+        const chip = ui(docOf(unit), 'button', 'pass_chip', count ? `${count} ${view === 'text' ? (count === 1 ? 'line' : 'lines') : '¶'} · open` : 'open');
+        chip.type = 'button';
+        chip.dataset.peek = s.key;
+        chip.title = `Not part of pass ${pass()} (${Passes.ROLES[s.role].toLowerCase()}). Open it if you need to.`;
+        unit.head.append(chip);
     }
 
     // opened with a click: it can be folded again
     function markOpen(unit, s) {
-        const btn = ui(docOf(unit), 'button', 'pass_peek open', '▾ fold again');
-        btn.type = 'button';
-        btn.dataset.unpeek = s.key;
-        place(unit, btn);
+        const chip = ui(docOf(unit), 'button', 'pass_chip open', 'fold');
+        chip.type = 'button';
+        chip.dataset.unpeek = s.key;
+        chip.title = 'Fold it again';
+        unit.head.append(chip);
     }
 
     // just after the heading (in pasted text, a line of its own, so the line numbers stay)
@@ -275,7 +276,7 @@ const PassMode = (() => {
             const key = 'proof|' + i;
             if (peeked.has(key)) return;
             proof.classList.add('pass_folded');
-            const btn = ui(proof.ownerDocument, 'button', 'pass_peek', '▸ proof · open');
+            const btn = ui(proof.ownerDocument, 'button', 'pass_chip solo', 'Proof · open');
             btn.type = 'button';
             btn.dataset.peek = key;
             btn.title = 'Proofs wait for pass 3. Open it if you need to.';
@@ -304,32 +305,37 @@ const PassMode = (() => {
         }
     }
 
+    // A slim strip until you start ("Predict “Method” before you read it · Predict · Skip"), then the box to
+    // write in and Reveal; once revealed, what you expected and a box for how theirs differs.
+    const expanded = new Set();
     function card(doc, s, saved, view) {
         const box = ui(doc, 'div', 'pass_card');
         box.dataset.key = s.key;
         const title = Passes.clean(s.title);
-        if (!saved.state) {
-            box.append(ui(doc, 'strong', '', `Before you read “${title}”`));
-            box.append(ui(doc, 'small', '', 'What do you expect it to say? How would you have done it yourself?'));
+        const button = (label, data, primary) => {
+            const b = ui(doc, 'button', 'pass_btn' + (primary ? ' primary' : ''), label);
+            b.type = 'button';
+            Object.assign(b.dataset, data);
+            return b;
+        };
+        if (!saved.state && !saved.predicted && !expanded.has(s.key)) {
+            box.classList.add('strip');
+            box.append(ui(doc, 'span', 'pass_card_text', `Predict “${title}” before you read it`),
+                button('Predict', { expand: '' }, true), button('Skip', { reveal: 'skipped' }));
+        } else if (!saved.state) {
+            box.append(ui(doc, 'strong', '', `What do you expect in “${title}”?`),
+                ui(doc, 'small', '', 'What it will say, or how you would have done it yourself.'));
             const area = ui(doc, 'textarea', '');
             area.rows = 3;
             area.dataset.predict = 'predicted';
             area.value = saved.predicted || '';
             area.setAttribute('aria-label', `What you expect in ${title}`);
             const row = ui(doc, 'div', 'pass_card_row');
-            const reveal = ui(doc, 'button', 'pass_btn primary', 'Reveal');
-            reveal.type = 'button';
-            reveal.dataset.reveal = 'revealed';
-            const skip = ui(doc, 'button', 'pass_btn', 'Skip');
-            skip.type = 'button';
-            skip.dataset.reveal = 'skipped';
-            skip.title = 'Not worth predicting: show it';
-            row.append(reveal, skip);
+            row.append(button('Reveal', { reveal: 'revealed' }, true), button('Skip', { reveal: 'skipped' }));
             box.append(area, row);
         } else if (saved.state === 'revealed') {
             box.classList.add('done');
-            box.append(ui(doc, 'strong', '', `You expected (“${title}”)`));
-            box.append(ui(doc, 'p', 'pass_expected', saved.predicted?.trim() || '(nothing written)'));
+            box.append(ui(doc, 'small', 'pass_card_label', 'You expected'), ui(doc, 'p', 'pass_expected', saved.predicted?.trim() || '(nothing written)'));
             const area = ui(doc, 'textarea', '');
             area.rows = 2;
             area.dataset.predict = 'differs';
@@ -338,12 +344,8 @@ const PassMode = (() => {
             area.setAttribute('aria-label', `How ${title} differs from what you expected`);
             box.append(area);
         } else {
-            box.classList.add('done', 'skipped');
-            box.append(ui(doc, 'small', '', `“${title}”: shown without a prediction.`));
-            const again = ui(doc, 'button', 'pass_btn', 'Predict it after all');
-            again.type = 'button';
-            again.dataset.reveal = '';
-            box.append(again);
+            box.classList.add('done', 'strip');
+            box.append(ui(doc, 'span', 'pass_card_text', 'Shown without a prediction'), button('Predict after all', { reveal: '' }));
         }
         if (view === 'html') box.classList.add('in_frame');
         return box;
@@ -356,19 +358,21 @@ const PassMode = (() => {
         style.id = 'rb_pass_css';
         style.textContent = `
             .pass_folded { display: none !important; }
-            .pass_blur { filter: blur(5px); opacity: .55; user-select: none; pointer-events: none; }
-            .pass_head { opacity: .7; }
-            .pass_peek { display: block; margin: 2px 0 14px; padding: 3px 10px; border: 1px dashed #b9b4ab; border-radius: 6px;
-                background: #faf8f4; color: #5b5750; font: 600 13px system-ui, sans-serif; cursor: pointer; }
-            .pass_peek:hover { border-style: solid; color: #1f1d1a; }
-            .pass_card { margin: 8px 0 16px; padding: 12px 14px; border: 1px solid #c9c4ff; border-radius: 10px;
-                background: #f5f4ff; font: 14px/1.45 system-ui, sans-serif; color: #1f1d1a; display: grid; gap: 6px; }
-            .pass_card.done { background: #f7f7f5; border-color: #ddd8cf; }
-            .pass_card small { color: #5b5750; }
+            .pass_blur { filter: blur(5px); opacity: .5; user-select: none; pointer-events: none; }
+            .pass_head { color: #8a857c; }
+            .pass_chip { margin-left: 10px; padding: 1px 9px; border: 1px solid #ddd8cf; border-radius: 999px; background: #f6f4f0;
+                color: #5b5750; font: 600 12px/1.6 system-ui, sans-serif; vertical-align: middle; cursor: pointer; }
+            .pass_chip:hover { border-color: #3d5afe; color: #3d5afe; }
+            .pass_card { margin: 6px 0 14px; padding: 10px 12px; border: 1px solid #d4d1fb; border-left: 3px solid #3d5afe; border-radius: 8px;
+                background: #f7f7ff; font: 14px/1.45 system-ui, sans-serif; color: #1f1d1a; display: grid; gap: 6px; }
+            .pass_card.strip { display: flex; align-items: center; gap: 8px; padding: 6px 8px 6px 12px; }
+            .pass_card.done { background: #f7f7f5; border-color: #e3dfd7; border-left-color: #b9b4ab; }
+            .pass_card_text { flex: 1; color: #3a3732; }
+            .pass_card small { color: #6b665e; }
             .pass_card textarea { width: 100%; box-sizing: border-box; font: inherit; padding: 6px 8px; border: 1px solid #ccc6bc; border-radius: 6px; resize: vertical; }
             .pass_card .pass_expected { margin: 0; white-space: pre-wrap; color: #3a3732; }
             .pass_card_row { display: flex; gap: 6px; }
-            .pass_btn { padding: 5px 12px; border: 1px solid #ccc6bc; border-radius: 6px; background: #fff; font: 600 13px system-ui, sans-serif; cursor: pointer; }
+            .pass_btn { padding: 4px 12px; border: 1px solid #ccc6bc; border-radius: 6px; background: #fff; font: 600 12.5px system-ui, sans-serif; cursor: pointer; }
             .pass_btn.primary { background: #3d5afe; border-color: #3d5afe; color: #fff; }`;
         doc.head.append(style);
     }
@@ -405,9 +409,18 @@ const PassMode = (() => {
             peeked.delete(btn.dataset.unpeek);
             return apply();
         }
+        if (btn.dataset.expand !== undefined) {
+            const key = btn.closest('.pass_card').dataset.key;
+            const doc = btn.ownerDocument;
+            expanded.add(key);
+            apply();
+            doc.querySelector(`.pass_card[data-key="${CSS.escape(key)}"] textarea`)?.focus();
+            return;
+        }
         if (btn.dataset.reveal !== undefined) {
             const key = btn.closest('.pass_card').dataset.key;
             const area = btn.closest('.pass_card').querySelector('textarea[data-predict="predicted"]');
+            if (btn.dataset.reveal === '') expanded.add(key);
             savePrediction(key, { state: btn.dataset.reveal, ...(area ? { predicted: area.value } : {}) }, true);
         }
     }
@@ -472,17 +485,20 @@ const PassMode = (() => {
         toast(`“${title}” is a section now. Change its role in Contents.`);
     }
 
-    // ---- the form at the end of the reader ----
+    // ---- the pass's notes, at the end of the paper ----
+    // A header card (which pass, what it's for, the time), your earlier passes (folded), the pass's steps in the
+    // order you do them while reading, then the decision as three choices.
 
     function field(label, path, value, { rows = 2, hint = '', placeholder = '' } = {}) {
         const box = el('label', 'pass_field');
-        box.append(el('strong', '', label));
-        if (hint) box.append(el('small', 'hint', hint));
+        if (label) box.append(el('strong', '', label));
+        if (hint) box.append(el('small', '', hint));
         const area = el('textarea');
         area.rows = rows;
         area.dataset.path = path;
         area.value = value || '';
         if (placeholder) area.placeholder = placeholder;
+        if (!label) area.setAttribute('aria-label', placeholder || path);
         box.append(area);
         return box;
     }
@@ -497,32 +513,14 @@ const PassMode = (() => {
         return box;
     }
 
-    function decision(n) {
-        const box = el('div', 'pass_decide');
-        const data = passData(n);
-        if (n < 3) box.append(el('strong', '', n === 1 ? 'Is a second pass worth it?' : 'Is a third pass worth it?'));
-        else box.append(el('strong', '', 'Done with the paper?'));
-        const row = el('div', 'pass_decide_row');
-        const btn = (label, value, primary, title) => {
-            const b = el('button', 'btn small' + (primary ? ' primary' : ''), label);
-            b.type = 'button';
-            b.dataset.decide = value;
-            if (title) b.title = title;
-            return b;
-        };
-        if (n < 3) row.append(btn(`Go to pass ${n + 1}`, 'next', true), btn('Enough: stop here', 'enough', false, 'You have what you need from it'));
-        else row.append(btn('Finish: read in three passes', 'enough', true));
-        row.append(btn('Park it', 'park', false, 'Come back to it later'));
-        const reason = el('input', 'pass_reason');
-        reason.placeholder = 'Why? (optional)';
-        reason.dataset.path = 'reason';
-        reason.value = data.reason || '';
-        reason.setAttribute('aria-label', 'Why (optional)');
-        box.append(row, reason);
-        if (data.decision) {
-            const said = { next: 'You went on to the next pass', enough: n === 3 ? 'You finished' : 'You stopped here', park: 'You parked it' }[data.decision];
-            box.append(el('small', 'hint', `${said}${data.doneAt ? ' on ' + new Date(data.doneAt).toLocaleDateString() : ''}.`));
-        }
+    // a numbered step: ① Title · count, a line on what it's for, then its content
+    function step(n, title, hint, ...content) {
+        const box = el('section', 'pass_stepbox');
+        const head = el('h4', 'pass_stephead');
+        head.append(el('span', 'pass_stepnum', String(n)), el('span', '', title));
+        box.append(head);
+        if (hint) box.append(el('p', 'pass_stephint', hint));
+        box.append(...content.filter(Boolean));
         return box;
     }
 
@@ -531,21 +529,32 @@ const PassMode = (() => {
         const form = $('#pass_form');
         const n = pass();
         const data = passData(n);
-        const head = el('header', 'pass_form_head');
-        head.append(el('h3', '', `Pass ${n} · ${Passes.PASSES[n].name}`));
-        const time = data.activeMs ? `${Passes.duration(data.activeMs)} so far` : '';
-        if (time) head.append(el('small', 'hint', time));
+        const info = Passes.PASSES[n];
+
+        const head = el('header', 'pass_headcard');
+        const kicker = el('div', 'pass_kicker');
+        kicker.append(el('span', '', `Pass ${n} of 3`));
+        const target = info.target ? (info.target[1] >= 60 ? 'about 1 h' : `${info.target[0]}–${info.target[1]} min`) : '';
+        const spent = data.activeMs ? Passes.duration(data.activeMs) : '';
+        if (spent || target) kicker.append(el('span', 'pass_time', [spent && `${spent} spent`, target && `aim ${target}`].filter(Boolean).join(' · ')));
+        head.append(kicker, el('h3', '', info.name), el('p', '', info.aim), el('p', 'pass_shows', info.shows));
         const parts = [head];
-        if (record.state !== 'reading') parts.push(el('p', 'pass_banner', `${Passes.label(record)}${passData().reason ? ': ' + passData().reason : ''}. Pick a pass above to go on any time.`));
-        if (n === 1) parts.push(...formOne(data));
-        if (n === 2) parts.push(...formTwo(data));
-        if (n === 3) parts.push(...formThree(data));
+        if (record.state !== 'reading') {
+            const why = passData().reason;
+            parts.push(el('p', 'pass_banner', `${Passes.label(record)}${why ? ': ' + why : ''}. Choose a pass at the top to go on any time.`));
+        }
+        const earlier = earlierPasses(n);
+        if (earlier) parts.push(earlier);
+        parts.push(...(n === 1 ? formOne(data) : n === 2 ? formTwo(data) : formThree(data)));
         parts.push(decision(n));
+
         // keep what's being typed (a re-render while you write keeps the box and where the cursor is)
         const active = document.activeElement;
         const path = form.contains(active) ? active.dataset.path : null;
         const caret = path && active.selectionStart;
+        const open = new Set($$('details[data-keep]', form).filter(d => d.open).map(d => d.dataset.keep));
         form.replaceChildren(...parts);
+        for (const d of $$('details[data-keep]', form)) if (open.has(d.dataset.keep)) d.open = true;
         if (path) {
             const again = $(`[data-path="${CSS.escape(path)}"]`, form);
             again?.focus({ preventScroll: true });
@@ -553,92 +562,112 @@ const PassMode = (() => {
         }
     }
 
+    // what you wrote in the passes before this one, to read back (not to edit here)
+    function earlierPasses(n) {
+        const rows = [];
+        const one = passData(1);
+        if (n > 1) {
+            const cs = Passes.FIVE_CS.filter(([key]) => one.cs?.[key]?.trim());
+            if (cs.length) {
+                const list = el('dl', 'pass_recall');
+                for (const [key, label] of cs) list.append(el('dt', '', label), el('dd', '', one.cs[key]));
+                rows.push(el('h5', '', 'Pass 1 · the five Cs'), list);
+            } else if (one.skipped) rows.push(el('p', 'hint', 'Pass 1 was skipped.'));
+        }
+        const two = passData(2);
+        if (n > 2) {
+            if (two.summary?.trim()) rows.push(el('h5', '', 'Pass 2 · the main argument'), el('p', 'pass_recall_text', two.summary));
+            else if (two.skipped) rows.push(el('p', 'hint', 'Pass 2 was skipped.'));
+        }
+        if (!rows.length) return null;
+        const box = el('details', 'pass_earlier');
+        box.dataset.keep = 'earlier';
+        box.append(el('summary', '', 'Your earlier passes'), ...rows);
+        return box;
+    }
+
     function formOne(data) {
-        const cs = data.cs || {};
-        const parts = [el('p', 'hint', 'Five to ten minutes: title, abstract, introduction, the headings, the conclusion, a glance at the references. Then answer the five Cs.')];
-        const grid = el('div', 'pass_cs');
-        for (const [key, label, hint] of Passes.FIVE_CS) grid.append(field(label, 'cs.' + key, cs[key], { hint }));
-        parts.push(grid);
         const refs = source.references || [];
+        const known = new Set(data.refsKnown || []);
+        let refsBox = el('p', 'hint', 'No reference list was found in this paper.');
         if (refs.length) {
-            const known = new Set(data.refsKnown || []);
-            const box = el('details', 'pass_refs');
-            box.append(el('summary', '', `References you already know (${known.size} of ${refs.length})`));
+            refsBox = el('details', 'pass_refs');
+            refsBox.dataset.keep = 'known';
+            refsBox.append(el('summary', '', `${known.size} of ${refs.length} known`));
             const list = el('ol', 'pass_ref_list');
             for (const ref of refs) {
                 const li = el('li');
                 li.append(check(`[${ref.n}] ${ref.text}`, 'refsKnown:' + ref.n, known.has(ref.n)));
                 list.append(li);
             }
-            box.append(list);
-            parts.push(box);
+            refsBox.append(list);
         }
-        return parts;
+        const cs = data.cs || {};
+        const grid = el('div', 'pass_grid');
+        for (const [key, label, hint] of Passes.FIVE_CS) grid.append(field(label, 'cs.' + key, cs[key], { hint }));
+        return [
+            step(1, 'Glance at the references', 'Tick the ones you already know: it tells you how close this paper is to what you know.', refsBox),
+            step(2, 'The five Cs', 'A line or two each is enough.', grid),
+        ];
     }
 
     function formTwo(data) {
-        const parts = [el('p', 'hint', 'Up to an hour: read it with care but skip the proofs. Then say what it argues, and with what evidence.')];
-        parts.push(field('The main argument, in your own words', 'summary', data.summary, { rows: 4, placeholder: 'What it claims, how, and what it found…' }));
+        // ① the figures: looked at closely, as you meet them
+        const figures = figuresIn();
+        const checks = data.figures || {};
+        let figs = el('p', 'hint', 'None found in this view. Check them as you go: labelled axes, error bars, results that mean something.');
+        if (figures.length) {
+            figs = el('ul', 'pass_list pass_figs');
+            for (const fig of figures) {
+                const c = checks[fig.key] || {};
+                const li = el('li');
+                const top = el('div', 'pass_fig_top');
+                const go = el('button', 'link pass_fig_go', fig.label);
+                go.type = 'button';
+                go.dataset.go = JSON.stringify(fig.place);
+                go.title = 'Go to it';
+                top.append(go, el('span', 'pass_fig_caption', fig.caption));
+                const row = el('div', 'pass_fig_checks');
+                row.append(check('Axes labelled', `fig:${fig.key}:axes`, c.axes), check('Error bars', `fig:${fig.key}:errors`, c.errors),
+                    check('Meaningful', `fig:${fig.key}:significant`, c.significant));
+                const note = el('input', 'pass_fig_note');
+                note.dataset.path = `fig:${fig.key}:note`;
+                note.value = c.note || '';
+                note.placeholder = 'What it shows, what’s off…';
+                note.setAttribute('aria-label', `Note on ${fig.label}`);
+                li.append(top, row, note);
+                figs.append(li);
+            }
+        }
 
-        // evidence: your highlights and notes on it, pinned
+        // ② evidence: your highlights and notes on it, pinned
         const pinned = new Set(data.evidence || []);
-        const box = el('section', 'pass_sub');
-        box.append(el('strong', '', 'Key evidence'));
         const marks = notes.filter(note => note.quote || note.body);
-        if (!marks.length) box.append(el('small', 'hint', 'Highlight passages as you read: they show here, to pin as the evidence for the argument.'));
-        else {
-            const list = el('ul', 'pass_list');
+        let evidence = el('p', 'hint', 'No highlights yet: the passages you highlight show here.');
+        if (marks.length) {
+            evidence = el('ul', 'pass_list');
             for (const note of marks) {
                 const li = el('li');
                 const words = (note.quote || note.body).replace(/\s+/g, ' ').trim();
                 li.append(check((words.length > 140 ? words.slice(0, 140) + '…' : words) + (note.page ? ` (p. ${note.page})` : ''), 'evidence:' + note.id, pinned.has(note.id)));
-                list.append(li);
+                evidence.append(li);
             }
-            box.append(list);
         }
-        parts.push(box);
 
-        // the figures: looked at closely
-        const figures = figuresIn();
-        const checks = data.figures || {};
-        const figs = el('section', 'pass_sub');
-        figs.append(el('strong', '', `Figures and tables${figures.length ? ` (${figures.length})` : ''}`));
-        if (!figures.length) figs.append(el('small', 'hint', 'None found in this view. Check them as you go: labelled axes, error bars, results that mean something.'));
-        const list = el('ul', 'pass_list pass_figs');
-        for (const fig of figures) {
-            const c = checks[fig.key] || {};
-            const li = el('li');
-            const go = el('button', 'link pass_fig_go', fig.label);
-            go.type = 'button';
-            go.dataset.go = JSON.stringify(fig.place);
-            const caption = el('small', 'hint', fig.caption);
-            const row = el('div', 'pass_fig_checks');
-            row.append(check('Axes labelled', `fig:${fig.key}:axes`, c.axes), check('Error bars', `fig:${fig.key}:errors`, c.errors),
-                check('Meaningful', `fig:${fig.key}:significant`, c.significant));
-            const note = el('input', 'pass_fig_note');
-            note.dataset.path = `fig:${fig.key}:note`;
-            note.value = c.note || '';
-            note.placeholder = 'What it shows, what’s off…';
-            note.setAttribute('aria-label', `Note on ${fig.label}`);
-            li.append(go, caption, row, note);
-            list.append(li);
-        }
-        if (figures.length) figs.append(list);
-        parts.push(figs);
-
-        // references to follow up (the ones not known already)
+        // ④ references to follow up (the ones not known already)
         const refs = (source.references || []).filter(r => !(passData(1).refsKnown || []).includes(r.n));
+        let follow = el('p', 'hint', (source.references || []).length ? 'You know every reference already.' : 'No reference list was found in this paper.');
         if (refs.length) {
-            const follow = new Set(data.followUp || []);
+            const chosen = new Set(data.followUp || []);
             const sources = Store.getItems(project.id).filter(i => i.type === 'source' && i.id !== source.id);
-            const box = el('details', 'pass_refs');
-            box.open = follow.size > 0;
-            box.append(el('summary', '', `References to follow up (${follow.size})`));
+            follow = el('details', 'pass_refs');
+            follow.dataset.keep = 'follow';
+            follow.append(el('summary', '', `${chosen.size} to follow up, of ${refs.length}`));
             const list = el('ol', 'pass_ref_list');
             for (const ref of refs) {
                 const li = el('li');
                 const there = (ref.sourceId && sources.find(s => s.id === ref.sourceId)) || References.match(ref, sources);
-                li.append(check(`[${ref.n}] ${ref.text}`, 'followUp:' + ref.n, follow.has(ref.n)));
+                li.append(check(`[${ref.n}] ${ref.text}`, 'followUp:' + ref.n, chosen.has(ref.n)));
                 if (there) {
                     const a = el('a', 'pass_in', 'In project ↗');
                     a.href = 'material.html?id=' + encodeURIComponent(there.id);
@@ -646,57 +675,91 @@ const PassMode = (() => {
                 }
                 list.append(li);
             }
-            const add = el('button', 'btn small', 'Add the ones to follow up to the project');
+            const add = el('button', 'btn small', `Add ${chosen.size || 'them'} to the project`);
             add.type = 'button';
             add.dataset.act = 'add_follow';
-            add.disabled = !follow.size;
-            box.append(list, add);
-            parts.push(box);
+            add.disabled = !chosen.size;
+            follow.append(list, add);
         }
-        return parts;
+
+        return [
+            step(1, `Figures and tables${figures.length ? ` (${figures.length})` : ''}`, 'Look closely as you meet each one.', figs),
+            step(2, `Key evidence${pinned.size ? ` (${pinned.size} pinned)` : ''}`, 'Pin the highlights that carry the argument.', evidence),
+            step(3, 'The main argument', 'Write it last, in your own words: you should be able to explain it to someone else.',
+                field('', 'summary', data.summary, { rows: 4, placeholder: 'What it claims, how, and what it found…' })),
+            step(4, 'References to follow up', 'The ones worth reading next. Added references are looked up for you.', follow),
+        ];
     }
 
     function formThree(data) {
-        const parts = [el('p', 'hint', 'Re-create the work: the main sections wait behind a card in the paper. Predict, reveal, compare. That is where hidden assumptions show.')];
         const predictions = data.predictions || {};
         const top = Passes.predictions(sections).map(p => p.section);
+        let list = el('p', 'hint', 'No main sections found to predict. Change a section’s role in Contents to Main work.');
         if (top.length) {
-            const box = el('section', 'pass_sub');
-            const done = top.filter(s => predictions[s.key]?.state).length;
-            box.append(el('strong', '', `Your predictions (${done} of ${top.length} sections)`));
-            const list = el('ul', 'pass_list');
+            list = el('ul', 'pass_list');
             for (const s of top) {
                 const p = predictions[s.key] || {};
-                const li = el('li');
+                const li = el('li', 'pass_pred');
                 const go = el('button', 'link', Passes.clean(s.title));
                 go.type = 'button';
                 go.dataset.go = JSON.stringify(s.place);
-                li.append(go, ' ', el('small', 'hint', p.state === 'revealed' ? 'predicted' : p.state === 'skipped' ? 'skipped' : 'waiting'));
+                const state = p.state === 'revealed' ? 'predicted' : p.state === 'skipped' ? 'skipped' : 'waiting';
+                li.append(go, el('span', 'pass_tag ' + state, state));
                 if (p.differs) li.append(el('p', 'pass_differs', p.differs));
                 list.append(li);
             }
-            box.append(list);
-            parts.push(box);
         }
-        parts.push(field('Notes', 'notes', data.notes, { rows: 3, placeholder: 'Anything, as you go…' }));
-        const grid = el('div', 'pass_cs');
+        const done = top.filter(s => predictions[s.key]?.state).length;
+        const grid = el('div', 'pass_grid');
         grid.append(
             field('Assumptions', 'assumptions', data.assumptions, { hint: 'Stated, and the ones it relies on without saying.' }),
             field('Weak spots', 'weaknesses', data.weaknesses, { hint: 'In the experiments, the analysis, the claims.' }),
             field('Missing citations', 'missing', data.missing, { hint: 'Work it should have compared with or credited.' }),
             field('Ideas for future work', 'future', data.future, { hint: 'What you would do next, or differently.' }),
         );
-        parts.push(grid);
-        const outline = el('details', 'pass_sub');
+        const outline = el('details', 'pass_outline');
+        outline.dataset.keep = 'outline';
         outline.open = !!data.outline;
-        outline.append(el('summary', '', 'Optional: the paper’s outline, from memory'));
-        outline.append(field('', 'outline', data.outline, { rows: 5, placeholder: 'Its sections and what each one says, without looking…' }));
+        outline.append(el('summary', '', 'Write it'));
         const compare = el('button', 'btn small', 'Compare with the contents');
         compare.type = 'button';
         compare.dataset.act = 'compare';
-        outline.append(compare, el('ol', 'pass_compare'));
-        parts.push(outline);
-        return parts;
+        outline.append(field('', 'outline', data.outline, { rows: 5, placeholder: 'Its sections and what each one says, without looking…' }), compare, el('ol', 'pass_compare'));
+        return [
+            step(1, `Your predictions${top.length ? ` (${done} of ${top.length})` : ''}`, 'Each main section waits behind a card in the paper: predict, reveal, compare.', list),
+            step(2, 'Close-out', 'Where the paper is strong, where it isn’t, and what comes next.',
+                field('Notes', 'notes', data.notes, { rows: 2, placeholder: 'Anything, as you go…' }), grid),
+            step(3, 'The outline, from memory', 'Optional: rebuild the paper’s structure without looking, then compare.', outline),
+        ];
+    }
+
+    function decision(n) {
+        const data = passData(n);
+        const box = el('section', 'pass_decide');
+        box.append(el('h4', '', n === 1 ? 'Is a second pass worth it?' : n === 2 ? 'Is a third pass worth it?' : 'Done with the paper?'));
+        const choices = el('div', 'pass_choices');
+        const choice = (value, title, text, primary) => {
+            const b = el('button', 'pass_choice' + (primary ? ' primary' : '') + (data.decision === value ? ' chosen' : ''));
+            b.type = 'button';
+            b.dataset.decide = value;
+            b.append(el('strong', '', title), el('small', '', text));
+            return b;
+        };
+        if (n < 3) choices.append(choice('next', 'Go deeper', `Start pass ${n + 1}: ${Passes.PASSES[n + 1].name.toLowerCase()}.`, true));
+        else choices.append(choice('enough', 'Finish', 'Read in three passes.', true));
+        if (n < 3) choices.append(choice('enough', 'Enough', 'I have what I need from it.'));
+        choices.append(choice('park', 'Park it', 'Not now: come back to it later.'));
+        const reason = el('input', 'pass_reason');
+        reason.placeholder = 'Why? (optional)';
+        reason.dataset.path = 'reason';
+        reason.value = data.reason || '';
+        reason.setAttribute('aria-label', 'Why (optional)');
+        box.append(choices, reason);
+        if (data.decision) {
+            const said = { next: 'You went on to the next pass', enough: n === 3 ? 'You finished' : 'You stopped here', park: 'You parked it' }[data.decision];
+            box.append(el('small', 'hint', `${said}${data.doneAt ? ' on ' + new Date(data.doneAt).toLocaleDateString() : ''}.`));
+        }
+        return box;
     }
 
     // figures and tables in the view shown: { key, label, caption, place }

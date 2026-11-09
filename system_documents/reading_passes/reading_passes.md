@@ -4,7 +4,7 @@ Based on S. Keshav, *How to Read a Paper* (2007): each paper is read up to three
 
 ## The three passes (built)
 
-Turned on per material with **Passes** in the reader bar. A bar under the reader's shows the passes, a timer, and a button to the pass's form at the end of the reader.
+Turned on per material with **Passes** in the reader bar. A slim bar under the reader's shows the passes as steps (done, current, skipped), a timer, and a button to the pass's notes at the end of the paper. The notes open with a card saying which pass it is and what it's for, then your earlier passes (folded), then the pass's steps, numbered in the order you do them while reading, and end with the decision as three choices.
 
 | Pass | In the paper | The form |
 | --- | --- | --- |
@@ -47,9 +47,17 @@ Every pass also keeps `activeMs`, `startedAt`, `doneAt`, `decision`, `reason`, `
 
 Code: `src/script/sources/passes.js` (the method, roles, the record), `src/script/pages/material_passes.js` (the material page), `src/style/passes.css`. Tests: `tests/passes.test.js`.
 
+## The survey board (built)
+
+Literature tab → **List | Survey**. The search, status, tag and author filters apply to the board too.
+
+- **The four steps** along the top, from Keshav's survey: ① Seed papers (starred) → ② A first pass on each → ③ Find the key papers → ④ Two passes on the key papers. Each shows how far along it is ("2 of 3"); the first not done is highlighted with a line on what to do.
+- **The board:** columns Not started · Pass 1 · Pass 2 · Pass 3 · Stopped or parked · Read in three passes. Cards move as you read (nothing is dragged). A card shows the title, author and year, your five-Cs *Category*, the time spent, and ★ to make it a seed. Seeds have a gold edge; key papers a badge.
+- **Key papers:** from the references of every paper that has had its first pass, the works cited by two or more of them (the same work matched by DOI, arXiv id or cleaned-up title; ones already in the project aren't suggested), most cited first, with **+ Add** (looked up like a reference on a paper's page; it arrives as a key paper, cited in those papers). Under them, **authors who keep coming up** across those reference lists, each linked to their papers on Google Scholar.
+
+Data: the seeds on the project (`surveySeeds: [sourceId]`); a key paper is a source with `surveyKey: true` and `citedIn`. Code: `src/script/sources/survey.js` (columns, steps, key papers), `src/script/pages/dashboard/survey.js` (the board), `References.identity` and `References.toSource` (shared with the material page). Tests: `tests/survey.test.js`.
+
 ## Still to build
 
-- **Survey board** on the project dashboard: seed papers, columns Unread → Pass 1 → Pass 2 → Pass 3 / Stopped, time per paper.
-- **Key papers:** count the citations and authors shared by your pass 1 papers, and suggest the most cited ones you don't have yet. Needs one new piece: recognising the same cited work across papers when it isn't in the project (DOI, then arXiv id, then the cleaned-up title).
 - **Review page:** a side panel of the five Cs and pass 2 summaries, each a click from a `[@key]` citation.
 - Smaller: assumptions linked to highlights; marking headings in the arXiv HTML version; figure checks beside each figure in the paper; a `by` on the record once collaborators sign in.

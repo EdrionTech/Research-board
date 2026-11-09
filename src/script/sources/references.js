@@ -168,5 +168,36 @@ const References = (() => {
 
     const scholarUrl = ref => 'https://scholar.google.com/scholar?q=' + encodeURIComponent(titleOf(ref) || ref.text.slice(0, 200));
 
-    return { fromHtml, fromPdfLines, parse, match, lookup, scholarUrl, titleOf };
+    // the same work wherever it's cited: its DOI, else its arXiv id, else its title cleaned up (null if too short
+    // to trust). For counting how many of your papers cite it (sources/survey.js).
+    function identity(ref) {
+        if (ref.doi) return 'doi:' + ref.doi.toLowerCase();
+        if (ref.arxiv) return 'arxiv:' + ref.arxiv;
+        const title = norm(titleOf(ref));
+        return title.length >= 12 ? 'title:' + title : null;
+    }
+
+    // a project source made from a reference and what lookup() found; citedIn: the papers that cite it
+    function toSource(ref, fields, found, citedIn) {
+        return {
+            type: 'source',
+            title: fields.title || ref.text.slice(0, 120),
+            kind: fields.kind || 'article',
+            published: fields.published || '',
+            venue: fields.venue || '',
+            authors: fields.authors || [],
+            doi: fields.doi || '',
+            url: fields.url || '',
+            pdfUrl: fields.pdfUrl || '',
+            abstract: fields.abstract || '',
+            keywords: fields.keywords || [],
+            tags: [],
+            status: 'to_read',
+            citedIn,                                // the papers whose references it came from
+            reference: ref.text,                    // as one of them cites it
+            ...(found ? {} : { unverified: true }), // details from the reference text only: worth a check
+        };
+    }
+
+    return { fromHtml, fromPdfLines, parse, match, lookup, scholarUrl, titleOf, identity, toSource };
 })();

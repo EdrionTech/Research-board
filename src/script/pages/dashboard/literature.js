@@ -68,6 +68,7 @@ function renderLiterature() {
     Reading.renderRow($('#continue_row'), all);
     renderColors();
     renderFigures();
+    SurveyBoard.render(); // (survey.js: the board, when the survey view is on)
 }
 
 // ---- highlight colours (sources/colors.js): their meanings, and every note of a colour across papers ----

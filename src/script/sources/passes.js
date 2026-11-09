@@ -31,11 +31,14 @@ const Passes = (() => {
 
     const PASSES = {
         1: { name: 'Bird’s-eye view', short: 'Bird’s-eye', target: [5, 10], form: 'Five Cs',
-            shows: 'The title, abstract, introduction and conclusion. Other sections show their headings only: open one with a click if you need to.' },
+            aim: 'Is this paper worth more of your time? Get its shape, then decide.',
+            shows: 'In the paper: the title, abstract, introduction and conclusion. Other sections show only their heading; open one if you need it.' },
         2: { name: 'Grasp the content', short: 'Grasp', target: [45, 75], form: 'Summary',
-            shows: 'Everything but proofs and appendices. Look closely at the figures, and note the references to follow up.' },
+            aim: 'Understand it well enough to explain it, with its evidence, to someone else.',
+            shows: 'In the paper: everything but proofs and appendices. Skip the details; look closely at the figures.' },
         3: { name: 'Re-implement it', short: 'Re-implement', target: null, form: 'Close-out',
-            shows: 'Before reading each main section, write what you expect, or how you would have done it. Then reveal it and note how theirs differs.' },
+            aim: 'Rebuild the work in your head, and find where it is strong and where it is weak.',
+            shows: 'In the paper: each main section waits behind a card. Predict it, reveal it, and note how theirs differs.' },
     };
 
     const FIVE_CS = [

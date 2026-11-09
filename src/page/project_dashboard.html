@@ -61,6 +61,11 @@
             <!-- material review: the source library; each source opens on its own page (material.html) -->
             <div class="library">
                 <div class="library_tools">
+                    <!-- the sources as a list, or as a survey board by how far each is read (survey.js) -->
+                    <div class="lit_view" id="lit_view" role="group" aria-label="Show the sources as">
+                        <button type="button" data-view="list" aria-pressed="true">List</button>
+                        <button type="button" data-view="survey" aria-pressed="false" title="A literature survey: seed papers, a first pass on each, the key papers their references share">Survey</button>
+                    </div>
                     <input type="search" id="source_search" placeholder="Search title, author, keyword...">
                     <select id="source_filter" aria-label="Filter by status">
                         <option value="">All</option>
@@ -90,6 +95,8 @@
                     <button type="button" class="btn small" id="open_export">Export bibliography</button>
                 </div>
                 <ul class="sources" id="source_list"></ul>
+                <!-- the survey board (pages/dashboard/survey.js) -->
+                <div class="survey" id="survey" hidden></div>
             </div>
 
             <!-- every note of a colour across papers (shown once some note has a colour; the colours: 🎨 Colours) -->
@@ -368,12 +375,15 @@
     <script data-src="../script/sources/links.js"></script>
     <script data-src="../script/sources/reading.js"></script>
     <script data-src="../script/sources/library.js"></script>
+    <script data-src="../script/sources/references.js"></script>
     <script data-src="../script/sources/passes.js"></script>
+    <script data-src="../script/sources/survey.js"></script>
     <script data-src="../script/sources/bookshelf.js"></script>
     <script data-src="../script/sources/picker.js"></script>
     <script data-src="../script/sources/figures.js"></script>
     <script data-src="../script/pages/dashboard/dashboard.js"></script>
     <script data-src="../script/pages/dashboard/literature.js"></script>
+    <script data-src="../script/pages/dashboard/survey.js"></script>
     <script data-src="../script/pages/dashboard/writing.js"></script>
 </body>
 

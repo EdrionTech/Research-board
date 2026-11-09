@@ -66,11 +66,11 @@ const { SAMPLE, startServer, launchBrowser, tester, wait } = require('./helpers'
     });
 
     await t.test('a folded section opens with a click (a peek, recorded)', async () => {
-        await tab.click('.pass_peek');
+        await tab.click('.pass_chip');
         await wait(200);
         if (await lineState(tab, 'A server with made-up data') !== 'shown') return 'method still folded';
         if (!(await record(tab)).passes[1].peeks?.length) return 'peek not recorded';
-        await tab.click('.pass_peek.open');
+        await tab.click('.pass_chip.open');
         await wait(200);
         if (await lineState(tab, 'A server with made-up data') !== 'folded') return 'did not fold again';
     });
@@ -113,6 +113,9 @@ const { SAMPLE, startServer, launchBrowser, tester, wait } = require('./helpers'
         await tab.click('.pass_step[data-pass="3"]');
         await wait(300);
         if (await lineState(tab, 'A server with made-up data') !== 'blurred') return 'method not blurred';
+        if (await tab.$('.pass_card textarea')) return 'the card should start as a slim strip';
+        await tab.click('.pass_card [data-expand]');
+        await wait(200);
         await tab.type('.pass_card textarea', 'They will use a fake server');
         await tab.click('.pass_card [data-reveal="revealed"]');
         await wait(300);
@@ -132,7 +135,7 @@ const { SAMPLE, startServer, launchBrowser, tester, wait } = require('./helpers'
         await tab.click('#passes_btn');
         await wait(300);
         if ((await record(tab)).pass !== 3) return 'did not resume pass 3';
-        if (await tab.$('.pass_card:not(.done)')) return 'the prediction was lost';
+        if (!(await tab.$('.pass_card.done textarea[data-predict="differs"]'))) return 'the prediction was lost';
     });
 
     await t.test('Enough after the last pass: finished', async () => {
