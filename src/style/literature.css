@@ -282,7 +282,20 @@
 /* ---- List | Survey (pages/dashboard/survey.js): built from the shared pieces (.segmented, .badge, .source_row,
    .tag_chip, .btn, .link), placed here with the theme's colours ---- */
 .library.survey_on #source_list, .library.survey_on .selection_bar, .library.survey_on #continue_row { display: none; }
-.survey { display: grid; gap: 16px; }
+.survey { display: grid; gap: 12px; }
+
+/* each part folds to one line: its title, and a count or where you are */
+.survey_fold { border: 1px solid var(--line); border-radius: var(--radius); }
+.survey_fold > .survey_fold_head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; padding: 10px 14px; cursor: pointer; list-style: none; }
+.survey_fold > .survey_fold_head::-webkit-details-marker { display: none; }
+.survey_fold > .survey_fold_head::before { content: '▸'; color: var(--muted); font-size: .8em; transition: transform .15s; }
+.survey_fold[open] > .survey_fold_head::before { transform: rotate(90deg); }
+.survey_fold_title { font-weight: 600; font-size: .92rem; }
+.survey_fold_note { color: var(--muted); font-size: .8rem; }
+.survey_fold[open] > .survey_fold_head { border-bottom: 1px solid var(--line); }
+.survey_fold > :not(summary) { margin: 10px 14px; }
+.survey_keys .survey_fold { border-style: solid; }
+.survey_empty_cols { margin-top: 0 !important; }
 .survey[hidden] { display: none; }
 
 /* the four steps of a survey: done, the one you're on, to come */
@@ -297,7 +310,7 @@
 .survey_hint { margin: 2px 0 0; font-size: .82rem; color: var(--muted); }
 
 /* the board: a column per stage; cards (.source_row) move as you read */
-.survey_board { display: grid; grid-template-columns: repeat(6, minmax(170px, 1fr)); gap: 10px; overflow-x: auto; padding-bottom: 4px; }
+.survey_board { display: grid; grid-template-columns: repeat(var(--cols, 6), minmax(170px, 1fr)); gap: 10px; overflow-x: auto; padding-bottom: 4px; }
 .survey_col { display: grid; align-content: start; gap: 8px; min-width: 0; padding: 10px; border: 1px solid var(--line); border-radius: var(--radius); }
 .survey_col_head { display: flex; justify-content: space-between; align-items: baseline; margin: 0; font-size: .85rem; }
 .survey_col_head small { color: var(--muted); font-weight: 600; }
@@ -313,7 +326,7 @@
 .survey_star[aria-pressed="true"] { color: var(--accent); }
 
 /* the key papers and authors the references share */
-.survey_keys { display: grid; gap: 10px; padding: 14px 16px; border: 1px solid var(--line); border-radius: var(--radius); }
+.survey_keys { display: grid; gap: 8px; }
 .survey_keys_head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; }
 .survey_keys_head h3 { margin: 0; font-size: 1rem; }
 .survey_keys_head small { color: var(--muted); }
@@ -325,7 +338,6 @@
 .survey_paper_text { display: grid; gap: 2px; flex: 1; min-width: 0; }
 .survey_paper_text strong { font-size: .9rem; overflow-wrap: anywhere; }
 .survey_paper_text small { color: var(--muted); font-size: .8rem; }
-.survey_sub { margin: 6px 0 0; font-size: .88rem; }
 .survey_chips { display: flex; flex-wrap: wrap; gap: 6px; }
 .survey_chip { display: inline-flex; align-items: center; gap: 6px; text-decoration: none; cursor: pointer; font: inherit; font-size: .82rem; }
 .survey_chip small { color: var(--muted); font-weight: 600; }
@@ -351,9 +363,7 @@
     .survey_step:not([data-state="current"]) { align-items: center; padding: 8px 10px; }
     .survey_step:not([data-state="current"]) .survey_step_text { display: flex; flex: 1; gap: 8px; align-items: baseline; }
     .survey_step:not([data-state="current"]) .survey_status { margin-left: auto; }
-    /* the columns one after another; empty ones fold away */
+    /* the columns one after another */
     .survey_board { grid-template-columns: 1fr; overflow: visible; }
-    .survey_col:has(.survey_empty) { padding: 8px 10px; }
-    .survey_col:has(.survey_empty) .survey_cards { display: none; }
     .survey_paper { flex-wrap: wrap; }
 }

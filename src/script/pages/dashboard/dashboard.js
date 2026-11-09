@@ -101,15 +101,73 @@ function render() {
 
     for (const el of $$('.section')) {
         const ofType = items.filter(i => i.type === el.dataset.type);
-        $('h3', el).textContent = `${SECTIONS[el.dataset.type].label} (${ofType.length})`;
-        $('.items', el).replaceChildren(...(ofType.length
-            ? ofType.map(itemRow)
+        // Summaries: your syntheses across papers, then each material's own Summary (written on its page, or in
+        // reading in passes), one item per paper
+        const extra = el.dataset.type === 'summary' ? materialSummaries() : [];
+        $('h3', el).textContent = `${SECTIONS[el.dataset.type].label} (${ofType.length + extra.length})`;
+        $('.items', el).replaceChildren(...(ofType.length || extra.length
+            ? [...ofType.map(itemRow), ...(extra.length ? [materialsHead(extra.length), ...extra] : [])]
             : [Object.assign(document.createElement('li'), { className: 'none', textContent: 'Nothing here yet.' })]));
     }
 
     renderStats();
     renderLiterature();
     renderWriting();
+}
+
+// ---- the materials' own summaries, in the Summaries box: one item per paper, opening the paper ----
+
+function materialsHead(count) {
+    const li = el('li', 'items_group', `From your materials (${count})`);
+    li.title = 'Each paper\'s Summary: written on its page, or section by section while reading in passes';
+    return li;
+}
+
+function materialSummaries() {
+    const sources = items.filter(i => i.type === 'source' && summaryOf(i).trim());
+    const style = project.citeStyle || 'apa';
+    return sources.sort((a, b) => b.updatedAt - a.updatedAt).map(source => {
+        const doc = Passes.parseSummary(summaryOf(source));
+        const li = el('li', 'item from_material');
+        li.tabIndex = 0;
+        li.dataset.source = source.id;
+        li.title = 'Read or edit its summary';
+        li.append(el('strong', '', source.title));
+        li.append(el('small', 'item_meta', shortCitation(source) || 'No authors yet'));
+        // what it says first: the main argument, else your words at the top, else its first section
+        const lead = doc.sections.find(x => x.title === 'The main argument')?.text || doc.intro || doc.sections[0]?.text || '';
+        if (lead.trim()) li.append(el('p', '', PaperLinks.preview(lead, items.filter(i => i.type === 'source'), style)));
+        const titles = doc.sections.filter(x => x.text.trim()).map(x => x.title);
+        if (titles.length) {
+            const chips = el('div', 'summary_parts');
+            chips.append(...titles.slice(0, 6).map(t => el('span', 'tag', t)), ...(titles.length > 6 ? [el('small', '', `+${titles.length - 6}`)] : []));
+            li.append(chips);
+        }
+        return li;
+    });
+}
+
+// a material's summary in a popup: each section with its own Edit, or all of it at once (writing/summary_editor.js)
+let summaryEditor = null;
+let summarySource = null;
+function openSummary(id) {
+    const source = items.find(i => i.id === id);
+    if (!source) return;
+    summarySource = id;
+    $('#summary_modal_title').textContent = source.title;
+    $('#summary_modal_meta').textContent = [shortCitation(source), Passes.label(items.find(i => i.type === 'passes' && i.sourceId === id))].filter(Boolean).join(' · ');
+    $('#summary_modal_open').href = 'material.html?id=' + encodeURIComponent(id);
+    summaryEditor ??= SummaryEditor.create($('#summary_modal_body'), {
+        get: () => summaryOf(Store.getItem(summarySource) || {}),
+        save: summary => {
+            Store.saveItem({ id: summarySource, summary });
+            render();
+        },
+        linkify: text => PaperLinks.withLinks(text, items.filter(i => i.type === 'source'), project.citeStyle || 'apa'),
+        editAll: true,
+    });
+    summaryEditor.render();
+    openModal($('#summary_modal'));
 }
 
 function itemRow(item) {
@@ -326,6 +384,7 @@ $('.workspace').addEventListener('click', e => {
     const add = e.target.closest('.add');
     if (add) return openForm(null, add.closest('.section').dataset.type);
     const row = e.target.closest('.item');
+    if (row?.dataset.source) return openSummary(row.dataset.source); // (a material's summary)
     if (row) openForm(items.find(i => i.id === row.dataset.id));
 });
 $('.workspace').addEventListener('keydown', e => {

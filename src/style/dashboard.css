@@ -137,3 +137,12 @@
 }
 
 .item_form .shortcut { align-self: center; color: var(--muted); font-size: .75rem; }
+
+/* the Summaries box: the materials' own summaries after your syntheses (dashboard.js) */
+.items .items_group { margin-top: 6px; font-size: .78rem; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); list-style: none; }
+.item.from_material .item_meta { display: block; color: var(--muted); font-size: .78rem; }
+.item.from_material p { display: -webkit-box; -webkit-line-clamp: 3; line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.summary_parts { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
+.summary_parts small { color: var(--muted); align-self: center; }
+.summary_modal_body { max-height: 60vh; overflow: auto; }
+.summary_modal h2 { margin-bottom: 2px; }

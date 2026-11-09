@@ -34,6 +34,26 @@ const SurveyBoard = (() => {
     };
 
     // ---- drawing ----
+    // Each part folds away (its state kept on this device, per project): the steps to one line saying where you
+    // are, the board to its counts, the references' findings each on their own.
+
+    const FOLD_KEY = 'research_board_survey_folds';
+    const folds = () => { try { return JSON.parse(localStorage.getItem(FOLD_KEY + ':' + project.id)) || {}; } catch { return {}; } };
+    function keepFold(id, open) {
+        try { localStorage.setItem(FOLD_KEY + ':' + project.id, JSON.stringify({ ...folds(), [id]: open })); } catch { }
+    }
+    // a part that folds: its title (and a count or a few words) always shown, the rest on a click
+    function fold(id, title, note, content, openFirst) {
+        const box = el('details', 'survey_fold');
+        box.dataset.fold = id;
+        box.open = folds()[id] ?? openFirst;
+        const head = el('summary', 'survey_fold_head');
+        head.append(el('span', 'survey_fold_title', title));
+        if (note) head.append(el('small', 'survey_fold_note', note));
+        box.append(head, ...[].concat(content).filter(Boolean));
+        box.addEventListener('toggle', () => keepFold(id, box.open));
+        return box;
+    }
 
     function render() {
         const on = view() === 'survey';
@@ -46,7 +66,13 @@ const SurveyBoard = (() => {
         const records = Survey.recordsOf(items);
         const keys = lastKeys = Survey.keyPapers(all, records, surveysUsed());
         const { list, current } = Survey.steps(all, records, seeds(), keys.papers.length);
-        $('#survey').replaceChildren(stepsRow(list, current), board(shownSources(), records), keyPanel(keys, all, records));
+        const step = list.find(s => s.n === current);
+        const shown = shownSources();
+        $('#survey').replaceChildren(
+            fold('steps', `Step ${current} of 4: ${step.title}`, step.status, stepsRow(list, current), !seeds().length),
+            fold('board', 'Your papers by pass', `${shown.length} paper${shown.length === 1 ? '' : 's'}`, board(shown, records), true),
+            keyPanel(keys, all, records),
+        );
     }
 
     function stepsRow(list, current) {
@@ -67,22 +93,27 @@ const SurveyBoard = (() => {
         return ol;
     }
 
+    // the columns with papers in them; the empty ones named in one line under the board
     function board(sources, records) {
         const box = el('div', 'survey_board');
         const byColumn = new Map(Survey.COLUMNS.map(([id]) => [id, []]));
         for (const source of sources) byColumn.get(Survey.column(records.get(source.id))).push(source);
+        const empty = [];
         for (const [id, label] of Survey.COLUMNS) {
             const list = byColumn.get(id).sort((a, b) => Number(seeds().includes(b.id)) - Number(seeds().includes(a.id)));
+            if (!list.length) { empty.push(label); continue; }
             const col = el('section', 'survey_col');
             col.dataset.col = id;
             const head = el('h4', 'survey_col_head');
             head.append(el('span', '', label), el('small', '', String(list.length)));
             const ul = el('ul', 'survey_cards');
-            ul.append(...(list.length ? list.map(source => card(source, records.get(source.id))) : [el('li', 'survey_empty', '—')]));
+            ul.append(...list.map(source => card(source, records.get(source.id))));
             col.append(head, ul);
             box.append(col);
         }
-        return box;
+        box.style.setProperty('--cols', Math.max(1, Survey.COLUMNS.length - empty.length));
+        if (!sources.length) return el('p', 'survey_hint', 'No papers match the filters.');
+        return [box, empty.length ? el('p', 'survey_hint survey_empty_cols', `Nothing yet in: ${empty.join(', ')}.`) : null];
     }
 
     function card(source, record) {
@@ -106,16 +137,17 @@ const SurveyBoard = (() => {
         return li;
     }
 
+    // what the references of the first-passed papers share: each part folds on its own
     function keyPanel(keys, all, records) {
         const box = el('section', 'survey_keys');
         const head = el('header', 'survey_keys_head');
-        head.append(el('h3', '', 'Key papers'));
+        head.append(el('h3', '', 'From their references'));
         head.append(el('small', '', keys.pool.length
-            ? `From the references of ${keys.pool.length} paper${keys.pool.length === 1 ? '' : 's'} you've had a first pass on`
-            : 'From the references of the papers you\'ve had a first pass on'));
+            ? `What the ${keys.pool.length} paper${keys.pool.length === 1 ? '' : 's'} you've had a first pass on cite`
+            : 'What the papers you\'ve had a first pass on cite'));
         box.append(head);
         if (!keys.pool.length) {
-            box.append(el('p', 'hint', 'Have a first pass on your seed papers (Passes, on a paper\'s page): the works, authors and venues their references share show here.'));
+            box.append(el('p', 'survey_hint', 'Have a first pass on your seed papers (Passes, on a paper\'s page): the works, authors and venues their references share show here.'));
             return box;
         }
         const shortOf = id => { const s = all.find(x => x.id === id); return s ? shortCitation(s) || s.title : ''; };
@@ -129,41 +161,43 @@ const SurveyBoard = (() => {
                 const li = el('li', 'survey_paper survey_offer');
                 const text = el('div', 'survey_paper_text');
                 text.append(el('strong', '', s.title), el('small', '', used
-                    ? `Its ${s.references.length} reference${s.references.length === 1 ? ' is' : 's are'} among your key papers below.`
+                    ? `Its ${s.references.length} reference${s.references.length === 1 ? ' is' : 's are'} among your key papers.`
                     : `A survey paper: its ${s.references.length} reference${s.references.length === 1 ? '' : 's'} can be your key papers.`));
                 li.append(el('span', 'badge survey_count', 'Survey'), text,
                     button('btn small' + (used ? '' : ' primary'), used ? 'Stop using' : 'Use its references', { survey: s.id }));
                 list.append(li);
             }
-            box.append(list);
+            box.append(fold('surveys', 'Survey papers', `${surveys.length}`, list, !surveysUsed().length));
         }
 
+        // the key papers
+        let papers;
         if (keys.pool.length < 2 && !surveysUsed().length) {
-            box.append(el('p', 'hint', 'One paper so far: have a first pass on another, and what their references share shows here.'));
+            papers = el('p', 'survey_hint', 'One paper so far: have a first pass on another, and what their references share shows here.');
         } else if (!keys.papers.length) {
-            box.append(el('p', 'hint', 'No work is cited by two of these papers yet (or you have them all).'));
+            papers = el('p', 'survey_hint', 'No work is cited by two of these papers yet (or you have them all).');
+        } else {
+            const shown = morePapers ? keys.papers : keys.papers.slice(0, SHOW_PAPERS);
+            const list = el('ol', 'survey_papers');
+            for (const work of shown) {
+                const li = el('li', 'survey_paper');
+                const text = el('div', 'survey_paper_text');
+                const cited = work.citers.length > 1 ? `Cited by ${work.citers.length}: ${work.citers.map(shortOf).join('; ')}`
+                    : work.followUp ? `You marked it to follow up in ${shortOf(work.citers[0])}`
+                    : `From the survey ${shortOf(work.citers[0])}`;
+                text.append(el('strong', '', work.title), el('small', '', cited));
+                const add = button('btn small', busy.has(work.key) ? 'Looking up…' : '+ Add', { add: work.key }, 'Add it to the project (its details are looked up)');
+                add.disabled = busy.has(work.key);
+                const count = el('span', 'badge survey_count', String(work.citers.length));
+                count.title = `Cited by ${work.citers.length} of your papers`;
+                li.append(count, text, add);
+                list.append(li);
+            }
+            papers = [list, keys.papers.length > SHOW_PAPERS ? button('link', morePapers ? 'Fewer' : `All ${keys.papers.length}`, { more: '' }) : null];
         }
-        const shown = morePapers ? keys.papers : keys.papers.slice(0, SHOW_PAPERS);
-        const list = el('ol', 'survey_papers');
-        for (const work of shown) {
-            const li = el('li', 'survey_paper');
-            const text = el('div', 'survey_paper_text');
-            const cited = work.citers.length > 1 ? `Cited by ${work.citers.length}: ${work.citers.map(shortOf).join('; ')}`
-                : work.followUp ? `You marked it to follow up in ${shortOf(work.citers[0])}`
-                : `From the survey ${shortOf(work.citers[0])}`;
-            text.append(el('strong', '', work.title), el('small', '', cited));
-            const add = button('btn small', busy.has(work.key) ? 'Looking up…' : '+ Add', { add: work.key }, 'Add it to the project (its details are looked up)');
-            add.disabled = busy.has(work.key);
-            const count = el('span', 'badge survey_count', String(work.citers.length));
-            count.title = `Cited by ${work.citers.length} of your papers`;
-            li.append(count, text, add);
-            list.append(li);
-        }
-        if (keys.papers.length) box.append(list);
-        if (keys.papers.length > SHOW_PAPERS) box.append(button('link', morePapers ? 'Fewer' : `All ${keys.papers.length}`, { more: '' }));
+        box.append(fold('papers', 'Key papers', keys.papers.length ? `${keys.papers.length} to add` : '', papers, true));
 
         if (keys.authors.length) {
-            box.append(el('h4', 'survey_sub', 'Authors who keep coming up'));
             const chips = el('div', 'survey_chips');
             for (const a of keys.authors.slice(0, 16)) {
                 // with papers in the project: the Literature tab's own author filter; else their papers on Google Scholar
@@ -181,20 +215,19 @@ const SurveyBoard = (() => {
                 chip.append(el('span', '', a.name), el('small', '', String(a.citers.length)));
                 chips.append(chip);
             }
-            box.append(chips);
+            box.append(fold('authors', 'Authors who keep coming up', `${keys.authors.length}`, chips, false));
         }
 
         // where the field publishes: each venue a click from its recent papers (Keshav: scan the top venues)
         if (keys.venues.length) {
-            box.append(el('h4', 'survey_sub', 'Where the field publishes'));
-            box.append(el('p', 'survey_hint', 'The venues these references cite most. Open one to scan its recent papers.'));
             const chips = el('div', 'survey_chips');
             for (const v of keys.venues.slice(0, 12)) {
                 const chip = button('tag_chip survey_chip', '', { venue: v.key }, `Cited ${v.cites} times, in ${v.citers.length} of your papers. Scan its recent papers`);
                 chip.append(el('span', '', v.label), el('small', '', String(v.cites)));
                 chips.append(chip);
             }
-            box.append(chips);
+            box.append(fold('venues', 'Where the field publishes', `${keys.venues.length}`,
+                [el('p', 'survey_hint', 'The venues these references cite most. Open one to scan its recent papers.'), chips], false));
         }
         return box;
     }

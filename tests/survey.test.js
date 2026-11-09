@@ -136,6 +136,7 @@ const { startServer, launchBrowser, tester, wait } = require('./helpers');
         await tab.evaluate(() => {
             Survey.searchWorks = async () => [{ id: 'W2', cited: 300, fields: { title: 'A much cited recent paper', kind: 'article', authors: [], venue: 'Nature', published: '2023', doi: '10.1/cited', keywords: [], abstract: '', pdfUrl: '', url: '' } }];
         });
+        await tab.evaluate(() => { document.querySelector('.survey_fold[data-fold="steps"]').open = true; });
         await tab.click('[data-find]');
         await wait(200);
         await tab.type('#works_query', 'reading');
@@ -173,6 +174,38 @@ const { startServer, launchBrowser, tester, wait } = require('./helpers');
         if (cards.join() !== 'Paper G') return 'the board shows ' + cards.join(', ');
         await tab.evaluate(() => document.querySelector('#author_filter .author_clear')?.click());
         await wait(300);
+    });
+
+    await t.test('the parts fold, and stay as you left them', async () => {
+        const parts = await tab.$$eval('.survey_fold', f => f.map(x => x.dataset.fold));
+        for (const part of ['steps', 'board', 'papers', 'authors', 'venues']) if (!parts.includes(part)) return 'no fold for ' + part + ': ' + parts;
+        await tab.evaluate(() => { const f = document.querySelector('.survey_fold[data-fold="authors"]'); f.open = true; });
+        await wait(100);
+        await tab.evaluate(() => window.render());
+        await wait(200);
+        if (!(await tab.$eval('.survey_fold[data-fold="authors"]', f => f.open))) return 'not kept open';
+        if (await tab.$('.survey_col .survey_empty')) return 'an empty column is still drawn';
+    });
+
+    await t.test('the Summaries box holds each material’s summary as its own item', async () => {
+        const rows = await tab.$$eval('.section[data-type="summary"] .item.from_material', r => r.map(x => x.textContent));
+        if (!rows.some(r => r.includes('Paper A') && r.includes('Category'))) return 'items: ' + rows.join(' | ');
+    });
+
+    await t.test('a material summary opens in a popup to read and edit, section by section', async () => {
+        await tab.evaluate(() => [...document.querySelectorAll('.section[data-type="summary"] .item.from_material')].find(r => r.textContent.includes('Paper A')).click());
+        await wait(300);
+        if (await tab.$eval('#summary_modal', m => m.hidden)) return 'no popup';
+        if (!/A measurement study/.test(await tab.$eval('#summary_modal_body', b => b.textContent))) return 'the summary is not shown';
+        await tab.click('#summary_modal_body .sum_sec[data-title="Category"] [data-edit]');
+        await wait(200);
+        await tab.$eval('#summary_modal_body textarea', a => { a.value = 'A careful measurement study'; });
+        await tab.click('#summary_modal_body [data-save]');
+        await wait(800);
+        const a = (await (await api('GET', 'boot')).json()).data.items.find(i => i.id === 'a');
+        if (!/### Category\nA careful measurement study/.test(a.summary)) return 'not saved: ' + JSON.stringify(a.summary);
+        if (!/A careful measurement study/.test(await tab.$eval('#summary_modal_body', b => b.textContent))) return 'the popup did not show the change';
+        await tab.click('#summary_modal [data-close]');
     });
 
     await t.test('the view is remembered; List brings the list back', async () => {

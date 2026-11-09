@@ -165,6 +165,18 @@
     </template>
 
     <div class="modals" id="modals" hidden>
+        <!-- a material's Summary, from the Summaries box: read it, edit a section or all of it (dashboard.js) -->
+        <div class="modal wide summary_modal" id="summary_modal" hidden>
+            <h2 id="summary_modal_title"></h2>
+            <p class="hint" id="summary_modal_meta"></p>
+            <div class="summary_modal_body" id="summary_modal_body"></div>
+            <div class="actions">
+                <a class="btn" id="summary_modal_open">Open the paper ↗</a>
+                <span class="spacer"></span>
+                <button type="button" class="btn primary" data-close>Done</button>
+            </div>
+        </div>
+
         <!-- papers from OpenAlex: to start a survey from, or a venue's recent ones (pages/dashboard/survey.js) -->
         <form class="modal wide works_modal" id="works_modal" hidden>
             <h2 id="works_title">Find papers</h2>
@@ -382,6 +394,7 @@
     <script data-src="../script/writing/mdbar.js"></script>
     <script data-src="../script/writing/citepicker.js"></script>
     <script data-src="../script/writing/mdimages.js"></script>
+    <script data-src="../script/writing/summary_editor.js"></script>
     <script data-src="../script/reader/documents.js"></script>
     <script data-src="../script/sources/sources.js"></script>
     <script data-src="../script/sources/authorfilter.js"></script>

@@ -599,17 +599,6 @@ body.side_collapsed .side { display: none; }
 .answer { padding-top: 6px; border-top: 1px dashed var(--line); }
 
 .md_field header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
-/* the Summary in sections (material_summary.js): each under its heading, with its own Edit */
-.sum_sec { margin: 0 0 10px; }
-.sum_sec + .sum_sec { padding-top: 8px; border-top: 1px solid var(--line); }
-.sum_head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
-.sum_head h4 { margin: 0 0 2px; font-size: .9rem; }
-.sum_head .link:only-child { margin-left: auto; }
-.sum_sec .md > :first-child { margin-top: 0; }
-.sum_sec .md > :last-child { margin-bottom: 0; }
-.sum_sec textarea { width: 100%; box-sizing: border-box; margin-top: 4px; resize: vertical; }
-.sum_sec .actions { margin-top: 6px; }
-.sum_add { margin-top: 2px; }
 .md_edit textarea { width: 100%; }
 
 .text_form textarea { width: 100%; }
