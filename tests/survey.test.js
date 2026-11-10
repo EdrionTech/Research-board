@@ -28,6 +28,9 @@ const { startServer, launchBrowser, tester, wait } = require('./helpers');
         source('g', 'Paper G', [], { authors: [{ firstName: 'Ashish', lastName: 'Vaswani' }] }),
         source('f', 'Paper F', [], { text: ['# Introduction', '', 'Why it matters.', '', '## Related work', '', 'Others did this before.', '', '## Method', '', 'What we did.'].join('\n') }),
         passes('pe', 'e', { pass: 1, state: 'stopped', passes: { 1: { doneAt: now } } }),
+        // highlights across papers: enough to need scrolling, one about timing
+        ...Array.from({ length: 24 }, (_, i) => ({ id: 'h' + i, projectId: 'p1', type: 'source_note', sourceId: i % 2 ? 'a' : 'b', color: 'yellow',
+            quote: i === 7 ? 'Each pass was timed carefully.' : `A highlighted passage number ${i}.`, body: '', page: String(i + 1), createdAt: now, updatedAt: now })),
         passes('pa', 'a', { pass: 2, state: 'reading', passes: { 1: { doneAt: now }, 2: {} } }),
         passes('pb', 'b', { pass: 1, state: 'stopped', passes: { 1: { doneAt: now } } }),
         passes('pc', 'c', { pass: 1, state: 'reading', passes: { 1: { activeMs: 120000 } } }),
@@ -206,6 +209,21 @@ const { startServer, launchBrowser, tester, wait } = require('./helpers');
         if (!/### Category\nA careful measurement study/.test(a.summary)) return 'not saved: ' + JSON.stringify(a.summary);
         if (!/A careful measurement study/.test(await tab.$eval('#summary_modal_body', b => b.textContent))) return 'the popup did not show the change';
         await tab.click('#summary_modal [data-close]');
+    });
+
+    await t.test('highlights across papers: a box of its own height, and searchable', async () => {
+        const box = await tab.$eval('#highlight_list', l => ({ client: l.clientHeight, scroll: l.scrollHeight, overflow: getComputedStyle(l).overflowY }));
+        if (box.overflow !== 'auto' || box.scroll <= box.client) return 'does not scroll inside its box: ' + JSON.stringify(box);
+        await tab.type('#highlight_search', 'timed');
+        await wait(200);
+        const shown = await tab.$$eval('#highlight_list .highlight_text', b => b.map(x => x.textContent));
+        if (shown.join() !== 'Each pass was timed carefully.') return 'the search shows: ' + shown.join(' | ');
+        if (await tab.$eval('#highlight_count', c => c.textContent) !== '1 of 24') return 'count: ' + await tab.$eval('#highlight_count', c => c.textContent);
+        // by the colour's name (yellow is "Important")
+        await tab.$eval('#highlight_search', i => { i.value = 'important timed'; i.dispatchEvent(new Event('input')); });
+        await wait(200);
+        if ((await tab.$$('#highlight_list .highlight')).length !== 1) return 'every word must match: ' + (await tab.$$('#highlight_list .highlight')).length;
+        await tab.$eval('#highlight_search', i => { i.value = ''; i.dispatchEvent(new Event('input')); });
     });
 
     await t.test('the view is remembered; List brings the list back', async () => {

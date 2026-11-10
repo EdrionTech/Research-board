@@ -105,6 +105,9 @@ function renderHighlights() {
     $('#highlight_filter').replaceChildren(chip('', 'All', notes.length),
         ...withNotes.map(c => chip(c.id, c.label, notes.filter(n => n.color === c.id).length, c.hex)));
     const list = highlightNotes();
+    const query = highlightQuery();
+    const all = query ? highlightNotes('') : list;
+    $('#highlight_count').textContent = query ? `${list.length} of ${all.length}` : `${list.length} highlight${list.length === 1 ? '' : 's'}`;
     $('#copy_highlights').disabled = !list.length;
     $('#highlight_list').replaceChildren(...(list.length ? list.map(({ note, source }, i) => {
         const li = el('li', 'highlight');
@@ -121,7 +124,7 @@ function renderHighlights() {
         li.append(open, where);
         if (note.quote && note.body) li.append(el('p', 'highlight_note', snippetOf(note.body)));
         return li;
-    }) : [el('li', 'none', 'No coloured notes yet. On a source\'s page, pick a colour when you attach a note.')]));
+    }) : [el('li', 'none', query ? 'No highlights match the search.' : 'No coloured notes yet. On a source\'s page, pick a colour when you attach a note.')]));
 }
 
 const paperLink = (note, source) => materialUrl(source.id) + '#note=' + encodeURIComponent(note.id);
@@ -131,12 +134,19 @@ const highlightCite = source => [firstAuthor(source) + (source.authors?.length >
 // "p. 3", "§2 ¶4" or, in pasted text, "l. 12"
 const locatorOfNote = note => (note.page ? 'p. ' + note.page : note.where || (note.line ? 'l. ' + note.line : '')).replace(/\s*·\s*(area|image)$/, '');
 
-// the notes of the chosen colour (or of every colour), paper by paper in library order, in reading order inside a paper
-function highlightNotes() {
+// the notes of the chosen colour (or of every colour) that match the search, paper by paper in library order, in
+// reading order inside a paper
+const highlightQuery = () => $('#highlight_search').value.trim().toLowerCase();
+function highlightNotes(query = highlightQuery()) {
     const order = (a, b) => (Number(a.page) || 0) - (Number(b.page) || 0) || (Number(a.line) || 0) - (Number(b.line) || 0) || a.createdAt - b.createdAt;
     const wanted = n => (highlightColor ? n.color === highlightColor : !!NoteColors.find(project, n.color));
-    return sourceItems().sort(byAuthor).flatMap(source => notesOf(source).filter(wanted).sort(order).map(note => ({ note, source })));
+    // every word of the search somewhere in the passage, your note, the paper (title, authors, year) or the colour's name
+    const words = query.split(/\s+/).filter(Boolean);
+    const matches = (note, source) => !words.length || words.every(w => [note.quote, note.body, note.answer, source.title, highlightCite(source),
+        authorsLine(source), NoteColors.find(project, note.color)?.label].join(' ').toLowerCase().includes(w));
+    return sourceItems().sort(byAuthor).flatMap(source => notesOf(source).filter(wanted).filter(n => matches(n, source)).sort(order).map(note => ({ note, source })));
 }
+$('#highlight_search').addEventListener('input', renderHighlights);
 
 $('#open_colors').onclick = () => {
     colorEditor.render();
