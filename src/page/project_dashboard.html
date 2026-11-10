@@ -55,6 +55,8 @@
                 <label class="style_pick" title="Used in the review, on source pages and in bibliography exports">
                     Citation style <select id="project_cite_style"></select>
                 </label>
+                <!-- a first structure for the review from what your reading gathered (pages/dashboard/wizard.js) -->
+                <button type="button" class="btn" data-open-wizard title="Write a first structure for the review from your papers' summaries">From your reading…</button>
                 <a class="btn primary" id="open_review">Open editor</a>
             </div>
 
@@ -165,6 +167,23 @@
     </template>
 
     <div class="modals" id="modals" hidden>
+        <!-- from your reading to a literature review: kind and papers, structure, the skeleton (pages/dashboard/wizard.js) -->
+        <form class="modal wide wizard_modal" id="wizard_modal" hidden>
+            <h2>Write the review from your reading</h2>
+            <div class="segmented wizard_steps" id="wizard_steps" role="radiogroup" aria-label="Steps">
+                <button type="button" role="radio" data-step="1" aria-checked="true">1 Kind and papers</button>
+                <button type="button" role="radio" data-step="2" aria-checked="false">2 Structure</button>
+                <button type="button" role="radio" data-step="3" aria-checked="false">3 Skeleton</button>
+            </div>
+            <div class="wizard_body" id="wizard_body"></div>
+            <div class="actions">
+                <button type="button" class="btn" id="wizard_back">Back</button>
+                <span class="spacer"></span>
+                <button type="button" class="btn" data-close>Cancel</button>
+                <button type="submit" class="btn primary" id="wizard_next">Next</button>
+            </div>
+        </form>
+
         <!-- a material's Summary, from the Summaries box: read it, edit a section or all of it (dashboard.js) -->
         <div class="modal wide summary_modal" id="summary_modal" hidden>
             <h2 id="summary_modal_title"></h2>
@@ -395,6 +414,7 @@
     <script data-src="../script/writing/citepicker.js"></script>
     <script data-src="../script/writing/mdimages.js"></script>
     <script data-src="../script/writing/summary_editor.js"></script>
+    <script data-src="../script/writing/review_plan.js"></script>
     <script data-src="../script/reader/documents.js"></script>
     <script data-src="../script/sources/sources.js"></script>
     <script data-src="../script/sources/authorfilter.js"></script>
@@ -412,6 +432,7 @@
     <script data-src="../script/pages/dashboard/dashboard.js"></script>
     <script data-src="../script/pages/dashboard/literature.js"></script>
     <script data-src="../script/pages/dashboard/survey.js"></script>
+    <script data-src="../script/pages/dashboard/wizard.js"></script>
     <script data-src="../script/pages/dashboard/writing.js"></script>
 </body>
 

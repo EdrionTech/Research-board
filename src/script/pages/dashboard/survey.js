@@ -87,6 +87,8 @@ const SurveyBoard = (() => {
             if (s.n === current) text.append(el('p', 'survey_hint', s.hint));
             // step 1: find recent, much-cited papers to start from
             if (s.n === 1) text.append(button('btn small survey_find', 'Find papers…', { find: '' }, 'Search for recent, much-cited papers on your subject (OpenAlex)'));
+            // and then: a first structure for the literature review, from what the passes gathered
+            if (s.n === 4) text.append(button('btn small survey_find', 'Write the review…', { wizard: '' }, 'A first structure for your literature review, from the papers\' summaries'));
             li.append(num, text);
             ol.append(li);
         }
@@ -370,6 +372,7 @@ const SurveyBoard = (() => {
             }
             if (b.dataset.venue) return openWorks('venue', lastKeys?.venues.find(v => v.key === b.dataset.venue));
             if (b.dataset.find !== undefined) return openWorks('seed');
+            if (b.dataset.wizard !== undefined) return ReviewWizard.open();
             if (b.dataset.more !== undefined) { morePapers = !morePapers; render(); }
         });
         $('#works_modal').addEventListener('submit', e => {

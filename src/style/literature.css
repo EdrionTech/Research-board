@@ -367,3 +367,31 @@
     .survey_board { grid-template-columns: 1fr; overflow: visible; }
     .survey_paper { flex-wrap: wrap; }
 }
+
+/* the wizard: from your reading to a literature review (pages/dashboard/wizard.js) */
+.wizard_modal { display: grid; gap: 12px; }
+.wizard_steps { justify-self: start; }
+.wizard_body { display: grid; gap: 14px; max-height: 62vh; overflow: auto; padding-right: 2px; }
+.wizard_kinds, .wizard_dest { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 8px; }
+.btn.wizard_kind { display: grid; gap: 2px; justify-items: start; height: auto; padding: 10px 12px; text-align: left; white-space: normal; }
+.wizard_kind small { font-weight: normal; opacity: .85; }
+.wizard_field { display: grid; gap: 4px; }
+.wizard_field input, .wizard_field textarea { width: 100%; box-sizing: border-box; }
+.wizard_field .hint { font-size: .8rem; color: var(--muted); }
+.wizard_papers_head { display: flex; align-items: baseline; gap: 12px; }
+.wizard_papers { display: grid; gap: 2px; margin: 0; padding: 0; list-style: none; max-height: 240px; overflow: auto; }
+.wizard_papers .check { align-items: baseline; flex-wrap: wrap; padding: 4px 6px; border-radius: 6px; }
+.wizard_papers .check:hover { background: var(--bg); }
+.wizard_papers .check span { flex: 1 1 14em; min-width: 0; }
+.wizard_papers .hint { flex-basis: 100%; padding-left: 22px; font-size: .78rem; color: var(--muted); }
+.wizard_theme { display: grid; gap: 6px; padding: 10px 12px; border: 1px solid var(--line); border-radius: var(--radius); }
+.wizard_theme.unsorted { border-style: dashed; }
+.wizard_theme_head { display: flex; align-items: center; gap: 10px; }
+.wizard_theme_name { flex: 1; min-width: 0; font-weight: 600; }
+.wizard_theme_papers { display: grid; gap: 4px; margin: 0; padding: 0; list-style: none; }
+.wizard_theme_papers li { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; font-size: .88rem; }
+.wizard_theme_papers li > span { flex: 1 1 14em; min-width: 0; overflow-wrap: anywhere; }
+.wizard_theme_papers .hint { color: var(--muted); font-size: .82rem; }
+.wizard_theme_papers select { max-width: 14em; }
+.wizard_order { margin: 0; font-size: .9rem; }
+.wizard_preview { max-height: 38vh; overflow: auto; padding: 10px 14px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--bg); }

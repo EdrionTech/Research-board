@@ -90,6 +90,21 @@ Literature tab → **List | Survey**. The search, status, tag and author filters
 
 Data: on the project, `surveySeeds` and `surveyFrom` (the survey papers whose references you use), both `[sourceId]`; a key paper is a source with `surveyKey: true` (and `citedIn` when it came from references). Code: `src/script/sources/survey.js` (columns, steps, key papers, venues, the OpenAlex searches), `src/script/pages/dashboard/survey.js` (the board and the papers popup), `References.identity` / `toSource` and `fieldsFromOpenAlex` (shared). Tests: `tests/survey.test.js` (OpenAlex faked).
 
+## From your reading to a literature review (built)
+
+**From your reading…** on the Literature tab's review card (or **Write the review…** in the survey's last step) opens a wizard in three steps:
+
+1. **Kind and papers.** *By theme*: the usual literature review or related-work section. *Paper by paper*: a review of each paper in turn. A title, the question it answers (it opens the introduction), and the papers: to start with, every paper with a summary or a pass.
+2. **Structure.** By theme: themes suggested by **shared citations** (papers citing two or more of the same works, named after the work they share most), **your tags**, **Category** (the usual kinds of paper by their words: user studies, experiments, new designs…, else the Category's own words), or **start empty**. Rename them, add or remove them, move papers between them; the papers in none are listed apart. Paper by paper: their order (by year, author or title).
+3. **Skeleton.** A preview, and where it goes: **into the literature review** (it becomes the review if that's empty, else it's added at the end) or **as a new draft** in Writing (the choice when the review already has text). Then it opens in the editor.
+
+What it writes, from each paper's Summary:
+
+- **By theme:** Introduction (your question; the seed papers' *What the field has done*, cited) · a section per theme: its papers cited together, then each one's main argument as a cited point to rewrite (its contributions or Category when there's no argument yet) · Gaps and open questions: every paper's weak spots, missing work and ideas for future work, cited · Conclusion.
+- **Paper by paper:** Introduction · a section per paper, cited: what it is, its argument, contributions, weak spots, future work · Comparing them · Gaps and open questions · Conclusion.
+
+Code: `src/script/writing/review_plan.js` (themes, the skeleton), `src/script/pages/dashboard/wizard.js` (the wizard). Tests: `tests/wizard.test.js`.
+
 ## Still to build
 
 - **Review page:** a side panel of the five Cs and pass 2 summaries, each a click from a `[@key]` citation.
