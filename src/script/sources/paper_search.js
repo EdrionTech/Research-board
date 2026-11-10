@@ -1,15 +1,17 @@
-// Find papers (OpenAlex), in one popup used wherever materials are added: a project's Literature tab and the
+// Find papers (OpenAlex, and Crossref when OpenAlex doesn't know a title or reference), in one popup used wherever materials are added: a project's Literature tab and the
 // Library ("Find papers…"), and the survey board (papers to start from, a venue's recent papers).
 //   By subject:   the most-cited papers whose title or abstract has your words (the last five years, or any time)
 //   By title:     a title, a whole reference, a DOI or an arXiv link: the paper it is (closest matches first)
 // Each result shows its authors, venue, year and citations, its abstract a click away, and what you can do with it:
 // add it (to the project, or the Library), add it as a survey seed, or say where it already is.
-//   PaperSearch.open({ projectId, mode: 'add' | 'seed' | 'venue', venue, extra, onAdded(id), title, intro })
+//   PaperSearch.open({ projectId, mode: 'add' | 'seed' | 'venue', venue, extra, onAdded(id), title, intro,
+//                      by: 'subject' | 'title', query })   – query: searched at once (the Add material form)
 // The popup builds itself inside the page's #modals (core/ui.js). Uses sources.js (fieldsFromOpenAlex,
-// lookupMaterial, findDoi, findArxivId).
+// fieldsFromCrossref, lookupMaterial, findDoi, findArxivId) and references.js (References.parse).
 
 const PaperSearch = (() => {
     const OPENALEX = 'https://api.openalex.org/';
+    const norm = text => (text || '').toLowerCase().normalize('NFKD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, ' ').trim();
     const yearsAgo = n => `${new Date().getFullYear() - n}-01-01`;
     async function getJson(url) {
         const res = await fetch(url);
@@ -45,10 +47,35 @@ const PaperSearch = (() => {
         const parsed = References.parse(query).title || '';
         const reference = /\b(19|20)\d{2}\b/.test(query) && parsed.length >= 12 && parsed.length < query.length - 10;
         const title = reference ? parsed : query.slice(0, 200);
-        const found = ((await getJson(`${OPENALEX}works?search=${encodeURIComponent(title)}&per-page=10`)).results || []).map(asResult);
+        let found = await getJson(`${OPENALEX}works?search=${encodeURIComponent(title)}&per-page=10`).then(r => (r.results || []).map(asResult)).catch(() => []);
+        // OpenAlex has no paper with this title: Crossref, which matches whole references well (its own list after)
+        if (!found.some(r => overlap(r.fields.title, title) >= 0.8)) {
+            const more = await crossref(reference ? query : title).catch(() => []);
+            const dois = new Set(found.map(r => r.fields.doi?.toLowerCase()).filter(Boolean));
+            const good = more.filter(r => !dois.has(r.fields.doi?.toLowerCase()));
+            found = [...good.filter(r => overlap(r.fields.title, title) >= 0.8), ...found, ...good.filter(r => overlap(r.fields.title, title) < 0.8)];
+            if (!found.length && !more.length) throw new Error('nothing reachable'); // (both out of reach: say so)
+        }
         // the reference's own year first (the same title can be several papers)
         const year = reference && References.parse(query).published;
         return year ? [...found].sort((a, b) => Number(b.fields.published?.startsWith(year)) - Number(a.fields.published?.startsWith(year))) : found;
+    }
+
+    // how many of a found title's words are in what you typed (1 = all of them)
+    function overlap(found, typed) {
+        const words = norm(found).split(' ').filter(w => w.length > 2);
+        const have = new Set(norm(typed).split(' '));
+        return words.length ? words.filter(w => have.has(w)).length / words.length : 0;
+    }
+
+    // Crossref's bibliographic search: a reference or a title → its likely papers
+    async function crossref(text) {
+        const res = await fetch('https://api.crossref.org/works?rows=6&query.bibliographic=' + encodeURIComponent(text.slice(0, 400)));
+        if (!res.ok) throw new Error(`Crossref answered ${res.status}`);
+        return ((await res.json()).message?.items || []).filter(w => w.title?.[0]).map(work => ({
+            id: work.DOI, cited: work['is-referenced-by-count'] ?? null, from: 'Crossref',
+            fields: { ...fieldsFromCrossref(work), url: work.DOI ? 'https://doi.org/' + work.DOI : work.URL || '' },
+        }));
     }
 
     // the venue OpenAlex knows by that name (the one with the most works among the close matches), or null
@@ -77,7 +104,6 @@ const PaperSearch = (() => {
     let by = 'subject';
     let recent = true;
     const $m = sel => modal.querySelector(sel);
-    const norm = text => (text || '').toLowerCase().normalize('NFKD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, ' ').trim();
     const button = (cls, label, data = {}) => {
         const b = el('button', cls, label);
         b.type = 'button';
@@ -87,7 +113,7 @@ const PaperSearch = (() => {
 
     function build() {
         modal = el('form', 'modal wide works_modal');
-        modal.id = 'paper_search';
+        modal.id = 'find_papers_popup';
         modal.hidden = true;
         modal.innerHTML = `
             <h2 class="works_title"></h2>
@@ -145,6 +171,7 @@ const PaperSearch = (() => {
             : options.mode === 'seed' ? 'Recent papers on your subject, most cited first. Add 3 to 5 as seed papers, then have a first pass on each.'
             : `Search by subject for the most-cited papers, or find one by its title, a reference, a DOI or an arXiv link. Each is added to ${library ? 'your Library' : 'the project'} with its details.`);
         if (options.mode === 'seed') { by = 'subject'; recent = true; }
+        if (options.by) by = options.by;
         $m('.works_find').hidden = venue || options.mode === 'seed';
         $m('.works_search').hidden = venue;
         drawFind();
@@ -152,7 +179,9 @@ const PaperSearch = (() => {
         $m('.works_list').replaceChildren();
         $m('.works_state').textContent = '';
         openModal(modal);
+        $m('.works_query').value = options.query || '';
         if (venue) loadVenue(options.venue);
+        else if (options.query) search();
         else $m('.works_query').focus();
     }
 
@@ -212,7 +241,7 @@ const PaperSearch = (() => {
             const text = el('span');
             text.append(el('strong', '', f.title || '(no title)'));
             const authors = (f.authors || []).slice(0, 3).map(a => a.lastName).filter(Boolean).join(', ') + ((f.authors || []).length > 3 ? ' et al.' : '');
-            text.append(el('small', '', [authors, f.venue, (f.published || '').slice(0, 4), r.cited != null ? `cited ${r.cited.toLocaleString()} times` : ''].filter(Boolean).join(' · ')));
+            text.append(el('small', '', [authors, f.venue, (f.published || '').slice(0, 4), r.cited != null ? `cited ${r.cited.toLocaleString()} times` : '', r.from ? `found in ${r.from}` : ''].filter(Boolean).join(' · ')));
             if (f.abstract) {
                 const more = el('details', 'works_abstract');
                 more.append(el('summary', '', 'Abstract'), el('p', '', f.abstract));

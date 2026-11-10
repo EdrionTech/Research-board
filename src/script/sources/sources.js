@@ -202,7 +202,11 @@ function fieldsFromOpenAlex(work, doi = '') {
 async function fromCrossref(doi) {
     const res = await fetch('https://api.crossref.org/works/' + encodeURIComponent(doi));
     if (!res.ok) return null;
-    const work = (await res.json()).message;
+    return fieldsFromCrossref((await res.json()).message, doi);
+}
+
+// a Crossref work (from a lookup or a search) as source fields
+function fieldsFromCrossref(work, doi = '') {
     return {
         title: work.title?.[0] || '',
         kind: CROSSREF_KINDS[work.type] || 'other',
@@ -275,6 +279,12 @@ const SourceForm = (() => {
             </label>
             <small class="upload_name"></small>
         </div>
+        <!-- a title, a reference or a subject: the papers it could be, to pick one (sources/paper_search.js); above the
+             status line, so a lookup starting as you click (leaving the box looks it up) doesn't move it -->
+        <p class="lookup_search" hidden>
+            <button type="button" class="link" data-search="title">Search for it: see the papers it could be</button>
+            <button type="button" class="link" data-search="subject">or papers on this subject</button>
+        </p>
         <p class="lookup_status" aria-live="polite"></p>
         <label>Title <input name="title" required></label>
         <div class="form_row">
@@ -319,6 +329,7 @@ const SourceForm = (() => {
         editingId = source?.id ?? null;
         form.reset();
         upload = null;
+        $('.lookup_search', form).hidden = true;
         $('.upload_name', form).textContent = '';
         status.textContent = '';
         $('h2', form).textContent = source ? 'Edit source' : 'New source';
@@ -340,6 +351,23 @@ const SourceForm = (() => {
         if (data.tags) f.tags.value = data.tags.join(', ');
     }
 
+    // what's typed isn't a link, DOI or arXiv id (a title, a reference, a subject): it can be searched for
+    const searchable = () => {
+        const text = f.url.value.trim();
+        return typeof PaperSearch !== 'undefined' && !editingId && text.length >= 4 && !/^https?:\/\//i.test(text) && !findDoi(text) && !findArxivId(text);
+    };
+    function showSearch() {
+        $('.lookup_search', form).hidden = !searchable();
+    }
+    function search(by) {
+        const query = f.url.value.trim();
+        const saved = onSaved;
+        PaperSearch.open({
+            projectId, by, query,
+            onAdded: id => { closeModals(); saved?.(id); }, // (added from the search: it opens, as a saved form would)
+        });
+    }
+
     async function lookup() {
         const link = f.url.value.trim();
         if (!link) return f.url.focus();
@@ -349,6 +377,7 @@ const SourceForm = (() => {
             if (!found) {
                 status.textContent = /ieeexplore\.ieee\.org/i.test(link)
                     ? "IEEE Xplore links don't include the paper's DOI: paste its DOI (shown on the page) or its title instead."
+                    : searchable() ? "Couldn't pick out one paper for this: search for it below, or fill the details in yourself."
                     : "Couldn't find details for this. Try its DOI or exact title, or fill them in below.";
             } else if (!found.title) {
                 fill(found);
@@ -423,6 +452,11 @@ const SourceForm = (() => {
     });
 
     $('.lookup', form).onclick = lookup;
+    f.url.addEventListener('input', showSearch);
+    $('.lookup_search', form).addEventListener('click', e => {
+        const b = e.target.closest('[data-search]');
+        if (b) search(b.dataset.search);
+    });
     f.url.addEventListener('change', () => { if (!f.title.value.trim()) lookup(); });
     f.url.addEventListener('keydown', e => {
         if (e.key === 'Enter') { e.preventDefault(); lookup(); }

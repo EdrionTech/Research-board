@@ -251,6 +251,10 @@ form.modal label.check { display: flex; gap: 6px; color: var(--text); }
 .lookup_row input { flex: 1; min-width: 0; }
 .lookup_status { margin: -4px 0 0; font-size: .85rem; color: var(--accent); }
 .lookup_status:empty { display: none; }
+/* a title or a reference typed instead of a link: search for the papers it could be (sources.js, paper_search.js) */
+.lookup_search { display: flex; flex-wrap: wrap; gap: 4px 14px; margin: -4px 0 0; }
+.lookup_search[hidden] { display: none; }
+.lookup_search .link { font-size: .85rem; color: var(--accent); text-align: left; }
 
 /* rendered Markdown */
 .md { line-height: 1.5; overflow-wrap: anywhere; }
