@@ -569,6 +569,7 @@ $('#library_results').addEventListener('click', async e => {
     renderLibraryResults();
 });
 
+$('#find_papers').onclick = () => PaperSearch.open({ projectId: project.id, onAdded: () => render() });
 $('#add_source').onclick = () => SourceForm.open(null, {
     projectId: project.id,
     onSaved: id => { location.href = materialUrl(id); },

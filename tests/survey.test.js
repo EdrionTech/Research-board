@@ -120,38 +120,38 @@ const { startServer, launchBrowser, tester, wait } = require('./helpers');
 
     await t.test('a venue: its recent papers, one added to the survey', async () => {
         await tab.evaluate(() => {
-            Survey.findVenue = async () => ({ id: 'S1', name: 'Neural Information Processing Systems' });
-            Survey.venueWorks = async () => [{ id: 'W1', cited: 50, fields: { title: 'A recent NeurIPS paper', kind: 'article', authors: [{ firstName: 'Xu', lastName: 'Yi' }], venue: 'NeurIPS', published: '2025', doi: '10.1/recent', keywords: [], abstract: '', pdfUrl: '', url: '' } }];
+            PaperSearch.findVenue = async () => ({ id: 'S1', name: 'Neural Information Processing Systems' });
+            PaperSearch.venueWorks = async () => [{ id: 'W1', cited: 50, fields: { title: 'A recent NeurIPS paper', kind: 'article', authors: [{ firstName: 'Xu', lastName: 'Yi' }], venue: 'NeurIPS', published: '2025', doi: '10.1/recent', keywords: [], abstract: '', pdfUrl: '', url: '' } }];
             [...document.querySelectorAll('button.survey_chip')].find(b => b.textContent.startsWith('NeurIPS')).click();
         });
         await wait(400);
-        if (await tab.$eval('#works_modal', m => m.hidden)) return 'no popup';
-        if (!/Neural Information Processing Systems/.test(await tab.$eval('#works_title', h => h.textContent))) return 'title';
-        await tab.click('#works_list [data-pick="0"]');
+        if (await tab.$eval('#paper_search', m => m.hidden)) return 'no popup';
+        if (!/Neural Information Processing Systems/.test(await tab.$eval('#paper_search .works_title', h => h.textContent))) return 'title';
+        await tab.click('#paper_search .works_list [data-pick="0"]');
         await wait(800);
         const added = (await (await api('GET', 'boot')).json()).data.items.find(i => i.title === 'A recent NeurIPS paper');
         if (!added?.surveyKey) return 'not added to the survey';
-        if (!/In the project/.test(await tab.$eval('#works_list', l => l.textContent))) return 'not shown as added';
-        await tab.click('#works_modal [data-close]');
+        if (!/In the project/.test(await tab.$eval('#paper_search .works_list', l => l.textContent))) return 'not shown as added';
+        await tab.click('#paper_search [data-close]');
     });
 
     await t.test('papers to start from: found, one added as a seed', async () => {
         await tab.evaluate(() => {
-            Survey.searchWorks = async () => [{ id: 'W2', cited: 300, fields: { title: 'A much cited recent paper', kind: 'article', authors: [], venue: 'Nature', published: '2023', doi: '10.1/cited', keywords: [], abstract: '', pdfUrl: '', url: '' } }];
+            PaperSearch.searchWorks = async () => [{ id: 'W2', cited: 300, fields: { title: 'A much cited recent paper', kind: 'article', authors: [], venue: 'Nature', published: '2023', doi: '10.1/cited', keywords: [], abstract: '', pdfUrl: '', url: '' } }];
         });
         await tab.evaluate(() => { document.querySelector('.survey_fold[data-fold="steps"]').open = true; });
         await tab.click('[data-find]');
         await wait(200);
-        await tab.type('#works_query', 'reading');
+        await tab.type('#paper_search .works_query', 'reading');
         await tab.keyboard.press('Enter');
         await wait(400);
-        await tab.click('#works_list [data-pick="0"]');
+        await tab.click('#paper_search .works_list [data-pick="0"]');
         await wait(800);
         const data = (await (await api('GET', 'boot')).json()).data;
         const added = data.items.find(i => i.title === 'A much cited recent paper');
         if (!added) return 'not added';
         if (!data.projects.find(p => p.id === 'p1').surveySeeds.includes(added.id)) return 'not a seed';
-        await tab.click('#works_modal [data-close]');
+        await tab.click('#paper_search [data-close]');
     });
 
     await t.test('a reference marked to follow up on its paper is a key paper, even cited once', async () => {

@@ -2,7 +2,8 @@
 // to it: the survey's four steps, the project's materials in columns by how far each has been read (the search,
 // status, tag and author filters still apply), and what the references of the papers you've had a first pass on
 // share: key papers, authors, venues. Survey papers can lend their whole reference list. Two searches go online
-// (OpenAlex): papers to start from (step 1), and a venue's recent papers (Keshav: scan the top venues).
+// (OpenAlex, sources/paper_search.js): papers to start from (step 1), and a venue's recent papers (Keshav: scan the
+// top venues).
 // Uses literature.js (shownSources, sourceItems, materialUrl) and dashboard.js (items, project, render).
 
 const SurveyBoard = (() => {
@@ -260,97 +261,22 @@ const SurveyBoard = (() => {
         }
     }
 
-    // ---- papers from OpenAlex: to start from, or a venue's recent ones ----
+    // ---- papers from OpenAlex (sources/paper_search.js): to start from, or a venue's recent ones ----
 
-    let results = [];
-    let resultsFor = null; // { kind: 'seed' } or { kind: 'venue', venue }
-
-    function openWorks(kind, venue) {
-        resultsFor = { kind, venue };
-        results = [];
-        const seed = kind === 'seed';
-        $('#works_title').textContent = seed ? 'Find papers to start from' : `Recent papers in ${venue.label}`;
-        $('#works_intro').textContent = seed
-            ? 'Recent papers (the last five years) on your subject, most cited first. Add 3 to 5 as seed papers, then have a first pass on each.'
-            : 'Its papers of the last two years, most cited first. Scan the titles; add the ones that belong in your survey.';
-        $('#works_search').hidden = !seed;
-        $('#works_elsewhere').hidden = true;
-        $('#works_list').replaceChildren();
-        $('#works_state').textContent = '';
-        openModal($('#works_modal'));
-        if (seed) $('#works_query').focus();
-        else loadVenue(venue);
-    }
-
-    async function search(query) {
-        if (!query.trim()) return;
-        $('#works_state').textContent = 'Searching…';
-        $('#works_list').replaceChildren();
-        try {
-            results = await Survey.searchWorks(query.trim());
-            showResults(results.length ? '' : 'Nothing found: try other words.');
-        } catch {
-            showResults('Couldn’t reach OpenAlex: check your connection, and try again.');
-        }
-        setElsewhere('https://scholar.google.com/scholar?as_ylo=' + (new Date().getFullYear() - 5) + '&q=' + encodeURIComponent(query.trim()));
-    }
-
-    async function loadVenue(venue) {
-        $('#works_state').textContent = 'Finding the venue…';
-        setElsewhere('https://scholar.google.com/scholar?as_ylo=' + (new Date().getFullYear() - 2) + '&q=' + encodeURIComponent('source:"' + venue.search + '"'));
-        try {
-            const found = await Survey.findVenue(venue.search);
-            if (resultsFor?.venue !== venue) return;
-            if (!found) return showResults(`OpenAlex doesn’t know “${venue.label}”. Search it yourself below.`);
-            $('#works_title').textContent = `Recent papers in ${found.name}`;
-            $('#works_state').textContent = 'Loading its papers…';
-            results = await Survey.venueWorks(found.id);
-            if (resultsFor?.venue !== venue) return;
-            showResults(results.length ? '' : `No papers from the last two years found for ${found.name}.`);
-        } catch {
-            showResults('Couldn’t reach OpenAlex: check your connection, and try again.');
-        }
-    }
-
-    function setElsewhere(href) {
-        $('#works_elsewhere').href = href;
-        $('#works_elsewhere').hidden = false;
-    }
-
-    function showResults(message) {
-        $('#works_state').textContent = message;
-        const sources = Store.getItems(project.id).filter(i => i.type === 'source');
-        const seed = resultsFor?.kind === 'seed';
-        $('#works_list').replaceChildren(...results.map((r, i) => {
-            const f = r.fields;
-            const li = el('li');
-            const text = el('span');
-            text.append(el('strong', '', f.title || '(no title)'));
-            const authors = f.authors.slice(0, 3).map(a => a.lastName).filter(Boolean).join(', ') + (f.authors.length > 3 ? ' et al.' : '');
-            text.append(el('small', '', [authors, f.venue, (f.published || '').slice(0, 4), `cited ${r.cited.toLocaleString()} times`].filter(Boolean).join(' · ')));
-            const have = sources.find(s => (f.doi && s.doi?.toLowerCase() === f.doi.toLowerCase()) || Passes.norm(s.title) === Passes.norm(f.title));
-            if (have) {
-                const isSeed = seeds().includes(have.id);
-                li.append(text, seed && !isSeed ? button('btn small', '★ Make it a seed', { seedHave: have.id }) : el('small', 'hint', isSeed ? 'A seed already' : 'In the project'));
-            } else li.append(text, button('btn small' + (seed ? ' primary' : ''), seed ? '+ Add as seed' : '+ Add', { pick: i }));
-            return li;
-        }));
-    }
-
-    function addResult(i) {
-        const r = results[i];
-        if (!r) return;
-        const seed = resultsFor?.kind === 'seed';
-        const id = Store.saveItem({
-            projectId: project.id, type: 'source', ...r.fields, kind: r.fields.kind === 'other' ? 'article' : r.fields.kind,
-            tags: [], status: 'to_read', ...(seed ? {} : { surveyKey: true }),
+    function openWorks(mode, venue) {
+        PaperSearch.open({
+            projectId: project.id, mode, venue,
+            extra: mode === 'venue' ? { surveyKey: true } : {},   // (a venue's paper joins the survey's key papers)
+            seeds,
+            onSeed: id => toggleIn('surveySeeds', id),
+            onAdded: id => {
+                if (mode === 'seed') {
+                    project.surveySeeds = [...seeds(), id];
+                    Store.saveProject({ id: project.id, surveySeeds: project.surveySeeds });
+                }
+                window.render();
+            },
         });
-        if (seed) {
-            project.surveySeeds = [...seeds(), id];
-            Store.saveProject({ id: project.id, surveySeeds: project.surveySeeds });
-        }
-        window.render();
-        showResults($('#works_state').textContent);
     }
 
     function setup() {
@@ -374,15 +300,6 @@ const SurveyBoard = (() => {
             if (b.dataset.find !== undefined) return openWorks('seed');
             if (b.dataset.wizard !== undefined) return ReviewWizard.open();
             if (b.dataset.more !== undefined) { morePapers = !morePapers; render(); }
-        });
-        $('#works_modal').addEventListener('submit', e => {
-            e.preventDefault();
-            search($('#works_query').value);
-        });
-        $('#works_list').addEventListener('click', e => {
-            const b = e.target.closest('button');
-            if (b?.dataset.pick) addResult(Number(b.dataset.pick));
-            if (b?.dataset.seedHave) { toggleIn('surveySeeds', b.dataset.seedHave); showResults($('#works_state').textContent); }
         });
     }
 

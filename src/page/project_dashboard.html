@@ -76,6 +76,8 @@
                         <option value="done">Done</option>
                     </select>
                     <button type="button" class="btn" id="from_library" title="Materials in your library or your other projects">+ From library</button>
+                    <!-- search OpenAlex by subject, or find a paper by its title, a reference or a DOI (sources/paper_search.js) -->
+                    <button type="button" class="btn" id="find_papers" title="Search for papers by subject, or find one by its title, a reference or a DOI">Find papers…</button>
                     <button type="button" class="btn primary" id="add_source">+ Source</button>
                 </div>
                 <!-- the materials you're in the middle of: open one where you left off (reading.js) -->
@@ -202,22 +204,6 @@
             </div>
         </div>
 
-        <!-- papers from OpenAlex: to start a survey from, or a venue's recent ones (pages/dashboard/survey.js) -->
-        <form class="modal wide works_modal" id="works_modal" hidden>
-            <h2 id="works_title">Find papers</h2>
-            <p class="hint" id="works_intro"></p>
-            <div class="works_search" id="works_search">
-                <input type="search" id="works_query" placeholder="Your subject, e.g. reading comprehension in children" aria-label="Your subject">
-                <button type="submit" class="btn primary">Search</button>
-            </div>
-            <p class="hint works_state" id="works_state" aria-live="polite"></p>
-            <ul class="works_list" id="works_list"></ul>
-            <div class="actions">
-                <a class="btn" id="works_elsewhere" target="_blank" rel="noopener" hidden>Search on Google Scholar ↗</a>
-                <span class="spacer"></span>
-                <button type="button" class="btn" data-close>Close</button>
-            </div>
-        </form>
         <!-- this project's settings: sync with a server, a separate copy (core/project_sync.js) -->
         <form class="project_settings_form modal" id="project_settings_form" hidden>
             <h2>Project settings</h2>
@@ -432,6 +418,7 @@
     <script data-src="../script/sources/references.js"></script>
     <script data-src="../script/sources/passes.js"></script>
     <script data-src="../script/sources/survey.js"></script>
+    <script data-src="../script/sources/paper_search.js"></script>
     <script data-src="../script/sources/bookshelf.js"></script>
     <script data-src="../script/sources/picker.js"></script>
     <script data-src="../script/sources/figures.js"></script>

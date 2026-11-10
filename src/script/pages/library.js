@@ -206,6 +206,10 @@ function openNewMaterial() {
     SourceForm.open(null, { projectId: Store.LIBRARY_ID, onSaved: id => { location.href = 'material.html?id=' + encodeURIComponent(id); } });
 }
 
+// ---- Find papers: by subject, or by a title, reference or DOI; added to the library (sources/paper_search.js) ----
+
+$('#find_papers').onclick = () => PaperSearch.open({ projectId: Store.LIBRARY_ID, onAdded: () => render() });
+
 // ---- events ----
 
 $('#shelf_mode').addEventListener('click', e => {

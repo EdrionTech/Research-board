@@ -6,8 +6,8 @@
 // The board puts each material in a column by how far it's been read; nothing is dragged, cards move as you read.
 // The seeds are kept on the project (surveySeeds: [sourceId]), and the survey papers whose references you use
 // (surveyFrom: [sourceId]); a key paper added from here is a source with surveyKey: true and citedIn: the papers
-// that cite it. Beyond the references: the venues they cite most (each a click from its recent papers, OpenAlex),
-// and a search for papers to start from.
+// that cite it. Beyond the references: the venues they cite most (each a click from its recent papers), and a search
+// for papers to start from (both OpenAlex: sources/paper_search.js).
 
 const Survey = (() => {
     const COLUMNS = [
@@ -160,47 +160,5 @@ const Survey = (() => {
         return { key, label: name, search: name };
     }
 
-    // ---- OpenAlex: papers to start from, a venue's recent papers ----
-
-    const OPENALEX = 'https://api.openalex.org/';
-    const yearsAgo = n => `${new Date().getFullYear() - n}-01-01`;
-    async function getJson(url) {
-        const res = await fetch(url);
-        if (!res.ok) throw new Error(`OpenAlex answered ${res.status}`);
-        return res.json();
-    }
-    // a work → { fields (as a source's), cited, id }
-    const asResult = work => ({
-        id: work.id,
-        cited: work.cited_by_count || 0,
-        fields: { ...fieldsFromOpenAlex(work), url: work.doi || work.primary_location?.landing_page_url || '' },
-    });
-
-    // recent, much-cited papers on a subject (Keshav: 3 to 5 recent highly cited papers to start from)
-    async function searchWorks(query, { years = 5, count = 20 } = {}) {
-        // (the words in the title or abstract: a looser search sorted by citations brings famous papers on anything)
-        const words = query.replace(/[,|:]/g, ' ').trim();
-        const url = `${OPENALEX}works?filter=title_and_abstract.search:${encodeURIComponent(words)},from_publication_date:${yearsAgo(years)},type:article|preprint|review&sort=cited_by_count:desc&per-page=${count}`;
-        return ((await getJson(url)).results || []).map(asResult);
-    }
-
-    // the venue OpenAlex knows by that name (the one with the most works among the close matches), or null
-    async function findVenue(name) {
-        const results = (await getJson(`${OPENALEX}sources?search=${encodeURIComponent(name)}&per-page=8`)).results || [];
-        const want = new Set(name.toLowerCase().split(/\W+/).filter(w => w.length > 2));
-        const close = results.filter(r => {
-            const words = r.display_name.toLowerCase().split(/\W+/);
-            return [...want].filter(w => words.includes(w)).length >= Math.max(1, Math.ceil(want.size * 0.6));
-        });
-        const best = (close.length ? close : results.slice(0, 1)).sort((a, b) => (b.works_count || 0) - (a.works_count || 0))[0];
-        return best ? { id: best.id.replace(/^https?:\/\/openalex\.org\//, ''), name: best.display_name, type: best.type } : null;
-    }
-
-    // a venue's papers of the last years, most cited first (Keshav: scan the top venues' recent proceedings)
-    async function venueWorks(venueId, { years = 2, count = 25 } = {}) {
-        const url = `${OPENALEX}works?filter=primary_location.source.id:${venueId},from_publication_date:${yearsAgo(years)}&sort=cited_by_count:desc&per-page=${count}`;
-        return ((await getJson(url)).results || []).map(asResult);
-    }
-
-    return { COLUMNS, column, firstPassDone, twoPassesDone, recordsOf, steps, keyPapers, venueOf, searchWorks, findVenue, venueWorks };
+    return { COLUMNS, column, firstPassDone, twoPassesDone, recordsOf, steps, keyPapers, venueOf };
 })();
