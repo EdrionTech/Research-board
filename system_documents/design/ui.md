@@ -7,6 +7,7 @@ Every page is built from the same few pieces, styled once in `src/style/base.css
 ## Colours, theme, style
 
 - Colours come from the theme's variables only: `--bg`, `--surface`, `--text`, `--muted`, `--line`, `--accent`, `--danger`, `--ok` (done, saved), `--warn` (worth a check, past the time), plus `--radius` and `--shadow`. Corners use `--radius` (a style may make them square). White text on the accent is the one exception. A highlight's own colour (the project's note colours) is the person's choice, not a page's. No colour written into a page's CSS, so every style (`src/style/themes/`) and light/dark, and the person's own colours and CSS (Settings → Appearance), apply everywhere.
+- Styles dress parts by class name, so a new kind of card, box or heading isn't styled until it's named there. When a page adds one, add its class to every style's lists in `src/style/themes/*/` (a card inside a panel: the wells list that ends `.paper_picker`; a panel heading: the `.colors_panel h3` list; a box that only groups cards: its own border-only rule beside the wells), and check it in each style. An accent stripe a page keeps on top of the style's card goes on `body .the_card`.
 - A page loads `core/settings.js` in its `<head>`, so it's drawn in the person's theme and style from the start. The appearance controls themselves are one shared piece, `core/appearance.js` (`Appearance.mount(section)`), used by the app's Settings and by the server's control page (its Appearance tab, saved in that server's data via the `settingssaved` event).
 
 ## The pieces
@@ -27,6 +28,8 @@ Every page is built from the same few pieces, styled once in `src/style/base.css
 | One choice of a few | `.segmented` with `button[role=radio][aria-checked]`; `.view_toggle` and `.mode_toggle` with `aria-pressed` | One piece in `base.css` under three names (each style dresses them) |
 | Chip | `.tag_chip` (`.active` when on) | Filters, authors, a folded section's "open" |
 | Checkbox with words | `label.check` | |
+| A material's card | `a.source_row` (`strong` title, `small` detail) | Anything that opens a material: the Literature list, the survey board, Continue reading |
+| Meter | `.continue_progress` with `--progress` | Drawn like the video timeline (`.timeline` / `.span`) in each style |
 
 ## Rules for phones (≤ 700 px)
 

@@ -53,7 +53,7 @@ body {
     min-height: 100vh;
 }
 
-h1, h2, h3, .brand { font-family: var(--font-sans); font-weight: 600; }
+h1, h2, h3, .brand, .survey_fold_title { font-family: var(--font-sans); font-weight: 600; }
 .source_title { font-weight: 300; font-size: 2rem; line-height: 1.2; } /* display: light */
 .stat b { font-weight: 300; font-size: 2rem; font-variant-numeric: tabular-nums; }
 
@@ -61,7 +61,7 @@ h1, h2, h3, .brand { font-family: var(--font-sans); font-weight: 600; }
 
 /* ---- glass: big surfaces (real blur) ---- */
 
-.bar, .panel, .section, .library, .figures_panel, .review_card, .settings_section, .stat,
+.bar, .panel, .section, .library, .figures_panel, .review_card, .drafts, .settings_section, .stat,
 .modal, .composer, .workspacetabs,
 .colors_panel {
     background-color: var(--glass);
@@ -76,15 +76,15 @@ h1, h2, h3, .brand { font-family: var(--font-sans); font-weight: 600; }
         inset 0 0 0 1px var(--glass-edge-low),
         inset 0 -18px 30px -18px var(--glass-glow);
 }
-.panel, .section, .library, .figures_panel, .review_card, .settings_section, .modal,
+.panel, .section, .library, .figures_panel, .review_card, .drafts, .settings_section, .modal,
 .colors_panel { border-radius: var(--radius-lg); }
 .stat { border-radius: var(--radius-md); }
 .composer { border-radius: var(--radius-lg); }
 
 /* the curved reflection across the top-left of the glass */
-.panel, .section, .library, .figures_panel, .review_card, .settings_section, .stat, .modal,
+.panel, .section, .library, .figures_panel, .review_card, .drafts, .settings_section, .stat, .modal,
 .colors_panel { position: relative; isolation: isolate; }
-.panel::before, .section::before, .library::before, .figures_panel::before, .review_card::before,
+.panel::before, .section::before, .library::before, .figures_panel::before, .review_card::before, .drafts::before,
 .settings_section::before, .stat::before, .modal::before,
 .colors_panel::before {
     content: "";
@@ -101,7 +101,7 @@ h1, h2, h3, .brand { font-family: var(--font-sans); font-weight: 600; }
 .bar .back { color: var(--ink); font-weight: 600; }
 .workspacetabs { border-radius: 0; border-width: 0 0 1px; box-shadow: none; }
 
-.review_card { border-left: 1px solid var(--glass-edge); }
+.review_card, .drafts { border-left: 1px solid var(--glass-edge); }
 
 /* popups float a little higher; the page behind is dimmed and softened */
 .modal { background-color: var(--glass-strong); box-shadow: var(--shadow-glass), 0 24px 60px rgba(10, 40, 90, .35), inset 0 1px 0 0 var(--glass-edge); }
@@ -114,7 +114,9 @@ h1, h2, h3, .brand { font-family: var(--font-sans); font-weight: 600; }
 .item, .source_row, .source_note, .source_card, .figure_card, .picker, .style_card, .card_notes li,
 .digest_preview, .export_form textarea, .settings .setting code, .md code,
 .ref, .get_paper, .drop_zone, .highlight, .review_answer,
-.paper_picker {
+.paper_picker,
+.survey_step, .survey_paper, .pass_card, .pass_headcard, .pass_decide, .pass_earlier, .pass_list li,
+.wizard_theme, .wizard_preview, .lit_note, .draft_row, .works_list li, .pass_banner {
     background-color: var(--glass-strong);
     background-image: linear-gradient(180deg, var(--glass-sheen-end) 0%, transparent 60%);
     border: 1px solid var(--glass-edge);
@@ -128,6 +130,8 @@ h1, h2, h3, .brand { font-family: var(--font-sans); font-weight: 600; }
 .source_note { border-left: 4px solid var(--glass-edge); }
 .source_note.question { border-left-color: var(--aqua-light); }
 .setting { border-bottom-color: var(--glass-edge-low); }
+/* groups of glass (the survey's folds and columns): the edge, no fill */
+.survey_fold, .survey_col { border: 1px solid var(--glass-edge); border-radius: var(--radius-md); }
 .settings_section > header { border-bottom-color: var(--glass-edge-low); }
 
 /* ---- buttons: glossy pills (default glass; primary blue; delete red) ---- */
@@ -205,7 +209,7 @@ input, select { border-radius: var(--radius-pill); padding-left: 14px; padding-r
 textarea { border-radius: var(--radius-md); background-image: none; }
 input[type="checkbox"], input[type="radio"] { accent-color: var(--aqua); box-shadow: none; }
 input::placeholder, textarea::placeholder { color: var(--ink-muted); opacity: 1; }
-form.modal label, .style_pick, .picker_head strong, .checks > span, .attach_mode > span { font-weight: 600; font-size: 13px; }
+form.modal label, .style_pick, .picker_head strong, .pass_kicker, .continue_row h4, .pass_earlier h5, .lit_note_head small, .checks > span, .attach_mode > span { font-weight: 600; font-size: 13px; }
 
 /* ---- chips, tabs, toggles: glass pills; selected = aqua gloss ---- */
 
@@ -252,10 +256,10 @@ html[data-theme="dark"] .tag { color: var(--ink); }
 .visual { border: 1px solid var(--glass-edge); }
 .reader_html { border-radius: var(--radius-md); box-shadow: var(--shadow-glass); }
 .pdf_page { border-radius: 4px; box-shadow: var(--shadow-glass); }
-.reader_bar { background: var(--glass-strong); -webkit-backdrop-filter: blur(var(--blur-glass)); backdrop-filter: blur(var(--blur-glass)); border-bottom-color: var(--glass-edge-low); }
+.reader_bar, .pass_bar { background: var(--glass-strong); -webkit-backdrop-filter: blur(var(--blur-glass)); backdrop-filter: blur(var(--blur-glass)); border-bottom-color: var(--glass-edge-low); }
 
-.timeline { background: var(--glass-strong); border: 1px solid var(--glass-edge); box-shadow: inset 0 1px 3px var(--gloss-depth); }
-.timeline .span { background-image: linear-gradient(180deg, var(--aqua-light), var(--aqua)); }
+.timeline, .continue_progress { background: var(--glass-strong); border: 1px solid var(--glass-edge); box-shadow: inset 0 1px 3px var(--gloss-depth); }
+.timeline .span, .continue_progress::after { background-image: linear-gradient(180deg, var(--aqua-light), var(--aqua)); }
 .timeline .marker { background-image: linear-gradient(180deg, var(--orange-light), var(--orange)); border-color: var(--glass-edge); }
 
 /* floating keys: blue gloss pills */
@@ -306,7 +310,7 @@ html[data-theme="dark"] .tag { color: var(--ink); }
 
 /* reduced transparency, or no backdrop blur: frosted glass becomes solid glass */
 @media (prefers-reduced-transparency: reduce) {
-    .bar, .panel, .section, .library, .figures_panel, .review_card, .settings_section, .stat, .modal,
+    .bar, .panel, .section, .library, .figures_panel, .review_card, .drafts, .settings_section, .stat, .modal,
     .composer, .workspacetabs, .reader_bar, .side,
 .colors_panel {
         background-color: var(--glass-solid);
@@ -315,14 +319,14 @@ html[data-theme="dark"] .tag { color: var(--ink); }
     }
 }
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-    .bar, .panel, .section, .library, .figures_panel, .review_card, .settings_section, .stat, .modal,
+    .bar, .panel, .section, .library, .figures_panel, .review_card, .drafts, .settings_section, .stat, .modal,
     .composer, .workspacetabs, .reader_bar, .side,
 .colors_panel { background-color: var(--glass-solid); }
 }
 /* high contrast: no shine or reflections, plain system borders */
 @media (forced-colors: active) {
     .btn::before, .panel::before, .section::before, .library::before, .figures_panel::before,
-    .review_card::before, .settings_section::before, .stat::before, .modal::before,
+    .review_card::before, .drafts::before, .settings_section::before, .stat::before, .modal::before,
 .colors_panel::before { display: none; }
     .btn, .tag_chip, .group_chip, .attach_mode button, input, select, textarea,
 .color_chip, .md_bar button, .zoom_ctl button, .row_cite,

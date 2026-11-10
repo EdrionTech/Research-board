@@ -32,7 +32,7 @@ const Reading = (() => {
 
     // a card that opens it where you were (the material page continues there by itself)
     function card(source) {
-        const a = el('a', 'continue_card');
+        const a = el('a', 'source_row continue_card');
         a.href = 'material.html?id=' + encodeURIComponent(source.id);
         a.title = 'Continue from ' + source.readingAt.label;
         const bar = el('span', 'continue_progress');

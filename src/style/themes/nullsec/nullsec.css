@@ -46,7 +46,7 @@ body {
     min-height: 100vh;
 }
 
-h1, h2, h3, h4, .brand, .source_title {
+h1, h2, h3, h4, .brand, .source_title, .survey_fold_title {
     font-family: var(--font-display);
     font-weight: 600;
     letter-spacing: .06em;
@@ -66,7 +66,7 @@ code, pre, kbd, .md code, .seg_chip, .timestamp { font-family: var(--font-mono);
 
 /* ---- frames: neon outline, chamfered corners, brackets on the square ones ---- */
 
-.panel:not(.reader), .section, .library, .figures_panel, .review_card, .settings_section, .stat, .modal, .composer,
+.panel:not(.reader), .section, .library, .figures_panel, .review_card, .drafts, .settings_section, .stat, .modal, .composer,
 .colors_panel {
     --c: var(--cut-lg);
     --edge: var(--line-strong);   /* the outline */
@@ -88,24 +88,24 @@ code, pre, kbd, .md code, .seg_chip, .timestamp { font-family: var(--font-mono);
     clip-path: polygon(var(--c) 0, 100% 0, 100% calc(100% - var(--c)), calc(100% - var(--c)) 100%, 0 100%, 0 var(--c));
 }
 /* the lead frames are red */
-.review_card, .panel.writer, .modal { --edge: var(--red); --t: var(--red); }
-.review_card { border-left-width: 1px; }
+.review_card, .drafts, .panel.writer, .modal { --edge: var(--red); --t: var(--red); }
+.review_card, .drafts { border-left-width: 1px; }
 .stat { --c: var(--cut-md); }
 
 /* the reader isn't clipped (its loading card floats out of it): a plain outline with a red top rule */
 .reader.panel { background: var(--panel); border: 1px solid var(--line-strong); border-top: 2px solid var(--red); border-radius: 0; box-shadow: none; }
 
 /* frame headings read like HUD tabs */
-.section h3, .figures_panel h3, .side h3, .review_card h3, .settings_section > header h2,
+.section h3, .figures_panel h3, .side h3, .review_card h3, .drafts h3, .settings_section > header h2,
 .settings_section > header h3, form.modal h2,
-.colors_panel h3 {
+.colors_panel h3, .survey_keys_head h3 {
     font-family: var(--font-display);
     font-weight: 700;
     letter-spacing: .12em;
     text-transform: uppercase;
 }
 .section h3, .figures_panel h3, .settings_section > header h2, .settings_section > header h3,
-.colors_panel h3 { color: var(--red-ink); font-size: 14px; }
+.colors_panel h3, .survey_keys_head h3 { color: var(--red-ink); font-size: 14px; }
 .settings_section > header, .figures_panel header,
 .colors_panel header { border-bottom: 1px dashed var(--line); }
 
@@ -132,7 +132,9 @@ code, pre, kbd, .md code, .seg_chip, .timestamp { font-family: var(--font-mono);
 .item, .source_row, .source_note, .source_card, .figure_card, .picker, .style_card, .card_notes li,
 .digest_preview, .export_form textarea, .settings .setting code, .md code, .figure_credit_preview,
 .ref, .get_paper, .drop_zone, .highlight, .review_answer,
-.paper_picker {
+.paper_picker,
+.survey_step, .survey_paper, .pass_card, .pass_headcard, .pass_decide, .pass_earlier, .pass_list li,
+.wizard_theme, .wizard_preview, .lit_note, .draft_row, .works_list li, .pass_banner {
     background-color: var(--surface-raised);
     border: 1px solid var(--line);
     border-radius: 0;
@@ -148,9 +150,11 @@ code, pre, kbd, .md code, .seg_chip, .timestamp { font-family: var(--font-mono);
 .source_note { border-left: 2px solid var(--cyan); }
 .source_note.question { border-left-color: var(--amber); }
 .setting { border-bottom: 1px dashed var(--line); }
+/* groups of plates (the survey's folds and columns): the hairline, no fill */
+.survey_fold, .survey_col { border: 1px solid var(--line); border-radius: 0; }
 
 /* labels: Tektur capitals */
-form.modal label, .style_pick, .picker_head strong, .checks > span, .attach_mode > span, .tag_filter > span {
+form.modal label, .style_pick, .picker_head strong, .pass_kicker, .continue_row h4, .pass_earlier h5, .lit_note_head small, .checks > span, .attach_mode > span, .tag_filter > span {
     font-family: var(--font-display);
     font-size: 11px;
     font-weight: 600;
@@ -158,7 +162,7 @@ form.modal label, .style_pick, .picker_head strong, .checks > span, .attach_mode
     text-transform: uppercase;
     color: var(--ink-muted);
 }
-form.modal .checks label { font-family: var(--font-sans); font-size: 15px; letter-spacing: 0; text-transform: none; color: var(--ink); }
+form.modal .checks label, form.modal label.check { font-family: var(--font-sans); font-size: 15px; letter-spacing: 0; text-transform: none; color: var(--ink); }
 
 /* ---- buttons: chamfered; outline by default, solid red for the lead, solid cyan to accept ---- */
 
@@ -285,16 +289,16 @@ input[type="range"] { accent-color: var(--red); border: 0; background: none; }
 .tag { color: var(--cyan-ink); }
 
 /* (these set their own rounding in the page stylesheets) */
-.tag_row input, .visual, .preview, .preview img, .visual img, .timeline .span { border-radius: 0; }
+.tag_row input, .visual, .preview, .preview img, .visual img, .timeline .span, .continue_progress::after { border-radius: 0; }
 
 /* ---- reading surfaces; PDF pages stay paper ---- */
 
 .visual, .preview { background: var(--surface-raised); border: 1px solid var(--line); }
 .reader_html, .pdf_page { border-radius: 0; box-shadow: 0 0 0 1px var(--line-strong), 0 0 var(--glow-size) var(--glow-neutral); }
-.reader_bar { background: var(--panel); border-bottom: 1px dashed var(--line); }
+.reader_bar, .pass_bar { background: var(--panel); border-bottom: 1px dashed var(--line); }
 
-.timeline { background: var(--surface-raised); border: 1px solid var(--line); border-radius: 0; }
-.timeline .span { background: var(--cyan); box-shadow: 0 0 6px var(--cyan-glow); }
+.timeline, .continue_progress { background: var(--surface-raised); border: 1px solid var(--line); border-radius: 0; }
+.timeline .span, .continue_progress::after { background: var(--cyan); box-shadow: 0 0 6px var(--cyan-glow); }
 .timeline .marker { background: var(--red); border-color: var(--red); box-shadow: 0 0 6px var(--red-glow); }
 
 /* floating keys: solid red, chamfered */
@@ -338,7 +342,7 @@ input[type="range"] { accent-color: var(--red); border: 0; background: none; }
 }
 @media (max-width: 599px) {
     .source_title { font-size: 1.4rem; }
-    .panel:not(.reader), .section, .library, .figures_panel, .review_card, .settings_section, .modal,
+    .panel:not(.reader), .section, .library, .figures_panel, .review_card, .drafts, .settings_section, .modal,
 .colors_panel { --c: var(--cut-md); }
 }
 /* touch 44px, mouse 32px (target-min / target-min-pointer) */
@@ -355,7 +359,7 @@ input[type="range"] { accent-color: var(--red); border: 0; background: none; }
 }
 /* high contrast: no chamfers or glow, plain system borders */
 @media (forced-colors: active) {
-    .panel, .section, .library, .figures_panel, .review_card, .settings_section, .stat, .modal, .composer,
+    .panel, .section, .library, .figures_panel, .review_card, .drafts, .settings_section, .stat, .modal, .composer,
     .btn, .badge, .tag, .project, .show_side, .selection_btn, .img_note_btn,
     .attach_mode button, .segmented button, .workspacetabs button, .tabs button, .view_toggle button,
 .colors_panel { clip-path: none; }

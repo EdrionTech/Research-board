@@ -81,7 +81,7 @@ const SurveyBoard = (() => {
         for (const s of list) {
             const li = el('li', 'survey_step');
             li.dataset.state = s.done ? 'done' : s.n === current ? 'current' : '';
-            const num = el('span', 'badge survey_num', s.done ? '✓' : String(s.n));
+            const num = el('span', 'badge survey_num' + (s.done ? ' done' : s.n === current ? ' reading' : ''), s.done ? '✓' : String(s.n));
             const text = el('div', 'survey_step_text');
             text.append(el('strong', '', s.title));
             if (s.status) text.append(el('small', 'survey_status', s.status));

@@ -60,12 +60,12 @@ html[data-style="gildmoor"][data-theme="light"] body {
     background-attachment: fixed;
 }
 /* the big frames let a little of the landscape through */
-html[data-style="gildmoor"][data-theme="light"] :is(.panel, .section, .library, .figures_panel, .review_card, .settings_section, .stat),
+html[data-style="gildmoor"][data-theme="light"] :is(.panel, .section, .library, .figures_panel, .review_card, .drafts, .settings_section, .stat),
 .colors_panel {
     background: linear-gradient(180deg, color-mix(in srgb, var(--surface-top) 90%, transparent), color-mix(in srgb, var(--surface-bottom) 86%, transparent));
 }
 
-h1, h2, h3, h4, .brand {
+h1, h2, h3, h4, .brand, .survey_fold_title {
     font-family: var(--font-caps);
     font-weight: 700;
     letter-spacing: .06em;
@@ -85,7 +85,7 @@ code, pre, kbd { font-family: ui-monospace, Consolas, monospace; }
 
 /* ---- frames: gold line, inner hairline, soft gold glow ---- */
 
-.bar, .panel, .section, .library, .figures_panel, .review_card, .settings_section, .stat,
+.bar, .panel, .section, .library, .figures_panel, .review_card, .drafts, .settings_section, .stat,
 .modal, .composer, .workspacetabs,
 .colors_panel {
     background: linear-gradient(180deg, var(--surface-top), var(--surface-bottom));
@@ -93,13 +93,13 @@ code, pre, kbd { font-family: ui-monospace, Consolas, monospace; }
     border-radius: 0;
     box-shadow: inset 0 0 0 3px var(--frame-gap), inset 0 0 0 4px var(--gold-deep), 0 0 24px 0 var(--gold-glow), var(--shadow-panel);
 }
-.review_card { border-left-width: 1px; }
+.review_card, .drafts { border-left-width: 1px; }
 .settings_section { overflow: visible; } /* room for the corners (it only clipped the rounding) */
 
 /* diamond corners (::after) and the finial at the top centre (::before), on the frames that don't scroll */
-.panel, .section, .library, .figures_panel, .review_card, .settings_section, .stat,
+.panel, .section, .library, .figures_panel, .review_card, .drafts, .settings_section, .stat,
 .colors_panel { position: relative; }
-.panel::after, .section::after, .library::after, .figures_panel::after, .review_card::after,
+.panel::after, .section::after, .library::after, .figures_panel::after, .review_card::after, .drafts::after,
 .settings_section::after, .stat::after,
 .colors_panel::after {
     content: "";
@@ -133,9 +133,9 @@ code, pre, kbd { font-family: ui-monospace, Consolas, monospace; }
 }
 
 /* frame titles: centred-feeling carved capitals */
-.section h3, .figures_panel h3, .side h3, .review_card h3, .settings_section > header h2,
+.section h3, .figures_panel h3, .side h3, .review_card h3, .drafts h3, .settings_section > header h2,
 .settings_section > header h3, form.modal h2,
-.colors_panel h3 { font-family: var(--font-caps); color: var(--title); letter-spacing: .08em; }
+.colors_panel h3, .survey_keys_head h3 { font-family: var(--font-caps); color: var(--title); letter-spacing: .08em; }
 .settings_section > header, .figures_panel header,
 .colors_panel header { border-bottom: 1px solid var(--gold-deep); }
 
@@ -154,7 +154,9 @@ code, pre, kbd { font-family: ui-monospace, Consolas, monospace; }
 .item, .source_row, .source_note, .source_card, .figure_card, .picker, .style_card, .card_notes li,
 .digest_preview, .export_form textarea, .settings .setting code, .md code, .figure_credit_preview,
 .ref, .get_paper, .drop_zone, .highlight, .review_answer,
-.paper_picker {
+.paper_picker,
+.survey_step, .survey_paper, .pass_card, .pass_headcard, .pass_decide, .pass_earlier, .pass_list li,
+.wizard_theme, .wizard_preview, .lit_note, .draft_row, .works_list li, .pass_banner {
     background: var(--inset);
     border: 1px solid var(--gold-deep);
     border-radius: 0;
@@ -168,16 +170,19 @@ code, pre, kbd { font-family: ui-monospace, Consolas, monospace; }
 .source_note { border-left: 3px solid var(--gold); }
 .source_note.question { border-left-color: var(--amethyst-light); }
 .setting { border-bottom-color: var(--gold-deep); }
+/* groups of wells (the survey's folds and columns): the gold-deep line, no fill */
+.survey_fold, .survey_col { border: 1px solid var(--gold-deep); border-radius: 0; }
+.pass_card, .pass_headcard, .pass_note { border-color: var(--gold-deep); }
 
 /* labels: Cinzel capitals in the label gold */
-form.modal label, .style_pick, .picker_head strong, .checks > span, .attach_mode > span, .tag_filter > span {
+form.modal label, .style_pick, .picker_head strong, .pass_kicker, .continue_row h4, .pass_earlier h5, .lit_note_head small, .checks > span, .attach_mode > span, .tag_filter > span {
     font-family: var(--font-caps);
     font-size: 12px;
     font-weight: 600;
     letter-spacing: .1em;
     color: var(--label);
 }
-form.modal .checks label { font-family: var(--font-serif); font-size: 15px; letter-spacing: 0; color: var(--ink); }
+form.modal .checks label, form.modal label.check { font-family: var(--font-serif); font-size: 15px; letter-spacing: 0; color: var(--ink); }
 
 /* ---- buttons: square plates with a gold double line; gems carry the meaning ---- */
 
@@ -307,17 +312,17 @@ input[type="range"] { accent-color: var(--gold); box-shadow: none; background: n
 .badge.material { background: linear-gradient(180deg, var(--amethyst-light), var(--amethyst) 55%, var(--amethyst-deep)); }
 
 /* (these set their own rounding in the page stylesheets) */
-.tag_row input, .visual, .preview, .preview img, .visual img, .timeline .span { border-radius: 0; }
+.tag_row input, .visual, .preview, .preview img, .visual img, .timeline .span, .continue_progress::after { border-radius: 0; }
 
 /* ---- reading surfaces: the book page; PDF pages stay paper ---- */
 
 .md { font-family: var(--font-serif); }
 .visual, .preview { background: var(--inset); border: 1px solid var(--gold-deep); }
 .reader_html, .pdf_page { border-radius: 0; box-shadow: 0 0 0 1px var(--gold-deep), 0 0 22px 0 var(--gold-glow); }
-.reader_bar { background: var(--surface-bottom); border-bottom: 1px solid var(--gold-deep); }
+.reader_bar, .pass_bar { background: var(--surface-bottom); border-bottom: 1px solid var(--gold-deep); }
 
-.timeline { background: var(--inset); border: 1px solid var(--gold); border-radius: 0; }
-.timeline .span { background: linear-gradient(180deg, var(--sapphire-light), var(--sapphire)); }
+.timeline, .continue_progress { background: var(--inset); border: 1px solid var(--gold); border-radius: 0; }
+.timeline .span, .continue_progress::after { background: linear-gradient(180deg, var(--sapphire-light), var(--sapphire)); }
 .timeline .marker { background: var(--gold); border-color: var(--gold-bright); }
 
 /* floating keys: sapphire plates with a gold line */
@@ -377,7 +382,7 @@ input[type="range"] { accent-color: var(--gold); box-shadow: none; background: n
     .btn.primary::before, .btn.primary::after,
     .workspacetabs button[aria-selected="true"]::after, .tabs button[aria-selected="true"]::after, .segmented button[aria-checked="true"]::after,
 .colors_panel::before { display: none; }
-    .panel::after, .section::after, .library::after, .figures_panel::after, .review_card::after,
+    .panel::after, .section::after, .library::after, .figures_panel::after, .review_card::after, .drafts::after,
     .settings_section::after, .stat::after,
 .colors_panel::after { forced-color-adjust: none; background: CanvasText; }
     .btn, .tag_chip, .group_chip, .attach_mode button, input, select, textarea,

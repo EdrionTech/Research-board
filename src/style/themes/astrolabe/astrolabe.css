@@ -70,7 +70,7 @@ body {
     min-height: 100vh;
 }
 
-h1, h2, h3, h4 { font-family: var(--font-sans); font-weight: 700; }
+h1, h2, h3, h4, .survey_fold_title { font-family: var(--font-sans); font-weight: 700; }
 h1, .brand, .source_title, .project_title {
     font-family: var(--font-display);
     font-weight: 600;
@@ -90,7 +90,7 @@ code, pre, kbd, .seg_chip { font-family: var(--font-mono); }
 
 /* ---- panels: see-through, hairline border, a glow in the corner and stars inside ---- */
 
-.bar, .panel, .section, .library, .figures_panel, .review_card, .settings_section, .stat,
+.bar, .panel, .section, .library, .figures_panel, .review_card, .drafts, .settings_section, .stat,
 .modal, .composer, .workspacetabs,
 .colors_panel {
     background-color: var(--veil);
@@ -101,7 +101,7 @@ code, pre, kbd, .seg_chip { font-family: var(--font-mono); }
     box-shadow: var(--shadow-panel);
 }
 .stat { border-radius: var(--radius-md); }
-.review_card { border-left-width: 1px; }
+.review_card, .drafts { border-left-width: 1px; }
 .settings_section { overflow: visible; } /* room for the crosshairs */
 .modal { background-color: var(--surface-solid); }
 .modals { background: color-mix(in srgb, var(--space) 70%, transparent); }
@@ -109,7 +109,7 @@ code, pre, kbd, .seg_chip { font-family: var(--font-mono); }
 .composer_head { border-bottom-color: var(--hairline); }
 
 /* the one featured panel per screen carries orbit rings (the halo panel) */
-.review_card, .panel.writer {
+.review_card, .drafts, .panel.writer {
     background-image:
         repeating-radial-gradient(circle at 100% 0%, transparent 0 71px, var(--orbit-line) 72px 73px, transparent 74px 110px),
         radial-gradient(120% 70% at 0% 0%, var(--panel-glow) 0%, transparent 60%), var(--as-stars);
@@ -117,9 +117,9 @@ code, pre, kbd, .seg_chip { font-family: var(--font-mono); }
 }
 
 /* crosshairs on the four corners, on the panels that don't scroll */
-.panel, .section, .library, .figures_panel, .review_card, .settings_section,
+.panel, .section, .library, .figures_panel, .review_card, .drafts, .settings_section,
 .colors_panel { position: relative; }
-.panel::after, .section::after, .library::after, .figures_panel::after, .review_card::after, .settings_section::after,
+.panel::after, .section::after, .library::after, .figures_panel::after, .review_card::after, .drafts::after, .settings_section::after,
 .colors_panel::after {
     content: "";
     position: absolute;
@@ -134,9 +134,9 @@ code, pre, kbd, .seg_chip { font-family: var(--font-mono); }
 }
 
 /* panel titles in the atlas face, with a ruler of ticks under the header */
-.section h3, .figures_panel h3, .side h3, .review_card h3, .settings_section > header h2,
+.section h3, .figures_panel h3, .side h3, .review_card h3, .drafts h3, .settings_section > header h2,
 .settings_section > header h3, form.modal h2,
-.colors_panel h3 {
+.colors_panel h3, .survey_keys_head h3 {
     font-family: var(--font-display);
     font-weight: 600;
     font-size: 1.45rem;
@@ -163,7 +163,9 @@ code, pre, kbd, .seg_chip { font-family: var(--font-mono); }
 .item, .source_row, .source_note, .source_card, .figure_card, .picker, .style_card, .card_notes li,
 .digest_preview, .export_form textarea, .settings .setting code, .md code, .figure_credit_preview,
 .ref, .get_paper, .drop_zone, .highlight, .review_answer,
-.paper_picker {
+.paper_picker,
+.survey_step, .survey_paper, .pass_card, .pass_headcard, .pass_decide, .pass_earlier, .pass_list li,
+.wizard_theme, .wizard_preview, .lit_note, .draft_row, .works_list li, .pass_banner {
     background-color: var(--inset);
     border: 1px solid var(--hairline);
     border-radius: var(--radius-md);
@@ -178,9 +180,11 @@ code, pre, kbd, .seg_chip { font-family: var(--font-mono); }
 .source_note { border-left: 2px solid var(--star); }
 .source_note.question { border-left-color: var(--sun); }
 .setting { border-bottom-color: var(--hairline); }
+/* groups of wells (the survey's folds and columns): the hairline, no fill */
+.survey_fold, .survey_col { border: 1px solid var(--hairline); border-radius: var(--radius-md); }
 
 /* labels: small spaced capitals */
-form.modal label, .style_pick, .picker_head strong, .checks > span, .attach_mode > span, .tag_filter > span {
+form.modal label, .style_pick, .picker_head strong, .pass_kicker, .continue_row h4, .pass_earlier h5, .lit_note_head small, .checks > span, .attach_mode > span, .tag_filter > span {
     font-family: var(--font-sans);
     font-size: 11px;
     font-weight: 600;
@@ -188,7 +192,7 @@ form.modal label, .style_pick, .picker_head strong, .checks > span, .attach_mode
     text-transform: uppercase;
     color: var(--ink-muted);
 }
-form.modal .checks label { font-size: 14px; letter-spacing: 0; text-transform: none; color: var(--ink); }
+form.modal .checks label, form.modal label.check { font-size: 14px; letter-spacing: 0; text-transform: none; color: var(--ink); }
 
 /* ---- buttons: planets. Default = a dark sphere; primary = blue giant; delete = red dwarf; confirm = aurora ---- */
 
@@ -329,10 +333,10 @@ input[type="range"] { accent-color: var(--star); border: 0; background: none; }
 .tag_row input, .preview img, .visual img { border-radius: var(--radius-sm); }
 .visual, .preview { background: var(--inset); border: 1px solid var(--hairline); border-radius: var(--radius-md); }
 .reader_html, .pdf_page { border-radius: var(--radius-sm); box-shadow: var(--shadow-panel); }
-.reader_bar { background: var(--surface-solid); border-bottom: 1px solid var(--hairline); }
+.reader_bar, .pass_bar { background: var(--surface-solid); border-bottom: 1px solid var(--hairline); }
 
-.timeline { background: var(--inset); border: 1px solid var(--line-strong); border-radius: var(--radius-pill); }
-.timeline .span { background: linear-gradient(90deg, var(--star-body-lo), var(--star-body) 60%, var(--star-body-hi)); }
+.timeline, .continue_progress { background: var(--inset); border: 1px solid var(--line-strong); border-radius: var(--radius-pill); }
+.timeline .span, .continue_progress::after { background: linear-gradient(90deg, var(--star-body-lo), var(--star-body) 60%, var(--star-body-hi)); }
 .timeline .marker { background: var(--sun); border-color: var(--sun); box-shadow: 0 0 8px var(--sun-glow); }
 
 /* floating keys: blue planets */
@@ -391,7 +395,7 @@ input[type="range"] { accent-color: var(--star); border: 0; background: none; }
 }
 /* high contrast: crosshairs, ticks and moons drop away; plain system borders */
 @media (forced-colors: active) {
-    .panel::after, .section::after, .library::after, .figures_panel::after, .review_card::after, .settings_section::after,
+    .panel::after, .section::after, .library::after, .figures_panel::after, .review_card::after, .drafts::after, .settings_section::after,
     .workspacetabs button[aria-selected="true"]::after, .tabs button[aria-selected="true"]::after,
     .segmented button[aria-checked="true"]::after, .view_toggle button[aria-pressed="true"]::after, .badge::before,
 .colors_panel::after { display: none; }

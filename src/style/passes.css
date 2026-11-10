@@ -64,6 +64,10 @@
 }
 .pass_card.strip { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 6px 8px 6px 12px; }
 .pass_card.done { border-left-color: var(--muted); background: var(--bg); }
+/* each style draws these as its cards (themes/…): the accent stripe stays on top */
+body .pass_card { border-left: 3px solid var(--accent); }
+body .pass_card.done { border-left-color: var(--muted); }
+body .pass_headcard { border-top: 3px solid var(--accent); }
 .pass_card_text { flex: 1; min-width: 12em; }
 .pass_card small { color: var(--muted); }
 .pass_card textarea { width: 100%; box-sizing: border-box; resize: vertical; }
@@ -127,7 +131,7 @@ button.toc_role { padding: 0 4px; }
 .pass_refs { display: grid; gap: 6px; }
 .pass_refs > summary, .pass_outline > summary { cursor: pointer; font-weight: 600; font-size: .9rem; }
 .pass_ref_list { margin: 6px 0; padding: 0; list-style: none; display: grid; gap: 2px; max-height: 300px; overflow: auto; }
-.pass_ref_list li { display: flex; align-items: baseline; gap: 8px; padding: 3px 6px; border-radius: 6px; }
+.pass_ref_list li { display: flex; align-items: baseline; gap: 8px; padding: 3px 6px; border-radius: calc(var(--radius) / 2); }
 .pass_ref_list li:hover { background: var(--bg); }
 .pass_ref_list .check { flex: 1; min-width: 0; align-items: baseline; }
 .pass_in { flex: none; font-size: .8rem; }

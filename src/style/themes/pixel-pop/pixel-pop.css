@@ -37,7 +37,7 @@ body {
     background-size: var(--space-6) var(--space-6);
 }
 
-h1, h2, h3, .brand, .project_title, .source_title, .section h3, .md_field h3, #notes_heading {
+h1, h2, h3, .brand, .project_title, .source_title, .section h3, .md_field h3, #notes_heading, .survey_fold_title {
     font-family: var(--font-display);
     font-weight: 600;
     letter-spacing: 0;
@@ -56,7 +56,7 @@ h1, h2, h3, .brand, .project_title, .source_title, .section h3, .md_field h3, #n
 .bar .back, .bar .brand, .bar small, .bar .style_pick { color: var(--on-candy); }
 .bar .back { font-family: var(--font-mono); font-size: 14px; }
 
-.panel, .section, .library, .figures_panel, .review_card, .stat, .library_list, .source_pane,
+.panel, .section, .library, .figures_panel, .review_card, .drafts, .stat, .library_list, .source_pane,
 .project, .picker, .digest_preview, .export_form textarea,
 .colors_panel {
     background-color: var(--surface-window);
@@ -64,17 +64,21 @@ h1, h2, h3, .brand, .project_title, .source_title, .section h3, .md_field h3, #n
     border-radius: 0;
     box-shadow: none;
 }
-.review_card { border-left-width: var(--border-heavy); border-left-color: var(--line); }
+.review_card, .drafts { border-left-width: var(--border-heavy); border-left-color: var(--line); }
 
 /* things inside a window: wells */
 .item, .source_row, .source_note, .source_card, .figure_card, .card_notes li, .notes li, .stats .stat b,
 .ref, .get_paper, .drop_zone, .highlight, .review_answer,
-.paper_picker {
+.paper_picker,
+.survey_step, .survey_paper, .pass_card, .pass_headcard, .pass_decide, .pass_earlier, .pass_list li,
+.wizard_theme, .wizard_preview, .lit_note, .draft_row, .works_list li, .pass_banner {
     border-radius: 0;
 }
 .item, .source_row, .source_note, .source_card, .figure_card,
 .ref, .get_paper, .drop_zone, .highlight, .review_answer,
-.paper_picker {
+.paper_picker,
+.survey_step, .survey_paper, .pass_card, .pass_headcard, .pass_decide, .pass_earlier, .pass_list li,
+.wizard_theme, .wizard_preview, .lit_note, .draft_row, .works_list li {
     background: var(--surface-inset);
     border: var(--border-pixel) solid var(--line);
 }
@@ -86,6 +90,9 @@ h1, h2, h3, .brand, .project_title, .source_title, .section h3, .md_field h3, #n
 }
 .source_note { border-left: var(--border-heavy) solid var(--line); }
 .source_note.question { border-left-color: var(--candy-teal); }
+/* groups of wells (the survey's folds and columns): the pixel line, no fill */
+.survey_fold, .survey_col { border: var(--border-pixel) solid var(--line); border-radius: 0; }
+.pass_bar { border-bottom: var(--border-pixel) solid var(--line); }
 
 /* lifted: popups and the floating note box get the hard pixel shadow */
 .modal, .composer {
@@ -162,13 +169,15 @@ input, textarea, select {
 }
 input::placeholder, textarea::placeholder { color: var(--ink-muted); opacity: 1; }
 input:disabled, textarea:disabled, select:disabled { color: var(--ink-muted); border-style: dashed; }
-form.modal label, .style_pick, .attach_mode > span, .picker_head strong, .checks > span {
+form.modal label, .style_pick, .attach_mode > span, .picker_head strong, .pass_kicker, .continue_row h4, .pass_earlier h5, .lit_note_head small, .checks > span {
     font-family: var(--font-label);
     font-weight: 800;
     font-size: 12px;
     letter-spacing: 0.06em;
     text-transform: uppercase;
 }
+/* a checkbox row in a popup reads as text, not as a field's label */
+form.modal label.check { font-family: inherit; font-weight: normal; font-size: .9rem; letter-spacing: 0; text-transform: none; }
 input[type="checkbox"], input[type="radio"] { accent-color: var(--candy-green); }
 
 /* ---- tabs, toggles, chips ---- */
@@ -240,8 +249,8 @@ progress, .reader_progress { accent-color: var(--candy-blue); }
 .pdf_page { box-shadow: var(--shadow-pixel-sm); outline: var(--border-pixel) solid var(--line); }
 .reader_html, .visual, .preview, .reader_original { border-radius: 0; }
 .visual { background: var(--surface-inset); border: var(--border-pixel) solid var(--line); }
-.timeline { border: var(--border-pixel) solid var(--line); border-radius: 0; background: var(--surface-inset); }
-.timeline .span { border-radius: 0; background: var(--candy-yellow); }
+.timeline, .continue_progress { border: var(--border-pixel) solid var(--line); border-radius: 0; background: var(--surface-inset); }
+.timeline .span, .continue_progress::after { border-radius: 0; background: var(--candy-yellow); }
 .timeline .marker { border-radius: 0; background: var(--candy-pink); border-color: var(--line); }
 .show_side { background: var(--candy-orange); color: var(--on-candy); border: var(--border-pixel) solid var(--line); border-right: 0; border-radius: 0; box-shadow: var(--shadow-pixel-sm); font-family: var(--font-display); }
 .capture_hint { background: var(--candy-teal); color: var(--on-candy); border: var(--border-pixel) solid var(--line); border-radius: 0; font-family: var(--font-mono); }

@@ -41,19 +41,7 @@
 }
 .sources .none { color: var(--muted); font-style: italic; font-size: .9rem; }
 
-.source_row {
-    display: grid;
-    gap: 4px;
-    height: 100%;
-    padding: 12px;
-    background: var(--bg);
-    border-radius: 8px;
-    color: inherit;
-    text-decoration: none;
-    overflow-wrap: anywhere;
-}
-.source_row:hover, .source_row:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
-.source_row small { color: var(--muted); font-size: .78rem; }
+/* (a material's card, .source_row: the shared piece in base.css) */
 
 /* its paper's first page (or the video's thumbnail), blurred, behind the card */
 .source_row.has_preview { position: relative; isolation: isolate; overflow: hidden; }
@@ -311,7 +299,7 @@
 .survey_steps { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin: 0; padding: 0; list-style: none; }
 .survey_step { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border: 1px solid var(--line); border-radius: var(--radius); }
 .survey_step[data-state="current"] { border-color: var(--accent); box-shadow: inset 0 3px 0 var(--accent); }
-.survey_step[data-state="done"] .survey_num, .survey_step[data-state="current"] .survey_num { background: var(--accent); color: #fff; }
+/* (its number: .badge.done when done, .badge.reading for the one you're on) */
 .survey_num { flex: none; min-width: 1.6em; text-align: center; font-weight: 700; }
 .survey_step_text { display: grid; gap: 2px; min-width: 0; }
 .survey_step_text strong { font-size: .9rem; }
@@ -376,11 +364,11 @@
 .btn.wizard_kind { display: grid; gap: 2px; justify-items: start; height: auto; padding: 10px 12px; text-align: left; white-space: normal; }
 .wizard_kind small { font-weight: normal; opacity: .85; }
 .wizard_field { display: grid; gap: 4px; }
-.wizard_field input, .wizard_field textarea { width: 100%; box-sizing: border-box; }
+.wizard_field input:not([type="checkbox"]), .wizard_field textarea { width: 100%; box-sizing: border-box; }
 .wizard_field .hint { font-size: .8rem; color: var(--muted); }
 .wizard_papers_head { display: flex; align-items: baseline; gap: 12px; }
 .wizard_papers { display: grid; gap: 2px; margin: 0; padding: 0; list-style: none; max-height: 240px; overflow: auto; }
-.wizard_papers .check { align-items: baseline; flex-wrap: wrap; padding: 4px 6px; border-radius: 6px; }
+.wizard_papers .check { align-items: baseline; flex-wrap: wrap; padding: 4px 6px; border-radius: calc(var(--radius) / 2); }
 .wizard_papers .check:hover { background: var(--bg); }
 .wizard_papers .check span { flex: 1 1 14em; min-width: 0; }
 .wizard_papers .hint { flex-basis: 100%; padding-left: 22px; font-size: .78rem; color: var(--muted); }

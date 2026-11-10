@@ -51,7 +51,7 @@ body {
     min-height: 100vh;
 }
 
-h1, h2, h3, h4, .brand, .project_title {
+h1, h2, h3, h4, .brand, .project_title, .survey_fold_title {
     font-family: var(--font-display);
     font-weight: 400;
     letter-spacing: .04em;
@@ -84,7 +84,7 @@ code, pre, kbd, .seg_chip { font-family: var(--font-mono); }
 
 /* ---- plates: lit top band, flat face, ink outline, hard cel shadow, four screws ---- */
 
-.panel, .section, .library, .figures_panel, .review_card, .settings_section, .modal, .composer,
+.panel, .section, .library, .figures_panel, .review_card, .drafts, .settings_section, .modal, .composer,
 .colors_panel {
     background-color: var(--plate);
     background-image: var(--screws), linear-gradient(180deg, var(--plate-hi) 0%, var(--plate) 38%, var(--plate-lo) 100%);
@@ -92,11 +92,11 @@ code, pre, kbd, .seg_chip { font-family: var(--font-mono); }
     border-radius: var(--radius-md);
     box-shadow: inset 0 1px 0 0 var(--bezel-hi), inset 0 0 0 1px var(--bezel), var(--shadow-cel);
 }
-.review_card { border-left-width: 1px; }
+.review_card, .drafts { border-left-width: 1px; }
 .settings_section { overflow: visible; }
 
 /* the one hazard plate per screen: a caution stripe across the top */
-.review_card, .panel.writer {
+.review_card, .drafts, .panel.writer {
     padding-top: 26px;
     background-image:
         repeating-linear-gradient(-45deg, var(--hazard) 0 10px, var(--hazard-ink) 10px 20px),
@@ -109,9 +109,9 @@ code, pre, kbd, .seg_chip { font-family: var(--font-mono); }
 }
 
 /* plate titles with the grooved rule under them */
-.section h3, .figures_panel h3, .side h3, .review_card h3, .settings_section > header h2,
+.section h3, .figures_panel h3, .side h3, .review_card h3, .drafts h3, .settings_section > header h2,
 .settings_section > header h3, form.modal h2,
-.colors_panel h3 { font-family: var(--font-display); font-weight: 400; font-size: 1.15rem; letter-spacing: .04em; text-transform: uppercase; }
+.colors_panel h3, .survey_keys_head h3 { font-family: var(--font-display); font-weight: 400; font-size: 1.15rem; letter-spacing: .04em; text-transform: uppercase; }
 .settings_section > header, .figures_panel header, .section header,
 .colors_panel header {
     padding-bottom: 10px;
@@ -157,7 +157,9 @@ code, pre, kbd, .seg_chip { font-family: var(--font-mono); }
 .item, .source_row, .source_note, .source_card, .figure_card, .picker, .style_card, .card_notes li,
 .digest_preview, .export_form textarea, .settings .setting code, .md code, .figure_credit_preview,
 .ref, .get_paper, .drop_zone, .highlight, .review_answer,
-.paper_picker {
+.paper_picker,
+.survey_step, .survey_paper, .pass_card, .pass_headcard, .pass_decide, .pass_earlier, .pass_list li,
+.wizard_theme, .wizard_preview, .lit_note, .draft_row, .works_list li, .pass_banner {
     background: var(--recess);
     border: 1.5px solid var(--outline);
     border-radius: var(--radius-sm);
@@ -175,7 +177,7 @@ code, pre, kbd, .seg_chip { font-family: var(--font-mono); }
 .setting { border-bottom: 1px dashed var(--line-strong); }
 
 /* labels: condensed stencil capitals */
-form.modal label, .style_pick, .picker_head strong, .checks > span, .attach_mode > span, .tag_filter > span {
+form.modal label, .style_pick, .picker_head strong, .pass_kicker, .continue_row h4, .pass_earlier h5, .lit_note_head small, .checks > span, .attach_mode > span, .tag_filter > span {
     font-family: var(--font-cond);
     font-size: 13px;
     font-weight: 600;
@@ -183,7 +185,7 @@ form.modal label, .style_pick, .picker_head strong, .checks > span, .attach_mode
     text-transform: uppercase;
     color: var(--ink-muted);
 }
-form.modal .checks label { font-family: var(--font-sans); font-size: 15px; letter-spacing: 0; text-transform: none; color: var(--ink); }
+form.modal .checks label, form.modal label.check { font-family: var(--font-sans); font-size: 15px; letter-spacing: 0; text-transform: none; color: var(--ink); }
 
 /* ---- keys: cel-shaded keycaps. Steel by default; amber = the main action; red = delete; green = go; blue = downloads ---- */
 
@@ -342,10 +344,10 @@ input[type="range"] { accent-color: var(--amber); border: 0; background: none; b
 
 .visual, .preview { background: var(--recess); border: 1.5px solid var(--outline); border-radius: var(--radius-sm); }
 .reader_html, .pdf_page { border-radius: var(--radius-sm); box-shadow: 0 0 0 1.5px var(--outline), var(--shadow-cel); }
-.reader_bar { background: var(--plate); border-bottom: 2px solid var(--outline); }
+.reader_bar, .pass_bar { background: var(--plate); border-bottom: 2px solid var(--outline); }
 
-.timeline { background: var(--recess); border: 1.5px solid var(--outline); border-radius: 2px; box-shadow: inset 0 2px 3px rgba(0, 0, 0, .5); }
-.timeline .span { background: var(--amber); border-radius: 0; }
+.timeline, .continue_progress { background: var(--recess); border: 1.5px solid var(--outline); border-radius: 2px; box-shadow: inset 0 2px 3px rgba(0, 0, 0, .5); }
+.timeline .span, .continue_progress::after { background: var(--amber); border-radius: 0; }
 .timeline .marker { background: var(--lamp-red); border-color: var(--outline); box-shadow: 0 0 8px var(--lamp-red); }
 
 /* floating keys: amber keycaps */

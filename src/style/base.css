@@ -510,16 +510,30 @@ form.modal .image_field label.image_field_upload { display: inline-flex; align-i
 a.paper_ref { color: var(--accent); text-decoration: none; border-bottom: 1px dotted currentColor; }
 a.paper_ref:hover { border-bottom-style: solid; }
 
-/* "Continue reading": the materials you're in the middle of (reading.js) */
+/* a material's card: a link that opens it (the Literature list, the survey board, Continue reading) */
+.source_row {
+    display: grid;
+    gap: 4px;
+    height: 100%;
+    padding: 12px;
+    background: var(--bg);
+    border-radius: 8px;
+    color: inherit;
+    text-decoration: none;
+    overflow-wrap: anywhere;
+}
+.source_row:hover, .source_row:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.source_row small { color: var(--muted); font-size: .78rem; }
+
+/* "Continue reading": the materials you're in the middle of (reading.js), each a .source_row card */
 .continue_row { display: grid; gap: 8px; }
 .continue_row[hidden] { display: none; }
 .continue_row h4 { margin: 0; font-size: .85rem; color: var(--muted); font-weight: 600; }
 .continue_list { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 8px; }
-.continue_card { display: grid; gap: 4px; padding: 10px 12px; border-radius: 8px; background: var(--bg); color: inherit; text-decoration: none; border: 1px solid var(--line); }
-.continue_card:hover, .continue_card:focus-visible { border-color: var(--accent); }
+.continue_card { padding: 10px 12px; }
 .continue_card strong { font-size: .88rem; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-.continue_card small { color: var(--muted); font-size: .76rem; }
-.continue_progress { height: 4px; border-radius: 2px; background: var(--line); overflow: hidden; }
+/* how far you've read: a small meter, dressed like the video timeline in each style (themes/…) */
+.continue_progress { display: block; height: 8px; margin-top: 2px; border-radius: 999px; background: var(--line); overflow: hidden; }
 .continue_progress::after { content: ''; display: block; height: 100%; width: var(--progress, 0%); background: var(--accent); }
 
 /* Settings: a style's colour choices, as circles (a set of colours in slices of one circle) */
